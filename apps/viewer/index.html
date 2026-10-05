@@ -57,6 +57,16 @@
             <input type="password" id="password-input" placeholder="Enter password" autocomplete="current-password" />
             <p id="password-error" class="field-error hidden"></p>
           </div>
+          <!-- Group-restricted links: student ID is the username, national ID the password -->
+          <div id="credentials-field" class="field hidden">
+            <label for="student-id-input">Student ID</label>
+            <input type="text" id="student-id-input" placeholder="e.g. 40123456" autocomplete="username" inputmode="numeric" />
+            <p id="credentials-error" class="field-error hidden"></p>
+          </div>
+          <div id="national-id-field" class="field hidden">
+            <label for="national-id-input">National ID</label>
+            <input type="password" id="national-id-input" placeholder="Your national ID" autocomplete="current-password" inputmode="numeric" />
+          </div>
           <button type="submit" id="gate-submit" class="btn-primary">View Document</button>
           <p id="gate-error" class="form-error hidden"></p>
         </form>

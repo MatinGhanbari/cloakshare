@@ -23,6 +23,11 @@ const $emailError = document.getElementById('email-error')!;
 const $passwordField = document.getElementById('password-field')!;
 const $passwordInput = document.getElementById('password-input') as HTMLInputElement;
 const $passwordError = document.getElementById('password-error')!;
+const $credentialsField = document.getElementById('credentials-field')!;
+const $nationalIdField = document.getElementById('national-id-field')!;
+const $studentIdInput = document.getElementById('student-id-input') as HTMLInputElement;
+const $nationalIdInput = document.getElementById('national-id-input') as HTMLInputElement;
+const $credentialsError = document.getElementById('credentials-error')!;
 const $gateSubmit = document.getElementById('gate-submit') as HTMLButtonElement;
 const $gateError = document.getElementById('gate-error')!;
 const $gateTitle = document.getElementById('gate-title')!;
@@ -78,6 +83,8 @@ interface LinkMetadata {
   file_type: string;
   require_email: boolean;
   has_password: boolean;
+  requires_credentials?: boolean;
+  access_group_name?: string | null;
   allowed_domains: string[] | null;
   page_count: number;
   video_metadata?: {
@@ -197,11 +204,16 @@ async function fetchMetadata(token: string): Promise<LinkMetadata | null> {
   return json.data;
 }
 
-async function verifyAccess(token: string, email?: string, password?: string): Promise<VerifyResponse | null> {
+async function verifyAccess(
+  token: string,
+  email?: string,
+  password?: string,
+  credentials?: { student_id: string; national_id: string },
+): Promise<VerifyResponse | null> {
   const res = await fetch(`${API_URL}/v1/viewer/${token}/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, ...(credentials ?? {}) }),
   });
 
   const json = await res.json();
@@ -339,18 +351,29 @@ function setupGate(meta: LinkMetadata) {
 
   // Title
   $gateTitle.textContent = meta.name ? `View "${meta.name}"` : 'View document';
-  $gateSubtitle.textContent = meta.require_email
-    ? 'Enter your email to access this document.'
-    : meta.has_password
-      ? 'Enter the password to access this document.'
-      : 'Click below to view this document.';
+  $gateSubtitle.textContent = meta.requires_credentials
+    ? `Sign in with your student ID to open this document${
+        meta.access_group_name ? ` — ${meta.access_group_name}` : ''
+      }.`
+    : meta.require_email
+      ? 'Enter your email to access this document.'
+      : meta.has_password
+        ? 'Enter the password to access this document.'
+        : 'Click below to view this document.';
 
-  // Show relevant fields
-  if (meta.require_email) {
-    $emailField.classList.remove('hidden');
-  }
-  if (meta.has_password) {
-    $passwordField.classList.remove('hidden');
+  // Group-restricted links replace the email/password fields with group credentials.
+  if (meta.requires_credentials) {
+    $credentialsField.classList.remove('hidden');
+    $nationalIdField.classList.remove('hidden');
+    $gateSubmit.textContent = 'Sign in';
+  } else {
+    // Show relevant fields
+    if (meta.require_email) {
+      $emailField.classList.remove('hidden');
+    }
+    if (meta.has_password) {
+      $passwordField.classList.remove('hidden');
+    }
   }
 
   // Apply brand color
@@ -998,7 +1021,42 @@ function setupGateForm() {
     // Reset errors
     $emailError.classList.add('hidden');
     $passwordError.classList.add('hidden');
+    $credentialsError.classList.add('hidden');
     $gateError.classList.add('hidden');
+
+    // Group-restricted links sign in with a student ID and national ID.
+    if (metadata?.requires_credentials) {
+      const studentId = $studentIdInput.value.trim();
+      const nationalId = $nationalIdInput.value.trim();
+      if (!studentId || !nationalId) {
+        $credentialsError.textContent = 'Student ID and national ID are required';
+        $credentialsError.classList.remove('hidden');
+        return;
+      }
+
+      $gateSubmit.disabled = true;
+      $gateSubmit.textContent = 'Verifying...';
+
+      const credentialResult = await verifyAccess(linkToken, undefined, undefined, {
+        student_id: studentId,
+        national_id: nationalId,
+      });
+
+      if (!credentialResult) {
+        $gateSubmit.disabled = false;
+        $gateSubmit.textContent = 'Sign in';
+        $credentialsError.textContent = 'Student ID or national ID is incorrect';
+        $credentialsError.classList.remove('hidden');
+        return;
+      }
+
+      if (metadata.file_type === 'video') {
+        startVideoViewer(metadata, credentialResult);
+      } else {
+        startViewer(metadata, credentialResult);
+      }
+      return;
+    }
 
     const email = metadata?.require_email ? $emailInput.value.trim() : undefined;
     const password = metadata?.has_password ? $passwordInput.value : undefined;
