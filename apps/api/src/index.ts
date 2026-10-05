@@ -366,7 +366,7 @@ try {
 }
 
 // Root → dashboard
-app.get('/', (c) => c.redirect('/dashboard/', 302));
+// app.get('/', (c) => c.redirect('/dashboard/', 302));
 
 // Dashboard SPA (Vite base /dashboard/). Only registered when a build is present, so the
 // dev gateway (or the 404 handler) takes over cleanly instead of serveStatic logging
