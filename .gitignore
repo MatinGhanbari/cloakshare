@@ -12,3 +12,4 @@ apps/api/data/
 .env.*
 !.env.example
 apps/site/.astro/
+run.ps1
