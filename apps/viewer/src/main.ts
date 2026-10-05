@@ -980,8 +980,13 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     }
   };
 
+  // The session key is only established after the handshake completes, so page content is
+  // requested from onReady rather than immediately after connect.
+  tileStream.onReady = () => {
+    requestPageTiles(1);
+  };
+
   tileStream.connect(linkToken, sess.session_token);
-  requestPageTiles(1);
 
   // Refine the request to the visible band while scrolling (cached tiles are free).
   $viewerBody.addEventListener('scroll', () => {

@@ -18,6 +18,13 @@
  * screenshots. Attribution via the burned-in watermark is the durable defence.
  */
 import type { IncomingMessage, Server as HttpServer } from 'node:http';
+import {
+  randomBytes,
+  createPublicKey,
+  publicEncrypt,
+  createCipheriv,
+  constants as cryptoConstants,
+} from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
 import { eq } from 'drizzle-orm';
 import sharp from 'sharp';
@@ -110,6 +117,64 @@ function encodeTileFrame(header: TileHeader, bytes: Buffer): Buffer {
 }
 
 // ============================================
+// TRANSPORT ENCRYPTION (hybrid)
+// ============================================
+// A random AES-256 key is generated for every WebSocket session and handed to the client
+// wrapped with RSA-OAEP against a public key the client generates locally, so the session
+// key never travels in the clear. Every tile frame is then sealed with AES-256-GCM.
+//
+// What this does and does not buy:
+//  - It protects the page content from a passive observer when the stream is not already
+//    protected by TLS (plain ws://, or TLS terminated by an intermediary you do not trust).
+//  - It does NOT stop a determined client. The decrypting code is served by this same
+//    server, so anyone who can run the viewer can also read the pixels it paints.
+//  - Over wss:// it is defence in depth rather than the primary control.
+
+interface TransportCrypto {
+  key: Buffer; // 32-byte AES-256 key, fresh per session
+  noncePrefix: Buffer; // 4 random bytes, fixed per session
+  counter: number; // monotonic; a nonce is never reused within a session
+  wrapped: Buffer; // the session key sealed with the client's RSA public key
+}
+
+/** Seal one frame: [8-byte BE counter][AES-256-GCM ciphertext || 16-byte tag]. */
+function sealFrame(plaintext: Buffer, tc: TransportCrypto): Buffer {
+  const counterBuf = Buffer.alloc(8);
+  counterBuf.writeBigUInt64BE(BigInt(tc.counter), 0);
+  tc.counter += 1;
+
+  const iv = Buffer.concat([tc.noncePrefix, counterBuf]); // 12-byte GCM IV
+  const cipher = createCipheriv('aes-256-gcm', tc.key, iv);
+  const body = Buffer.concat([cipher.update(plaintext), cipher.final(), cipher.getAuthTag()]);
+  return Buffer.concat([counterBuf, body]);
+}
+
+/** Wrap the fresh session key with the client's RSA public key. */
+function establishTransport(publicKeySpkiBase64: string): TransportCrypto {
+  const clientKey = createPublicKey({
+    key: Buffer.from(publicKeySpkiBase64, 'base64'),
+    format: 'der',
+    type: 'spki',
+  });
+
+  const key = randomBytes(32);
+  const noncePrefix = randomBytes(4);
+
+  const wrapped = publicEncrypt(
+    {
+      key: clientKey,
+      padding: cryptoConstants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: 'sha256',
+    },
+    key,
+  );
+
+  // The wrapped key travels back over the socket; only the holder of the private key can
+  // unwrap it. Everything after this point is sealed with `key`.
+  return { key, noncePrefix, counter: 0, wrapped };
+}
+
+// ============================================
 // TILE EXTRACTION
 // ============================================
 
@@ -178,6 +243,9 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
   };
   sessionState.set(session.id, state);
 
+  // Transport encryption state for this socket — null until the client sends its public key.
+  let transport: TransportCrypto | null = null;
+
   const sessionShortId = sessionToken.slice(0, 6);
   const watermarkText = renderWatermarkTemplate(
     link.watermarkTemplate || '{{email}} · {{date}} · {{session_id}}',
@@ -200,7 +268,12 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
   );
 
   ws.on('message', async (raw) => {
-    let msg: { type?: string; page?: number; rect?: { x: number; y: number; w: number; h: number } };
+    let msg: {
+      type?: string;
+      page?: number;
+      rect?: { x: number; y: number; w: number; h: number };
+      key?: string;
+    };
     try {
       msg = JSON.parse(raw.toString());
     } catch {
@@ -208,7 +281,50 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
       return;
     }
 
+    // Key exchange: the client sends its RSA public key, we answer with the session key
+    // wrapped to it. Until this completes, no page content is sent.
+    if (msg.type === 'pubkey') {
+      if (transport) return; // already established for this socket
+      try {
+        transport = establishTransport(String(msg.key ?? ''));
+        ws.send(
+          JSON.stringify({
+            type: 'key',
+            alg: 'AES-256-GCM',
+            wrapped_key: transport.wrapped.toString('base64'),
+            nonce_prefix: transport.noncePrefix.toString('base64'),
+          }),
+        );
+        logger.info({ linkId, sessionId: session.id }, 'Tile stream transport key established');
+      } catch (err) {
+        logger.warn({ err, linkId }, 'Transport key exchange failed');
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            code: 'CRYPTO_ERROR',
+            message: 'Could not establish a secure channel',
+          }),
+        );
+        ws.close(4400, 'crypto');
+      }
+      return;
+    }
+
     if (msg.type !== 'viewport') return;
+
+    if (!transport) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          code: 'CRYPTO_REQUIRED',
+          message: 'Complete the key exchange before requesting pages',
+        }),
+      );
+      return;
+    }
+    // Capture into a const: `transport` is a mutable binding captured by this closure, so
+    // TypeScript will not keep the narrowing above across the awaits below.
+    const tc: TransportCrypto = transport;
 
     const page = Math.trunc(Number(msg.page));
     if (!Number.isFinite(page) || page < 1 || page > (link.pageCount || 0)) {
@@ -281,21 +397,24 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
 
           const tile = await readTile(linkId, session.id, page, col, row, pageWidth, pageHeight);
           ws.send(
-            encodeTileFrame(
-              {
-                page,
-                col,
-                row,
-                x: col * TILE_SIZE,
-                y: row * TILE_SIZE,
-                w: Math.min(TILE_SIZE, pageWidth - col * TILE_SIZE),
-                h: Math.min(TILE_SIZE, pageHeight - row * TILE_SIZE),
-                cols,
-                rows,
-                pageWidth,
-                pageHeight,
-              },
-              tile.bytes,
+            sealFrame(
+              encodeTileFrame(
+                {
+                  page,
+                  col,
+                  row,
+                  x: col * TILE_SIZE,
+                  y: row * TILE_SIZE,
+                  w: Math.min(TILE_SIZE, pageWidth - col * TILE_SIZE),
+                  h: Math.min(TILE_SIZE, pageHeight - row * TILE_SIZE),
+                  cols,
+                  rows,
+                  pageWidth,
+                  pageHeight,
+                },
+                tile.bytes,
+              ),
+              tc,
             ),
           );
           sent++;
