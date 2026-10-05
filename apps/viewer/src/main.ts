@@ -3,6 +3,7 @@
 // ============================================
 
 import Hls from 'hls.js';
+import { TileStream, type PageGeometry, type TileHeader } from './tiles';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -113,6 +114,14 @@ let session: VerifyResponse | null = null;
 let currentPage = 1;
 let totalPages = 1;
 let pageImages: Map<number, HTMLImageElement> = new Map();
+
+// Tile stream state (documents are delivered as WebSocket tiles, not whole-page images)
+let tileStream: TileStream | null = null;
+let pageGeo: PageGeometry | null = null;
+let currentScale = 1;
+const tileBitmaps = new Map<string, ImageBitmap>(); // `${page}:${col}-${row}` -> bitmap
+const tileHeaders = new Map<string, TileHeader>(); // `${page}:${col}-${row}` -> placement
+let scrollThrottle: ReturnType<typeof setTimeout> | null = null;
 let trackingInterval: ReturnType<typeof setInterval> | null = null;
 let pageTimes: Record<number, number> = {};
 let pageStartTime = Date.now();
@@ -346,37 +355,78 @@ function setupGate(meta: LinkMetadata) {
 // ============================================
 
 function renderPage(pageNum: number) {
-  const img = pageImages.get(pageNum);
-  if (!img || !img.complete) {
-    // Page not loaded yet — try fetching on-demand for large documents
-    if (session && pageNum > session.pages.length) {
-      fetchPageOnDemand(pageNum);
-    }
+  // Document pages arrive as WebSocket tiles, never as a whole-page image.
+  if (!pageGeo || pageGeo.page !== pageNum) {
+    // Geometry for this page is not known yet — request it; onPage() re-renders.
+    requestPageTiles(pageNum);
     return;
   }
 
+  const geo = pageGeo;
   const ctx = $canvas.getContext('2d')!;
   const dpr = window.devicePixelRatio || 1;
 
-  // Size canvas to image dimensions (scaled for container)
+  // Size canvas to the page aspect, scaled to the container
   const containerWidth = $viewerBody.clientWidth - 48; // padding
-  const scale = Math.min(1, containerWidth / img.naturalWidth);
-  const displayWidth = img.naturalWidth * scale;
-  const displayHeight = img.naturalHeight * scale;
+  const scale = Math.min(1, containerWidth / geo.pageWidth);
+  currentScale = scale;
+  const displayWidth = geo.pageWidth * scale;
+  const displayHeight = geo.pageHeight * scale;
 
   $canvas.style.width = `${displayWidth}px`;
   $canvas.style.height = `${displayHeight}px`;
   $canvas.width = displayWidth * dpr;
   $canvas.height = displayHeight * dpr;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(dpr, dpr);
 
-  // Draw page image — watermark is already baked in server-side
-  ctx.drawImage(img, 0, 0, displayWidth, displayHeight);
+  drawTiles(geo.page);
 
   // Update navigation
   $pageIndicator.textContent = `${pageNum} / ${totalPages}`;
   $prevBtn.disabled = pageNum <= 1;
   $nextBtn.disabled = pageNum >= totalPages;
+}
+
+/** Paint every tile we currently hold for `page` at its scaled position. */
+function drawTiles(page: number) {
+  const ctx = $canvas.getContext('2d')!;
+  ctx.clearRect(0, 0, $canvas.width, $canvas.height);
+  const prefix = `${page}:`;
+  for (const [key, bitmap] of tileBitmaps) {
+    if (!key.startsWith(prefix)) continue;
+    const header = tileHeaders.get(key);
+    if (!header) continue;
+    ctx.drawImage(
+      bitmap,
+      header.x * currentScale,
+      header.y * currentScale,
+      header.w * currentScale,
+      header.h * currentScale,
+    );
+  }
+}
+
+/** Ask the server for the tiles covering the page (or the visible band, if known). */
+function requestPageTiles(page: number, rect?: { x: number; y: number; w: number; h: number }) {
+  if (!tileStream) return;
+  tileStream.requestPage(page, rect);
+}
+
+/** The band of the current page currently visible in the scroll container, in image px. */
+function visibleImageRect() {
+  const geo = pageGeo;
+  if (!geo) return undefined;
+  const canvasRect = $canvas.getBoundingClientRect();
+  const bodyRect = $viewerBody.getBoundingClientRect();
+  if (canvasRect.height <= 0) return undefined;
+
+  const toImage = geo.pageHeight / canvasRect.height;
+  const topPx = Math.max(0, bodyRect.top - canvasRect.top);
+  const bottomPx = Math.min(canvasRect.height, bodyRect.bottom - canvasRect.top);
+  const y = Math.max(0, Math.floor(topPx * toImage));
+  const h = Math.max(1, Math.ceil((bottomPx - topPx) * toImage));
+  return { x: 0, y, w: geo.pageWidth, h };
 }
 
 /**
@@ -429,10 +479,9 @@ function goToPage(page: number) {
 
   currentPage = page;
 
-  // If this page isn't loaded yet, fetch it on-demand
-  const img = pageImages.get(page);
-  if (!img || !img.complete || !img.naturalWidth) {
-    fetchPageOnDemand(page);
+  // Clear stale geometry so renderPage() requests the new page's tiles.
+  if (!pageGeo || pageGeo.page !== page) {
+    pageGeo = null;
   }
 
   renderPage(currentPage);
@@ -780,8 +829,50 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   $docName.textContent = meta.name || 'Document';
   showScreen($viewer);
 
-  // Load and render pages
-  preloadPages(sess.pages);
+  // Documents are streamed as tiles over a WebSocket instead of whole-page images.
+  tileBitmaps.clear();
+  tileHeaders.clear();
+  pageGeo = null;
+  tileStream?.close();
+  tileStream = new TileStream();
+
+  tileStream.onPage = (geo) => {
+    pageGeo = geo;
+    renderPage(currentPage);
+    // Ask for just the visible band now that the page geometry is known.
+    requestPageTiles(currentPage, visibleImageRect());
+  };
+
+  tileStream.onTile = (header, bitmap) => {
+    const key = `${header.page}:${header.col}-${header.row}`;
+    if (tileBitmaps.has(key)) return; // already held
+    tileBitmaps.set(key, bitmap);
+    tileHeaders.set(key, header);
+    if (header.page === currentPage) drawTiles(header.page);
+  };
+
+  tileStream.onError = (code, message) => {
+    console.error('[tiles]', code, message);
+    if (code === 'RATE_LIMITED') {
+      // Server budget exhausted — back off and retry the current page.
+      setTimeout(() => {
+        if (session) requestPageTiles(currentPage);
+      }, 3000);
+    }
+  };
+
+  tileStream.connect(linkToken, sess.session_token);
+  requestPageTiles(1);
+
+  // Refine the request to the visible band while scrolling (cached tiles are free).
+  $viewerBody.addEventListener('scroll', () => {
+    if (scrollThrottle) return;
+    scrollThrottle = setTimeout(() => {
+      scrollThrottle = null;
+      requestPageTiles(currentPage, visibleImageRect());
+    }, 250);
+  });
+
   setupNavigation();
   setupProtections();
 
