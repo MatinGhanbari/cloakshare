@@ -28,21 +28,32 @@ import { getWatermarkedPageOnDemand } from './watermarkRenderer.js';
 import { logger } from '../lib/logger.js';
 import { sha256, renderWatermarkTemplate, formatDateForWatermark } from '../lib/utils.js';
 
-/** Fixed tile edge in source-image pixels. */
-const TILE_SIZE = 256;
+/** Fixed tile edge in source-image pixels. 512px gives ~20 tiles for a 1600x2263 page,
+ *  which keeps a full page comfortably inside the per-minute tile budget. */
+const TILE_SIZE = 512;
 
 /** Hard cap on tiles returned for a single viewport request (bounds a hostile client). */
 const MAX_TILES_PER_REQUEST = 48;
 
-/** Per-viewer-session budgets. Tunable via env. */
-const TILES_PER_MINUTE = Number(process.env.TILE_RATE_LIMIT ?? 60);
-const PAGES_PER_MINUTE = Number(process.env.PAGE_RATE_LIMIT ?? 3);
+/** Per-viewer-session budgets. Tunable via env.
+ *  Only *newly* requested pages and *cache-miss* tiles are charged, so re-scrolling or
+ *  re-visiting a page a viewer has already seen is free, while scraping a document still
+ *  costs a bounded number of new tiles per minute. */
+const NEW_TILES_PER_MINUTE = Number(process.env.TILE_RATE_LIMIT ?? 60);
+const NEW_PAGES_PER_MINUTE = Number(process.env.PAGE_RATE_LIMIT ?? 3);
 
 const WINDOW_MS = 60_000;
 
+interface Budget {
+  count: number;
+  windowStart: number;
+}
+
 interface SessionState {
-  tiles: { count: number; windowStart: number };
-  pages: { count: number; windowStart: number };
+  /** Pages this viewer has already requested (re-requests are free). */
+  seenPages: Set<number>;
+  newTiles: Budget;
+  newPages: Budget;
 }
 
 const sessionState = new Map<string, SessionState>();
@@ -52,23 +63,23 @@ setInterval(() => {
   const now = Date.now();
   for (const [key, state] of sessionState) {
     if (
-      now - state.tiles.windowStart > WINDOW_MS * 2 &&
-      now - state.pages.windowStart > WINDOW_MS * 2
+      now - state.newTiles.windowStart > WINDOW_MS * 2 &&
+      now - state.newPages.windowStart > WINDOW_MS * 2
     ) {
       sessionState.delete(key);
     }
   }
 }, 60_000).unref();
 
-function take(state: SessionState, bucket: 'tiles' | 'pages', limit: number): boolean {
+/** Returns true when the spend is allowed, false when the budget is exhausted. */
+function charge(budget: Budget, limit: number): boolean {
   const now = Date.now();
-  const w = state[bucket];
-  if (now - w.windowStart >= WINDOW_MS) {
-    w.count = 0;
-    w.windowStart = now;
+  if (now - budget.windowStart >= WINDOW_MS) {
+    budget.count = 0;
+    budget.windowStart = now;
   }
-  if (w.count >= limit) return false;
-  w.count += 1;
+  if (budget.count >= limit) return false;
+  budget.count += 1;
   return true;
 }
 
@@ -110,12 +121,12 @@ async function readTile(
   row: number,
   pageWidth: number,
   pageHeight: number,
-): Promise<Buffer> {
+): Promise<{ bytes: Buffer; cached: boolean }> {
   const storage = createStorage();
   const tileKey = `watermarked/${linkId}/${sessionId}/tiles/${page}/${col}-${row}.webp`;
 
   if (await storage.exists(tileKey)) {
-    return Buffer.from(await storage.download(tileKey));
+    return { bytes: Buffer.from(await storage.download(tileKey)), cached: true };
   }
 
   // The per-viewer watermarked page is the only source we ever slice from.
@@ -133,7 +144,7 @@ async function readTile(
     .toBuffer();
 
   await storage.upload(tileKey, bytes, 'image/webp');
-  return bytes;
+  return { bytes, cached: false };
 }
 
 // ============================================
@@ -161,8 +172,9 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
   }
 
   const state: SessionState = {
-    tiles: { count: 0, windowStart: Date.now() },
-    pages: { count: 0, windowStart: Date.now() },
+    seenPages: new Set<number>(),
+    newTiles: { count: 0, windowStart: Date.now() },
+    newPages: { count: 0, windowStart: Date.now() },
   };
   sessionState.set(session.id, state);
 
@@ -204,15 +216,20 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
       return;
     }
 
-    if (!take(state, 'pages', PAGES_PER_MINUTE)) {
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          code: 'RATE_LIMITED',
-          message: `Too many page requests. Limit is ${PAGES_PER_MINUTE} per minute.`,
-        }),
-      );
-      return;
+    // Charge only pages this viewer has not opened before, so re-scrolling is free
+    // while walking a whole document still costs budget.
+    if (!state.seenPages.has(page)) {
+      if (!charge(state.newPages, NEW_PAGES_PER_MINUTE)) {
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            code: 'RATE_LIMITED',
+            message: `Too many new pages. Limit is ${NEW_PAGES_PER_MINUTE} per minute.`,
+          }),
+        );
+        return;
+      }
+      state.seenPages.add(page);
     }
 
     try {
@@ -245,17 +262,24 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
       for (let row = rowStart; row <= rowEnd; row++) {
         for (let col = colStart; col <= colEnd; col++) {
           if (sent >= MAX_TILES_PER_REQUEST) break;
-          if (!take(state, 'tiles', TILES_PER_MINUTE)) {
+
+          // Charge the budget BEFORE extracting. If we charged afterwards, a rate-limited
+          // request would still populate the cache and could then be retried for free,
+          // which would defeat the limit entirely.
+          const tileKey = `watermarked/${linkId}/${session.id}/tiles/${page}/${col}-${row}.webp`;
+          const cached = await storage.exists(tileKey);
+          if (!cached && !charge(state.newTiles, NEW_TILES_PER_MINUTE)) {
             ws.send(
               JSON.stringify({
                 type: 'error',
                 code: 'RATE_LIMITED',
-                message: `Tile budget exhausted (${TILES_PER_MINUTE}/min). Slow down.`,
+                message: `Tile budget exhausted (${NEW_TILES_PER_MINUTE} new tiles/min). Slow down.`,
               }),
             );
             return;
           }
-          const bytes = await readTile(linkId, session.id, page, col, row, pageWidth, pageHeight);
+
+          const tile = await readTile(linkId, session.id, page, col, row, pageWidth, pageHeight);
           ws.send(
             encodeTileFrame(
               {
@@ -271,7 +295,7 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
                 pageWidth,
                 pageHeight,
               },
-              bytes,
+              tile.bytes,
             ),
           );
           sent++;
