@@ -138,18 +138,25 @@ let pageImages: Map<number, HTMLImageElement> = new Map();
 
 // Tile stream state (documents are delivered as WebSocket tiles, not whole-page images)
 let tileStream: TileStream | null = null;
+/** Geometry of the page currently on screen — always the cache entry for `currentPage`. */
 let pageGeo: PageGeometry | null = null;
+/**
+ * Geometry of every page the server has described, keyed by page number — including pages we
+ * only asked for in order to preload them. Retaining it makes navigating to a preloaded page a
+ * pure repaint: no round trip, and no reliance on the request de-duplication guard below.
+ */
+const pageGeometryCache = new Map<number, PageGeometry>();
+/**
+ * Pages whose tile batch has been fully received. The loading overlay and the navigation lock
+ * are both driven by this: until `done` arrives for a page the viewer cannot navigate away from
+ * it, so a burst of clicks can never queue up several page changes.
+ */
+const readyPages = new Set<number>();
 let currentScale = 1;
 const tileBitmaps = new Map<string, ImageBitmap>(); // `${page}:${col}-${row}` -> bitmap
 const tileHeaders = new Map<string, TileHeader>(); // `${page}:${col}-${row}` -> placement
 let scrollThrottle: ReturnType<typeof setTimeout> | null = null;
 let rateLimitRetries = 0;
-/**
- * True once the server has finished sending every tile for the current page. The loading
- * overlay stays up until then, so the viewer never sees the page assemble tile by tile —
- * the tiling stays an implementation detail.
- */
-let pageReady = false;
 
 // Zoom: a multiplier applied on top of fit-to-width.
 const ZOOM_MIN = 0.5;
@@ -423,7 +430,10 @@ function setupGate(meta: LinkMetadata) {
 
 function renderPage(pageNum: number) {
   // Document pages arrive as WebSocket tiles, never as a whole-page image.
-  if (!pageGeo || pageGeo.page !== pageNum) {
+  // Geometry is looked up in the cache rather than read off a single "current page" slot, so a
+  // page whose geometry arrived during a preload can be painted without asking the server again.
+  const geo = pageGeometryCache.get(pageNum) ?? null;
+  if (!geo) {
     // Geometry for this page is not known yet — request it; onPage() re-renders.
     // Show the spinner meanwhile so navigation to an unloaded page is visible.
     requestPageTiles(pageNum);
@@ -431,7 +441,7 @@ function renderPage(pageNum: number) {
     return;
   }
 
-  const geo = pageGeo;
+  pageGeo = geo;
   const ctx = $canvas.getContext('2d')!;
   const dpr = window.devicePixelRatio || 1;
 
@@ -483,7 +493,8 @@ let lastRequestKey = '';
 let tileDecodeFailures = 0;
 function requestPageTiles(page: number, rect?: { x: number; y: number; w: number; h: number }) {
   if (!tileStream) return;
-  // Skip a request that is effectively the same as the previous one.
+  // Skip a request that is effectively the same as the previous one. `goToPage()` clears this
+  // key before every deliberate navigation, so the guard can never swallow a page change.
   const key = rect
     ? `${page}:${Math.round(rect.x)}:${Math.round(rect.y)}:${Math.round(rect.w)}:${Math.round(rect.h)}`
     : `${page}:full`;
@@ -492,10 +503,7 @@ function requestPageTiles(page: number, rect?: { x: number; y: number; w: number
 
   // For the page being viewed, hold the overlay until the server reports the batch is
   // complete — otherwise the viewer would watch the page assemble tile by tile.
-  if (page === currentPage) {
-    pageReady = false;
-    updatePageLoading(page);
-  }
+  if (page === currentPage) updatePageLoading(page);
   tileStream.requestPage(page, rect);
 }
 
@@ -519,18 +527,13 @@ function visibleImageRect() {
 // LOADING STATE
 // ============================================
 
-/** Has any tile for this page arrived yet? */
-function pageHasTiles(page: number): boolean {
-  const prefix = `${page}:`;
-  for (const key of tileBitmaps.keys()) {
-    if (key.startsWith(prefix)) return true;
-  }
-  return false;
-}
-
-/** Show the spinner until the current page is complete (not just partially drawn). */
+/**
+ * Show the spinner until the page is complete — not merely until the first tile lands, so the
+ * viewer never watches the page assemble tile by tile. A page counts as complete once the
+ * server has reported its batch as done, and stays complete for the rest of the session.
+ */
 function updatePageLoading(page: number = currentPage) {
-  $pageLoading.hidden = pageReady && pageHasTiles(page);
+  $pageLoading.hidden = readyPages.has(page);
 }
 
 // ============================================
@@ -634,6 +637,7 @@ async function fetchPageOnDemand(pageNum: number) {
 
 function goToPage(page: number) {
   if (page < 1 || page > totalPages) return;
+  if (page === currentPage) return;
 
   // Track time on previous page
   const now = Date.now();
@@ -644,13 +648,20 @@ function goToPage(page: number) {
 
   currentPage = page;
 
-  // Clear stale geometry so renderPage() requests the new page's tiles.
-  if (!pageGeo || pageGeo.page !== page) {
-    pageGeo = null;
-  }
+  // A deliberate page change must always be able to reach the server. The de-duplication guard
+  // in requestPageTiles() is keyed only by page + rect, so the preload of this very page would
+  // otherwise match the key and the request would be dropped: the canvas stayed blank, the page
+  // indicator never moved, and the following click jumped two pages ahead (1 → 3).
+  lastRequestKey = '';
+  // Geometry is kept per page, so a preloaded page paints immediately instead of being
+  // re-requested — and a page we have no geometry for is requested from scratch.
+  pageGeo = pageGeometryCache.get(page) ?? null;
 
   renderPage(currentPage);
   $viewerBody.scrollTop = 0;
+  // When the target page was already in memory no viewport request went out, so nothing else
+  // would warm the page after it. A duplicate preload is harmless: requestPageTiles() de-dupes it.
+  preloadAdjacentPages(page);
 }
 
 function setupNavigation() {
@@ -997,16 +1008,21 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   // Documents are streamed as tiles over a WebSocket instead of whole-page images.
   tileBitmaps.clear();
   tileHeaders.clear();
+  pageGeometryCache.clear();
+  readyPages.clear();
   pageGeo = null;
   tileStream?.close();
   tileStream = new TileStream();
 
   tileStream.onPage = (geo) => {
     // The server sends a `page` message for EVERY viewport request, including the ones we
-    // fire to preload a neighbouring page. Treating a preload's geometry as the current
-    // page's made renderPage() believe it had no geometry for the page on screen, so it
-    // re-requested it — which preloaded again — a ping-pong that burned the whole
-    // per-session request budget in seconds and left the viewer stuck on a spinner.
+    // fire to preload a neighbouring page. Cache it either way — a preload's geometry is
+    // exactly what makes the eventual navigation to that page instant. Only the page on
+    // screen is painted: treating a preload's geometry as the current page's made
+    // renderPage() believe it had no geometry for the page on screen, so it re-requested it
+    // — which preloaded again — a ping-pong that burned the whole per-session request budget
+    // in seconds and left the viewer stuck on a spinner.
+    pageGeometryCache.set(geo.page, geo);
     if (geo.page !== currentPage) return;
 
     pageGeo = geo;
@@ -1031,10 +1047,9 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     // tile let the retry loop run forever: one success would re-arm the retry budget, so
     // the "give up after N" guard never fired and the client hammered the server.
     rateLimitRetries = 0;
-    if (page === currentPage) {
-      pageReady = true; // the whole page is in hand — reveal it in one go
-      updatePageLoading(page);
-    }
+    readyPages.add(page);
+    // The whole page is in hand — reveal it in one go.
+    if (page === currentPage) updatePageLoading(page);
   };
 
   tileStream.onError = (code, message) => {
