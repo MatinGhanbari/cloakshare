@@ -6,7 +6,7 @@ import { config } from '../lib/config.js';
 import { logger } from '../lib/logger.js';
 import * as schema from './schema.js';
 
-function createDbClient() {
+export function createDbClient() {
   if (config.database.provider === 'turso' && config.database.tursoUrl) {
     logger.info('Connecting to Turso database');
     const client = createClient({
@@ -37,7 +37,7 @@ function createDbClient() {
   // A writable directory is a precondition libsql checks itself, but it only reports
   // "SQLITE_CANTOPEN (14)". Say what is actually wrong.
   try {
-    accessSync(dir, W_OK);
+    accessSync(dir, fsConstants.W_OK);
   } catch {
     throw new Error(
       `The SQLite directory "${dir}" is not writable.\n` +
