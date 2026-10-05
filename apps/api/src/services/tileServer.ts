@@ -289,7 +289,21 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
     }),
   );
 
-  ws.on('message', async (raw) => {
+  // Viewport handling is serialised per connection. Concurrent handlers would interleave
+  // the frame counter (sending frames out of order, which the client rejects) and race on
+  // the same tile cache entry — one writing the file while another reads it.
+  let queue: Promise<void> = Promise.resolve();
+  ws.on('message', (raw) => {
+    queue = queue
+      .then(() => handleMessage(raw as Buffer))
+      .catch((err) => logger.warn({ err, linkId }, 'Tile message handling failed'));
+  });
+
+  async function handleMessage(raw: Buffer): Promise<void> {
+    // Re-narrow: TypeScript drops the outer narrowing for values captured by a nested
+    // function declaration.
+    if (!session || !link) return;
+
     let msg: {
       type?: string;
       page?: number;
@@ -477,7 +491,7 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
         }),
       );
     }
-  });
+  }
 
   ws.on('close', () => logger.info({ linkId, sessionId: session.id }, 'Tile stream closed'));
   ws.on('error', (err) => logger.warn({ err, linkId }, 'Tile stream error'));

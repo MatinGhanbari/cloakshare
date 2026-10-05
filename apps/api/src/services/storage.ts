@@ -7,9 +7,10 @@ import {
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { mkdir, writeFile, readFile, unlink, rm } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink, rm, rename } from 'fs/promises';
 import { join, dirname, resolve, sep } from 'path';
 import { existsSync } from 'fs';
+import { randomBytes } from 'crypto';
 import { config } from '../lib/config.js';
 import { logger } from '../lib/logger.js';
 
@@ -48,7 +49,12 @@ class LocalStorage implements StorageProvider {
   async upload(key: string, data: Buffer, _contentType: string): Promise<string> {
     const filePath = this.getFilePath(key);
     await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, data);
+    // Write to a temp file and rename. rename() is atomic on the same volume, so a
+    // concurrent reader can never observe a half-written file — reading a partially
+    // written tile is what produced undecodable images under load.
+    const tmpPath = `${filePath}.${randomBytes(6).toString('hex')}.tmp`;
+    await writeFile(tmpPath, data);
+    await rename(tmpPath, filePath);
     return key;
   }
 

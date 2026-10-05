@@ -465,8 +465,13 @@ function drawTiles(page: number) {
 
 /** Ask the server for the tiles covering the page (or the visible band, if known). */
 let lastRequestKey = '';
+let tileRequestInFlight = false;
+let tileDecodeFailures = 0;
 function requestPageTiles(page: number, rect?: { x: number; y: number; w: number; h: number }) {
   if (!tileStream) return;
+  // Never stack requests: the server serialises them per connection, so a backlog would
+  // just queue up behind a page the viewer has already moved past.
+  if (tileRequestInFlight) return;
   // The scroll handler fires often. Skip a request that is effectively the same viewport as
   // the previous one so we do not burn the per-session request budget for nothing.
   const key = rect
@@ -474,6 +479,7 @@ function requestPageTiles(page: number, rect?: { x: number; y: number; w: number
     : `${page}:full`;
   if (key === lastRequestKey) return;
   lastRequestKey = key;
+  tileRequestInFlight = true;
   tileStream.requestPage(page, rect);
 }
 
@@ -988,7 +994,6 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   tileStream.onTile = (header, bitmap) => {
     const key = `${header.page}:${header.col}-${header.row}`;
     if (tileBitmaps.has(key)) return; // already held
-    rateLimitRetries = 0; // a successful tile clears the back-off counter
     tileBitmaps.set(key, bitmap);
     tileHeaders.set(key, header);
     if (header.page === currentPage) {
@@ -997,21 +1002,38 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     }
   };
 
+  tileStream.onDone = () => {
+    tileRequestInFlight = false;
+    // Only a COMPLETED page clears the back-off counter. Resetting it on every received
+    // tile let the retry loop run forever: one success would re-arm the retry budget, so
+    // the "give up after N" guard never fired and the client hammered the server.
+    rateLimitRetries = 0;
+  };
+
   tileStream.onError = (code, message) => {
     console.error('[tiles]', code, message);
+    tileRequestInFlight = false;
+
+    if (code === 'BAD_TILE' || code === 'DECRYPT_FAILED') {
+      // A tile we cannot decode will not decode on retry either. Stop asking for the page
+      // rather than looping.
+      tileDecodeFailures += 1;
+      if (tileDecodeFailures > 8) {
+        console.warn('[tiles] too many undecodable tiles; not requesting further pages');
+        return;
+      }
+      lastRequestKey = '';
+      return;
+    }
+
     if (code === 'RATE_LIMITED') {
-      // Back off progressively and give up rather than retrying forever — a tight retry loop
-      // against a rate-limited session is what exhausted the server's resources before.
       rateLimitRetries += 1;
       if (rateLimitRetries > 4) {
         console.warn('[tiles] still rate limited after several retries; stopping');
         return;
       }
       lastRequestKey = ''; // allow the retry through the de-duplication guard
-      setTimeout(
-        () => requestPageTiles(currentPage, visibleImageRect()),
-        2000 * rateLimitRetries,
-      );
+      setTimeout(() => requestPageTiles(currentPage, visibleImageRect()), 2000 * rateLimitRetries);
     }
   };
 
