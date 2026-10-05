@@ -188,6 +188,13 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
+        # WebSocket upgrade — required by the secure viewer's tile stream
+        # (/v1/viewer/:token/stream). Without these the viewer connects but never
+        # receives any page content.
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
         # SSE support (notifications stream)
         proxy_buffering off;
         proxy_cache off;
