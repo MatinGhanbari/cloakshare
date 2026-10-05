@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { linksApi } from '../lib/api';
+import { linksApi, groupsApi, ApiError } from '../lib/api';
 
 export default function LinkDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +11,39 @@ export default function LinkDetail() {
   const [revoking, setRevoking] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Access control
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; member_count: number }>>([]);
+  const [accessGroupId, setAccessGroupId] = useState('');
+  const [savingAccess, setSavingAccess] = useState(false);
+  const [accessSaved, setAccessSaved] = useState(false);
+
+  useEffect(() => {
+    groupsApi
+      .list()
+      .then((d) => setGroups(d.groups))
+      .catch(() => {
+        /* the picker simply stays empty */
+      });
+  }, []);
+
+  useEffect(() => {
+    if (link) setAccessGroupId(link.access_group_id ?? '');
+  }, [link]);
+
+  const saveAccess = async () => {
+    if (!link) return;
+    setSavingAccess(true);
+    try {
+      await linksApi.updateAccess(link.id, accessGroupId || null);
+      setAccessSaved(true);
+      setTimeout(() => setAccessSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not update access');
+    } finally {
+      setSavingAccess(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -199,6 +232,42 @@ export default function LinkDetail() {
             <span className="text-text-secondary font-sans">{link.rules.block_download ? 'Yes' : 'No'}</span>
           </div>
         </div>
+      </div>
+
+      {/* Access */}
+      <div className="bg-surface border border-border rounded-lg p-5">
+        <h2 className="font-sans font-medium text-sm text-foreground mb-1">Access</h2>
+        <p className="text-xs text-text-tertiary font-sans mb-4">
+          Public links are gated by email. Restricted links require the viewer to sign in with a
+          student ID and national ID belonging to the selected group.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <select
+            value={accessGroupId}
+            onChange={(e) => setAccessGroupId(e.target.value)}
+            className="flex-1 bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
+          >
+            <option value="">Public — anyone with the link</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name} ({g.member_count} member{g.member_count === 1 ? '' : 's'})
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => void saveAccess()}
+            disabled={savingAccess || accessGroupId === (link.access_group_id ?? '')}
+            className="bg-accent text-background font-sans font-medium text-sm px-4 py-2.5 rounded-md hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {savingAccess ? 'Saving…' : accessSaved ? 'Saved' : 'Save'}
+          </button>
+        </div>
+        {groups.length === 0 && (
+          <p className="text-xs text-text-tertiary font-sans mt-3">
+            No groups yet — create one under Groups to restrict this link.
+          </p>
+        )}
       </div>
 
       {/* Recent views */}
