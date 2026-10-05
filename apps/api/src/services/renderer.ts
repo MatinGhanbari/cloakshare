@@ -20,6 +20,30 @@ import {
 
 const execFile = promisify(execFileCb);
 
+// Poppler binaries (pdfinfo + pdftoppm). They are normally on PATH, but a winget/scoop
+// install on Windows frequently lands outside the PATH inherited by the running process,
+// which surfaced as a bare "spawn pdfinfo ENOENT" and a failed render. Allow an explicit
+// override, same convention as FFMPEG_PATH / FFPROBE_PATH / LIBREOFFICE_PATH.
+const PDFINFO_BIN = process.env.PDFINFO_PATH || 'pdfinfo';
+const PDFTOPPM_BIN = process.env.PDFTOPPM_PATH || 'pdftoppm';
+
+const POPPLER_HINT =
+  'Poppler is required to render PDFs. Install it ' +
+  '(Windows: `winget install oschwartz10612.Poppler`; Debian/Ubuntu: `apt-get install poppler-utils`) ' +
+  'and if it is not on PATH, set PDFINFO_PATH and PDFTOPPM_PATH to the full binary paths.';
+
+/** Run a Poppler binary, turning a missing executable into an actionable error. */
+async function runPoppler(bin: string, args: string[], timeout: number) {
+  try {
+    return await execFile(bin, args, { timeout });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new Error(`"${bin}" was not found. ${POPPLER_HINT}`);
+    }
+    throw err;
+  }
+}
+
 // Concurrency limits (per CORRECTIONS doc ARCH 4)
 export const renderLimit = pLimit(MAX_CONCURRENT_RENDERS); // Max 2 concurrent renders
 const sharpLimit = pLimit(MAX_CONCURRENT_SHARP_OPS); // Max 3 concurrent Sharp ops per render
@@ -47,7 +71,7 @@ export type ProgressCallback = (progress: {
  * Get page count from a PDF using pdfinfo (part of poppler-utils)
  */
 async function getPageCount(pdfPath: string): Promise<number> {
-  const { stdout } = await execFile('pdfinfo', [pdfPath], { timeout: 30_000 });
+  const { stdout } = await runPoppler(PDFINFO_BIN, [pdfPath], 30_000);
   const match = stdout.match(/Pages:\s+(\d+)/);
   return match ? parseInt(match[1], 10) : 1;
 }
@@ -58,7 +82,7 @@ async function getPageCount(pdfPath: string): Promise<number> {
 async function renderPageToPng(pdfPath: string, page: number, outputDir: string): Promise<string> {
   const outputPrefix = join(outputDir, 'page');
 
-  await execFile('pdftoppm', [
+  await runPoppler(PDFTOPPM_BIN, [
     '-png',
     '-r', String(RENDER_DPI),       // 150 DPI
     '-f', String(page),             // First page
@@ -67,7 +91,7 @@ async function renderPageToPng(pdfPath: string, page: number, outputDir: string)
     '-scale-to-y', '-1',            // Maintain aspect ratio
     pdfPath,
     outputPrefix,
-  ], { timeout: 120_000 }); // 2 minute timeout per page
+  ], 120_000); // 2 minute timeout per page
 
   // pdftoppm names output: page-{padded_number}.png
   const files = await readdir(outputDir);
