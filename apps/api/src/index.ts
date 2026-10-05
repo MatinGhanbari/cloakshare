@@ -66,9 +66,12 @@ app.use('/v1/time', cors({
 }));
 
 // CORS — default for all other routes
+// Note: with `credentials: true` the wildcard origin is invalid per the CORS spec —
+// browsers reject `Access-Control-Allow-Origin: *` combined with
+// `Access-Control-Allow-Credentials: true`. So in dev we reflect the request origin.
 app.use('*', cors({
   origin: config.isDev
-    ? '*'
+    ? (origin: string) => origin || '*'
     : [config.viewerUrl, config.apiUrl, ...config.corsOrigins],
   credentials: true,
   allowHeaders: ['Content-Type', 'Authorization', 'X-Session-Token', 'X-Org-Id', 'X-Request-Id'],

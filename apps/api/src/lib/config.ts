@@ -1,4 +1,4 @@
-import type { CloakMode, StorageProvider, DatabaseProvider } from '@cloak/shared';
+import type { CloakMode, StorageProvider, DatabaseProvider, Plan } from '@cloak/shared';
 
 const INSECURE_DEFAULT = 'change-me-in-production';
 
@@ -38,6 +38,11 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET || INSECURE_DEFAULT,
   jwtSecret: process.env.JWT_SECRET || INSECURE_DEFAULT,
   signingSecret: process.env.CLOAK_SIGNING_SECRET || INSECURE_DEFAULT,
+
+  // Plan assigned to every newly created account (user + personal org).
+  // Defaults to the top tier so a local/self-hosted install is fully unlocked.
+  // Override with DEFAULT_PLAN=free|starter|growth|scale.
+  defaultPlan: (process.env.DEFAULT_PLAN || 'scale') as Plan,
 
   // CORS origins (configurable via env)
   corsOrigins: process.env.CORS_ORIGINS

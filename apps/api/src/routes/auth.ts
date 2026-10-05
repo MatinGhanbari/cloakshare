@@ -8,6 +8,7 @@ import { generateId, generateToken, sha256 } from '../lib/utils.js';
 import { Errors, errorResponse, successResponse } from '../lib/errors.js';
 import { sessionAuth } from '../middleware/session.js';
 import { logger } from '../lib/logger.js';
+import { config } from '../lib/config.js';
 import { logAudit, auditorFromContext } from '../services/audit.js';
 import { notifySignup } from '../services/notifications.js';
 import { API_KEY_LIVE_PREFIX, API_KEY_TEST_PREFIX } from '@cloak/shared';
@@ -68,6 +69,7 @@ auth.post('/register', async (c) => {
       email: email.toLowerCase(),
       passwordHash,
       name: name || null,
+      plan: config.defaultPlan,
       defaultOrgId: orgId,
     });
 
@@ -75,7 +77,7 @@ auth.post('/register', async (c) => {
       id: orgId,
       name: name || email.split('@')[0],
       slug,
-      plan: 'free',
+      plan: config.defaultPlan,
     });
 
     await tx.insert(orgMembers).values({
@@ -119,7 +121,7 @@ auth.post('/register', async (c) => {
   // Fire-and-forget Slack notification
   notifySignup({
     email: email.toLowerCase(),
-    plan: 'free',
+    plan: config.defaultPlan,
     orgName: name || email.split('@')[0],
   }).catch(() => {});
 
@@ -128,7 +130,7 @@ auth.post('/register', async (c) => {
       id: userId,
       email: email.toLowerCase(),
       name: name || null,
-      plan: 'free',
+      plan: config.defaultPlan,
       default_org_id: orgId,
     },
     api_key: keyRaw, // Only shown once

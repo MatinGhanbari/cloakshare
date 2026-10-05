@@ -84,7 +84,7 @@ demoRouter.post(
         id: demoUserId,
         email: 'demo@cloakshare.dev',
         passwordHash: 'demo-no-login',
-        plan: 'free',
+        plan: config.defaultPlan,
       });
       demoUser = await db.select().from(users).where(eq(users.id, demoUserId)).get();
     }
