@@ -3,25 +3,91 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Colour tokens are stored as space-separated RGB channels so Tailwind can still apply
+   * opacity modifiers (`bg-accent/10` -> `rgb(var(--accent) / 0.1)`).
+   * Dark is the default; `[data-theme='light']` on <html> overrides every token.
+   */
+  :root {
+    --bg-background: 9 9 11;
+    --fg-foreground: 250 250 250;
+    --bg-surface: 17 17 19;
+    --bg-elevated: 26 26 29;
+    --bg-hover: 34 34 37;
+    --bg-input: 15 15 17;
+    --bg-muted: 26 26 29;
+    --fg-muted: 161 161 170;
+    --border-default: 39 39 42;
+    --border-subtle: 30 30 33;
+    --fg-text-primary: 250 250 250;
+    --fg-text-secondary: 161 161 170;
+    --fg-text-tertiary: 113 113 122;
+    --accent: 0 255 136;
+    --accent-hover: 0 221 119;
+    --accent-foreground: 9 9 11;
+    --accent-muted: rgba(0, 255, 136, 0.15);
+    --success: 0 204 102;
+    --destructive: 255 68 68;
+    --warning: 255 170 0;
+    --info: 0 187 255;
+    --ring: 0 255 136;
+    --selection-bg: rgba(0, 255, 136, 0.25);
+    --selection-fg: #fafafa;
+    --body-gradient: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+    color-scheme: dark;
+  }
+
+  [data-theme='light'] {
+    --bg-background: 250 250 250;
+    --fg-foreground: 9 9 11;
+    --bg-surface: 255 255 255;
+    --bg-elevated: 244 244 245;
+    --bg-hover: 232 232 235;
+    --bg-input: 255 255 255;
+    --bg-muted: 244 244 245;
+    --fg-muted: 82 82 91;
+    --border-default: 228 228 231;
+    --border-subtle: 239 239 241;
+    --fg-text-primary: 9 9 11;
+    --fg-text-secondary: 82 82 91;
+    --fg-text-tertiary: 113 113 122;
+    /* A darker green: the neon accent has too little contrast on white.
+       #00803F scores 5.05:1 against white — WCAG AA as text and as a button background. */
+    --accent: 0 128 63;
+    --accent-hover: 0 107 52;
+    --accent-foreground: 255 255 255;
+    --accent-muted: rgba(0, 128, 63, 0.12);
+    --success: 0 145 90;
+    --destructive: 220 38 38;
+    --warning: 180 83 9;
+    --info: 3 105 161;
+    --ring: 0 128 63;
+    --selection-bg: rgba(0, 128, 63, 0.18);
+    --selection-fg: #09090b;
+    --body-gradient: radial-gradient(ellipse at 50% 0%, rgba(0, 0, 0, 0.02) 0%, transparent 60%);
+    color-scheme: light;
+  }
+
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    background-color: #09090B;
-    background-image: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+    background-color: rgb(var(--bg-background));
+    background-image: var(--body-gradient);
+    color: rgb(var(--fg-foreground));
     font-family: 'Geist', 'General Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background: rgba(0, 255, 136, 0.25);
-    color: #FAFAFA;
+    background: var(--selection-bg);
+    color: var(--selection-fg);
   }
 
   :focus-visible {
-    outline: 2px solid #00FF88;
+    outline: 2px solid rgb(var(--accent));
     outline-offset: 2px;
   }
 

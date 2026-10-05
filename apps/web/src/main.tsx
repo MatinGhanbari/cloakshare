@@ -14,7 +14,11 @@ import Billing from './pages/Billing';
 import Team from './pages/Team';
 import AuditLog from './pages/AuditLog';
 import DashboardLayout from './components/DashboardLayout';
+import { initTheme } from './lib/theme';
 import './index.css';
+
+// Apply the stored light/dark preference before the first paint.
+initTheme();
 
 // Initialize PostHog if configured
 const posthogKey = import.meta.env.VITE_POSTHOG_KEY;

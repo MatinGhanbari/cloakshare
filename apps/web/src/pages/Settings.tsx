@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { useAuth } from '../lib/auth';
+import { getStoredTheme, setTheme, type ThemePreference } from '../lib/theme';
+
+const THEME_OPTIONS: ThemePreference[] = ['light', 'dark', 'system'];
 
 export default function Settings() {
   const { user } = useAuth();
+  const [themePref, setThemePref] = useState<ThemePreference>(getStoredTheme());
 
   return (
     <div>
@@ -20,6 +25,35 @@ export default function Settings() {
             <span className="text-text-tertiary font-sans">Plan</span>
             <span className="text-accent font-sans font-medium uppercase text-xs tracking-wider">{user?.plan}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Appearance */}
+      <div className="bg-surface border border-border rounded-lg p-5 mb-6">
+        <h2 className="font-sans font-medium text-sm text-foreground mb-1">Appearance</h2>
+        <p className="text-xs text-text-tertiary font-sans mb-4">
+          Theme for this dashboard. <span className="text-text-secondary">System</span> follows your
+          operating system. The link viewer runs on a different origin, so it keeps its own switch —
+          the sun/moon button in the viewer header.
+        </p>
+        <div className="inline-flex rounded-md border border-border overflow-hidden">
+          {THEME_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                setTheme(option);
+                setThemePref(option);
+              }}
+              className={`px-4 py-2 text-sm font-sans capitalize transition-colors duration-150 ${
+                themePref === option
+                  ? 'bg-accent text-background font-medium'
+                  : 'text-text-secondary hover:bg-hover'
+              }`}
+            >
+              {option}
+            </button>
+          ))}
         </div>
       </div>
 
