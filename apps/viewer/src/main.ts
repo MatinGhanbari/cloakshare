@@ -204,25 +204,39 @@ async function fetchMetadata(token: string): Promise<LinkMetadata | null> {
   return json.data;
 }
 
+/** Result of an access attempt — carries the server's own message so the gate can explain it. */
+type VerifyResult =
+  | { ok: true; data: VerifyResponse }
+  | { ok: false; code: string; message: string };
+
 async function verifyAccess(
   token: string,
   email?: string,
   password?: string,
   credentials?: { student_id: string; national_id: string },
-): Promise<VerifyResponse | null> {
-  const res = await fetch(`${API_URL}/v1/viewer/${token}/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, ...(credentials ?? {}) }),
-  });
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    return null;
+): Promise<VerifyResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/v1/viewer/${token}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, ...(credentials ?? {}) }),
+    });
+  } catch {
+    return { ok: false, code: 'NETWORK', message: 'Could not reach the server. Check your connection and try again.' };
   }
 
-  return json.data;
+  const json = await res.json().catch(() => null);
+
+  if (!res.ok || !json?.data) {
+    return {
+      ok: false,
+      code: json?.error?.code ?? 'UNKNOWN',
+      message: json?.error?.message ?? 'Unable to access this document.',
+    };
+  }
+
+  return { ok: true, data: json.data };
 }
 
 async function trackEvent(token: string, sessionToken: string, isFinal = false) {
@@ -366,6 +380,8 @@ function setupGate(meta: LinkMetadata) {
     $credentialsField.classList.remove('hidden');
     $nationalIdField.classList.remove('hidden');
     $gateSubmit.textContent = 'Sign in';
+    // Drop the cursor straight into the first field.
+    setTimeout(() => $studentIdInput.focus(), 0);
   } else {
     // Show relevant fields
     if (meta.require_email) {
@@ -1047,18 +1063,20 @@ function setupGateForm() {
         national_id: nationalId,
       });
 
-      if (!credentialResult) {
+      if (!credentialResult.ok) {
         $gateSubmit.disabled = false;
         $gateSubmit.textContent = 'Sign in';
-        $credentialsError.textContent = 'Student ID or national ID is incorrect';
+        // Show the server's own message — it distinguishes a wrong credential from a
+        // paused, expired or revoked link, which a generic message would hide.
+        $credentialsError.textContent = credentialResult.message;
         $credentialsError.classList.remove('hidden');
         return;
       }
 
       if (metadata.file_type === 'video') {
-        startVideoViewer(metadata, credentialResult);
+        startVideoViewer(metadata, credentialResult.data);
       } else {
-        startViewer(metadata, credentialResult);
+        startViewer(metadata, credentialResult.data);
       }
       return;
     }
@@ -1095,18 +1113,18 @@ function setupGateForm() {
 
     const result = await verifyAccess(linkToken, email, password);
 
-    if (!result) {
+    if (!result.ok) {
       $gateSubmit.disabled = false;
       $gateSubmit.textContent = 'View Document';
-      $gateError.textContent = 'Access denied. Please check your credentials.';
+      $gateError.textContent = result.message;
       $gateError.classList.remove('hidden');
       return;
     }
 
     if (metadata!.file_type === 'video') {
-      startVideoViewer(metadata!, result);
+      startVideoViewer(metadata!, result.data);
     } else {
-      startViewer(metadata!, result);
+      startViewer(metadata!, result.data);
     }
   });
 }
@@ -1144,19 +1162,22 @@ async function init() {
     return;
   }
 
-  // Show email/password gate (or auto-verify if no gate)
-  if (!meta.require_email && !meta.has_password) {
+  // Show the gate when the link requires anything from the viewer. A group-restricted link
+  // must be listed explicitly: its email/password flags are often both false, and without
+  // this check the viewer would try to verify with no credentials at all and fail with
+  // "Student ID and national ID are required".
+  if (!meta.requires_credentials && !meta.require_email && !meta.has_password) {
     // No gate needed — verify immediately
     showScreen($loading);
     const result = await verifyAccess(linkToken);
-    if (!result) {
-      showError('Access denied', 'Unable to access this document.');
+    if (!result.ok) {
+      showError('Access denied', result.message);
       return;
     }
     if (meta.file_type === 'video') {
-      startVideoViewer(meta, result);
+      startVideoViewer(meta, result.data);
     } else {
-      startViewer(meta, result);
+      startViewer(meta, result.data);
     }
   } else {
     setupGate(meta);
