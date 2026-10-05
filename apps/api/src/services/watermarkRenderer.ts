@@ -16,10 +16,10 @@ export interface WatermarkConfig {
 }
 
 const DEFAULT_WATERMARK_CONFIG: Omit<WatermarkConfig, 'text'> = {
-  opacity: 0.12,
-  fontSize: 16,
+  opacity: 0.2,
+  fontSize: 18,
   angle: -30,
-  tileSpacingX: 400,
+  tileSpacingX: 300,
   tileSpacingY: 120,
   color: '128,128,128',
 };
