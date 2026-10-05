@@ -154,6 +154,11 @@ const pageGeometryCache = new Map<number, PageGeometry>();
  */
 const readyPages = new Set<number>();
 /**
+ * Pages with a viewport request in flight. Stops the prefetch window from asking for a page twice
+ * while its first batch is still on the way, and stops it re-asking for a page it already holds.
+ */
+const requestedPages = new Set<number>();
+/**
  * True while the page on screen is still being fetched. Both page buttons are disabled for the
  * duration, so a burst of clicks cannot queue several page changes behind one another, and the
  * button that started the change carries a spinner so the lock reads as "working", not "broken".
@@ -520,6 +525,9 @@ let lastRequestKey = '';
 let tileDecodeFailures = 0;
 function requestPageTiles(page: number, rect?: { x: number; y: number; w: number; h: number }) {
   if (!tileStream) return;
+  // Record the page as in flight before the de-duplication guard below, because a request the
+  // guard suppresses is one that is already on its way.
+  requestedPages.add(page);
   // Skip a request that is effectively the same as the previous one. `goToPage()` clears this
   // key before every deliberate navigation, so the guard can never swallow a page change.
   const key = rect
@@ -615,13 +623,33 @@ function setupZoom() {
 }
 
 /**
- * Warm the page after the current one so forward navigation is instant.
- * Only the next page is preloaded: reading is overwhelmingly forward, and preloading both
- * directions doubled the per-session page budget for no real benefit.
+ * How many pages ahead of the reader to keep in hand. Turning the page is instant only when the
+ * target page's tiles are already here, so the window has to be deep enough that a reader flipping
+ * quickly does not catch up with the prefetch.
+ *
+ * The window costs almost nothing: each page turn retires one page from the front and fills one
+ * new gap at the back, so the steady state is one viewport request per page turned — exactly what
+ * prefetching a single page ahead costs — while the reader has PREFETCH_AHEAD pages ready. Only the
+ * initial fill of the deeper window is extra, and it is one request.
+ */
+const PREFETCH_AHEAD = 2;
+
+/**
+ * Keep the reader's forward window (page+1 .. page+PREFETCH_AHEAD) loaded.
+ *
+ * A single call fills only the nearest gap and returns: the page on screen is what the viewer is
+ * waiting for, and it should not compete with a stack of speculative requests. Concurrency is
+ * bounded by the window itself — at most PREFETCH_AHEAD requests are ever outstanding — and the
+ * chain continues from onDone(), which is what advances the window as pages land.
  */
 function preloadAdjacentPages(page: number) {
-  const next = page + 1;
-  if (next >= 1 && next <= totalPages) requestPageTiles(next);
+  for (let ahead = 1; ahead <= PREFETCH_AHEAD; ahead++) {
+    const target = page + ahead;
+    if (target > totalPages) return; // "if the next page exists" — it does not, stop looking
+    if (readyPages.has(target) || requestedPages.has(target)) continue; // already here / on its way
+    requestPageTiles(target);
+    return;
+  }
 }
 
 /**
@@ -1139,6 +1167,7 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   tileHeaders.clear();
   pageGeometryCache.clear();
   readyPages.clear();
+  requestedPages.clear();
   pageGeo = null;
   tileStream?.close();
   tileStream = new TileStream();
@@ -1177,22 +1206,33 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     // the "give up after N" guard never fired and the client hammered the server.
     rateLimitRetries = 0;
     readyPages.add(page);
+    requestedPages.delete(page);
     // The whole page is in hand — reveal it in one go and release the page controls.
     if (page === currentPage) {
       setNavigating(false);
       updatePageLoading(page);
     }
+    // A landing page opens a new gap at the back of the prefetch window: continue the chain.
+    preloadAdjacentPages(currentPage);
   };
 
   tileStream.onError = (code, message) => {
     console.error('[tiles]', code, message);
+    // The error does not say which page failed, and the in-flight bookkeeping is only an
+    // optimisation: dropping all of it is safe, and it lets the prefetch window try again instead
+    // of treating a page that never arrived as permanently "on its way".
+    const giveUp = () => {
+      requestedPages.clear();
+      setNavigating(false);
+    };
+
     if (code === 'BAD_TILE' || code === 'DECRYPT_FAILED') {
       // A tile we cannot decode will not decode on retry either. Stop asking for the page
       // rather than looping.
       tileDecodeFailures += 1;
       if (tileDecodeFailures > 8) {
         console.warn('[tiles] too many undecodable tiles; not requesting further pages');
-        setNavigating(false); // release the controls — this page is not going to arrive
+        giveUp(); // this page is not going to arrive — release the controls
         return;
       }
       lastRequestKey = '';
@@ -1206,7 +1246,7 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
       rateLimitRetries += 1;
       if (rateLimitRetries > 12) {
         console.warn('[tiles] still rate limited; giving up on this page');
-        setNavigating(false);
+        giveUp();
         return;
       }
       lastRequestKey = ''; // allow the retry through the de-duplication guard
@@ -1216,7 +1256,7 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
 
     // Anything else (bad request, crypto failure, dropped socket) is terminal for this page:
     // unlock the controls so the viewer is not stuck staring at a spinner.
-    setNavigating(false);
+    giveUp();
   };
 
   // The session key is only established after the handshake completes, so page content is
