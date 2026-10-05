@@ -448,6 +448,9 @@ function renderPage(pageNum: number) {
   if (!geo) {
     // Geometry for this page is not known yet — request it; onPage() re-renders.
     // Show the spinner meanwhile so navigation to an unloaded page is visible.
+    // Drop the page that was on screen as well: the overlay is opaque and pinned, but the canvas
+    // must never be able to show one document page while another one is being loaded.
+    clearCanvas();
     requestPageTiles(pageNum);
     updatePageLoading(pageNum);
     return;
@@ -479,6 +482,18 @@ function renderPage(pageNum: number) {
   $pageCount.textContent = String(totalPages);
   updateNavButtons();
   updatePageLoading(pageNum);
+}
+
+/**
+ * Blank the canvas. Used when the page being loaded has no geometry yet, so the previous page can
+ * never be visible behind the loading overlay.
+ */
+function clearCanvas() {
+  const ctx = $canvas.getContext('2d');
+  if (!ctx) return;
+  // The canvas may still carry the device-pixel transform of the previous render.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, $canvas.width, $canvas.height);
 }
 
 /** Paint every tile we currently hold for `page` at its scaled position. */

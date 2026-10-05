@@ -494,10 +494,21 @@ html, body {
   text-align: center;
 }
 
-/* Per-page loading state — shown while a page's tiles are still arriving. */
+/*
+ * Per-page loading state — shown while a page's tiles are still arriving.
+ *
+ * Pinned to the viewport, NOT to the scroll content. `.viewer-body` scrolls, and an absolutely
+ * positioned child of a scroll container is anchored to the top of the *content*: scrolling moved
+ * the overlay out of view and exposed the previous page underneath it. `position: fixed` with the
+ * same box as `.viewer-body` (which is itself `fixed; top: 48px; left/right/bottom: 0`) keeps the
+ * overlay over the visible area at any scroll offset.
+ */
 .page-loading {
-  position: absolute;
-  inset: 0;
+  position: fixed;
+  top: 48px; /* below the fixed 48px header, matching .viewer-body */
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
