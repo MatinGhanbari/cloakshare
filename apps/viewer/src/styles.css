@@ -542,17 +542,26 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* Both axes scroll: zooming in must let the viewer pan horizontally instead of
+     squeezing the page. */
+  overflow: auto;
   display: flex;
-  justify-content: center;
+  align-items: flex-start;
   padding: 24px;
   background: var(--bg-root);
 }
 
 #doc-canvas {
-  max-width: 100%;
-  height: auto;
+  /*
+   * The canvas is sized explicitly in JS (displayWidth x displayHeight x dpr).
+   * `margin: auto` centres it while there is room and, unlike `justify-content: center`,
+   * does NOT clip the left edge once the canvas grows wider than the container.
+   * `flex: 0 0 auto` stops the flex container shrinking it.
+   * The previous `max-width: 100%` clamped the width but not the inline height, which
+   * squashed the page horizontally and stretched it vertically — a broken aspect ratio.
+   */
+  margin: auto;
+  flex: 0 0 auto;
   box-shadow: var(--shadow-lg);
   border-radius: 4px;
 }

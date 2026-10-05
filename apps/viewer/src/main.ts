@@ -136,6 +136,12 @@ const tileBitmaps = new Map<string, ImageBitmap>(); // `${page}:${col}-${row}` -
 const tileHeaders = new Map<string, TileHeader>(); // `${page}:${col}-${row}` -> placement
 let scrollThrottle: ReturnType<typeof setTimeout> | null = null;
 let rateLimitRetries = 0;
+/**
+ * True once the server has finished sending every tile for the current page. The loading
+ * overlay stays up until then, so the viewer never sees the page assemble tile by tile —
+ * the tiling stays an implementation detail.
+ */
+let pageReady = false;
 
 // Zoom: a multiplier applied on top of fit-to-width.
 const ZOOM_MIN = 0.5;
@@ -465,21 +471,22 @@ function drawTiles(page: number) {
 
 /** Ask the server for the tiles covering the page (or the visible band, if known). */
 let lastRequestKey = '';
-let tileRequestInFlight = false;
 let tileDecodeFailures = 0;
 function requestPageTiles(page: number, rect?: { x: number; y: number; w: number; h: number }) {
   if (!tileStream) return;
-  // Never stack requests: the server serialises them per connection, so a backlog would
-  // just queue up behind a page the viewer has already moved past.
-  if (tileRequestInFlight) return;
-  // The scroll handler fires often. Skip a request that is effectively the same viewport as
-  // the previous one so we do not burn the per-session request budget for nothing.
+  // Skip a request that is effectively the same as the previous one.
   const key = rect
     ? `${page}:${Math.round(rect.x)}:${Math.round(rect.y)}:${Math.round(rect.w)}:${Math.round(rect.h)}`
     : `${page}:full`;
   if (key === lastRequestKey) return;
   lastRequestKey = key;
-  tileRequestInFlight = true;
+
+  // For the page being viewed, hold the overlay until the server reports the batch is
+  // complete — otherwise the viewer would watch the page assemble tile by tile.
+  if (page === currentPage) {
+    pageReady = false;
+    updatePageLoading(page);
+  }
   tileStream.requestPage(page, rect);
 }
 
@@ -512,9 +519,9 @@ function pageHasTiles(page: number): boolean {
   return false;
 }
 
-/** Show the spinner while the given page has no tiles to draw yet. */
+/** Show the spinner until the current page is complete (not just partially drawn). */
 function updatePageLoading(page: number = currentPage) {
-  $pageLoading.hidden = pageHasTiles(page);
+  $pageLoading.hidden = pageReady && pageHasTiles(page);
 }
 
 // ============================================
@@ -530,9 +537,9 @@ function applyZoom(next: number) {
   if (Math.abs(clamped - zoomFactor) < 0.001) return;
   zoomFactor = clamped;
   updateZoomIndicator();
+  // The whole page is already in memory, so zooming is a pure re-render — no refetch and
+  // no spinner, which would otherwise flash on every zoom step.
   if (pageGeo) renderPage(pageGeo.page);
-  // A larger canvas exposes more of the page, so refresh the visible band.
-  requestPageTiles(currentPage, visibleImageRect());
 }
 
 function setupZoom() {
@@ -985,9 +992,8 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   tileStream.onPage = (geo) => {
     pageGeo = geo;
     renderPage(currentPage);
-    // Ask for just the visible band now that the page geometry is known.
-    requestPageTiles(currentPage, visibleImageRect());
-    // Warm the neighbouring pages for instant navigation.
+    // Warm the neighbouring pages so navigation is instant. Their tiles land in the cache
+    // without ever being revealed for the page currently on screen.
     preloadAdjacentPages(currentPage);
   };
 
@@ -1002,18 +1008,19 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     }
   };
 
-  tileStream.onDone = () => {
-    tileRequestInFlight = false;
+  tileStream.onDone = (page) => {
     // Only a COMPLETED page clears the back-off counter. Resetting it on every received
     // tile let the retry loop run forever: one success would re-arm the retry budget, so
     // the "give up after N" guard never fired and the client hammered the server.
     rateLimitRetries = 0;
+    if (page === currentPage) {
+      pageReady = true; // the whole page is in hand — reveal it in one go
+      updatePageLoading(page);
+    }
   };
 
   tileStream.onError = (code, message) => {
     console.error('[tiles]', code, message);
-    tileRequestInFlight = false;
-
     if (code === 'BAD_TILE' || code === 'DECRYPT_FAILED') {
       // A tile we cannot decode will not decode on retry either. Stop asking for the page
       // rather than looping.
@@ -1044,15 +1051,6 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   };
 
   tileStream.connect(linkToken, sess.session_token);
-
-  // Refine the request to the visible band while scrolling (cached tiles are free).
-  $viewerBody.addEventListener('scroll', () => {
-    if (scrollThrottle) return;
-    scrollThrottle = setTimeout(() => {
-      scrollThrottle = null;
-      requestPageTiles(currentPage, visibleImageRect());
-    }, 250);
-  });
 
   setupNavigation();
   setupProtections();
