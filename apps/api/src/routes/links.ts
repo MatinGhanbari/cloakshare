@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { eq, and, desc, count } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { links, views, renderingJobs } from '../db/schema.js';
+import { links, views, renderingJobs, viewerGroups } from '../db/schema.js';
 import { apiKeyAuth } from '../middleware/apiKey.js';
 import { enforceUsageLimits } from '../middleware/usage.js';
 import { rateLimiter } from '../middleware/rateLimit.js';
@@ -495,10 +495,13 @@ linksRouter.get('/v1/links', apiKeyAuth, async (c) => {
       id: link.id,
       secure_url: `${config.viewerUrl}/s/${link.id}`,
       name: link.name,
+      original_filename: link.originalFilename,
       file_type: link.fileType,
+      file_size: link.fileSize,
       page_count: link.pageCount,
       status: link.status,
       view_count: link.viewCount,
+      access_group_id: link.accessGroupId,
       created_at: link.createdAt,
     })),
     pagination: {
@@ -544,6 +547,9 @@ linksRouter.get('/v1/links/:id', apiKeyAuth, async (c) => {
     secure_url: `${config.viewerUrl}/s/${link.id}`,
     analytics_url: `${config.apiUrl}/v1/links/${link.id}/analytics`,
     name: link.name,
+    original_filename: link.originalFilename,
+    file_size: link.fileSize,
+    access_group_id: link.accessGroupId,
     file_type: link.fileType,
     page_count: link.pageCount,
     video_metadata: link.fileType === 'video' ? {
@@ -734,6 +740,60 @@ linksRouter.patch('/v1/links/:id/branding', apiKeyAuth, async (c) => {
 // ============================================
 // GET /v1/links/:id/progress — SSE rendering progress
 // ============================================
+
+/**
+ * PATCH /v1/links/:id/access — choose who may open a link.
+ * Body: { access_group_id: string | null }
+ *   null  -> public link (anyone with the link, gated by email)
+ *   <id>  -> restricted to that viewer group (student ID + national ID)
+ */
+linksRouter.patch('/v1/links/:id/access', apiKeyAuth, async (c) => {
+  const user = c.get('user') as { id: string; defaultOrgId?: string | null };
+  const orgId = c.get('orgId') as string | undefined;
+  const linkId = c.req.param('id');
+
+  const ownerCondition = orgId ? eq(links.orgId, orgId) : eq(links.userId, user.id);
+  const link = await db
+    .select()
+    .from(links)
+    .where(and(eq(links.id, linkId), ownerCondition))
+    .get();
+  if (!link) return errorResponse(c, Errors.notFound('Link'));
+
+  const body = (await c.req.json().catch(() => ({}))) as { access_group_id?: string | null };
+  const raw = body.access_group_id;
+
+  let groupId: string | null = null;
+  if (raw !== null && raw !== undefined && String(raw).trim() !== '') {
+    groupId = String(raw).trim();
+    // The group must exist and belong to this account.
+    const scope = (c.get('apiKey') as { orgId?: string } | undefined)?.orgId
+      || user.defaultOrgId
+      || user.id;
+    const group = await db
+      .select({ id: viewerGroups.id })
+      .from(viewerGroups)
+      .where(and(eq(viewerGroups.id, groupId), eq(viewerGroups.orgId, scope)))
+      .get();
+    if (!group) return errorResponse(c, Errors.notFound('Viewer group'));
+  }
+
+  await db
+    .update(links)
+    .set({ accessGroupId: groupId, updatedAt: new Date().toISOString() })
+    .where(eq(links.id, linkId));
+
+  logAudit({
+    ...auditorFromContext(c),
+    action: 'link.access_updated',
+    resourceType: 'link',
+    resourceId: linkId,
+    resourceLabel: link.name || link.originalFilename || undefined,
+    metadata: { access_group_id: groupId ?? undefined },
+  });
+
+  return successResponse(c, { id: linkId, access_group_id: groupId });
+});
 
 linksRouter.get('/v1/links/:id/progress', async (c) => {
   const linkId = c.req.param('id');
