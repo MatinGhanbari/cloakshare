@@ -1,5 +1,5 @@
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { db, pool } from './client.js';
+import { db, pool, explainDbConnectError } from './client.js';
 import { logger } from '../lib/logger.js';
 
 async function runMigrations() {
@@ -10,7 +10,7 @@ async function runMigrations() {
 
 runMigrations()
   .catch((err) => {
-    logger.error(err, 'Migration failed');
+    logger.error({ err }, `Migration failed: ${explainDbConnectError(err)}`);
     process.exit(1);
   })
   .finally(() => {

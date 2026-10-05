@@ -76,13 +76,21 @@ Open `http://localhost:3000` — that is the only URL you need in development.
 
 CloakShare uses **PostgreSQL**. For local development, start a database with
 `docker compose -f docker-compose.db.yml up -d` (the password is read from
-`POSTGRES_PASSWORD` in your environment). On Render, point `DATABASE_URL` at your
-Supabase connection string.
+`POSTGRES_PASSWORD` in your environment).
+
+On Render, point `DATABASE_URL` at your Supabase **connection pooler**, not the direct host.
+Supabase's direct host (`db.<project-ref>.supabase.co`) is **IPv6-only**, and Render has no IPv6
+egress — connecting to it fails with `ENETUNREACH`. The pooler is IPv4-only and works everywhere:
+
+    postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+
+Copy the exact string from **Supabase → Project Settings → Database → Connection pooling** (use
+session mode, port `5432`, for migrations). Note the pooler username is `postgres.<project-ref>`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DB_PROVIDER` | `postgres` | Always `postgres` |
-| `DATABASE_URL` | _(none)_ | PostgreSQL connection string, e.g. `postgresql://postgres:password@localhost:5432/cloak` (local) or the Supabase URL on Render |
+| `DATABASE_URL` | _(none)_ | PostgreSQL connection string: `postgresql://postgres:password@localhost:5432/cloak` (local Docker) or the Supabase pooler URL on Render |
 
 ### Storage
 
