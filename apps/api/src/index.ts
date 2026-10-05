@@ -40,6 +40,10 @@ import { startAuditRetentionWorker, stopAuditRetentionWorker } from './workers/a
 import { startWatermarkCleaner, stopWatermarkCleaner } from './workers/watermarkCleaner.js';
 import { startBackupWorker, stopBackupWorker } from './workers/backup.js';
 
+// Secure viewer tile stream (WebSocket)
+import { attachTileServer } from './services/tileServer.js';
+import type { Server as HttpServer } from 'node:http';
+
 const app = new Hono<{ Variables: Variables }>();
 
 // ============================================
@@ -287,6 +291,9 @@ if (!process.env.VITEST) {
     startWatermarkCleaner();
     startBackupWorker();
   });
+
+  // Attach the WebSocket tile stream the secure viewer uses instead of whole-page images.
+  attachTileServer(server as unknown as HttpServer);
 
   // Graceful shutdown
   const shutdown = () => {
