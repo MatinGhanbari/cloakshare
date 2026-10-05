@@ -38,7 +38,7 @@ auth.post('/register', async (c) => {
     .select({ id: users.id })
     .from(users)
     .where(eq(users.email, email.toLowerCase()))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (existing) {
     return errorResponse(c, Errors.validation('An account with this email already exists'));
@@ -52,7 +52,7 @@ auth.post('/register', async (c) => {
   const emailLocal = email.toLowerCase().split('@')[0].replace(/[^a-z0-9-]/g, '-').slice(0, 40);
   let slug = emailLocal;
   // Handle slug collision
-  const existingSlug = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.slug, slug)).get();
+  const existingSlug = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.slug, slug)).limit(1).then((r) => r[0]);
   if (existingSlug) {
     slug = `${emailLocal}-${userId.slice(-4)}`;
   }
@@ -152,7 +152,7 @@ auth.post('/login', async (c) => {
     .select()
     .from(users)
     .where(eq(users.email, email.toLowerCase()))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!user) {
     return errorResponse(c, Errors.unauthorized('Invalid email or password'));
@@ -261,7 +261,7 @@ auth.get('/me', sessionAuth, async (c) => {
     .from(orgMembers)
     .innerJoin(organizations, eq(orgMembers.orgId, organizations.id))
     .where(eq(orgMembers.userId, user.id))
-    .all();
+    ;
 
   return successResponse(c, {
     id: user.id,
@@ -298,7 +298,7 @@ auth.get('/api-keys', sessionAuth, async (c) => {
     })
     .from(apiKeys)
     .where(eq(apiKeys.userId, user.id))
-    .all();
+    ;
 
   return successResponse(c, { api_keys: keys });
 });
@@ -352,7 +352,7 @@ auth.delete('/api-keys/:id', sessionAuth, async (c) => {
     .select()
     .from(apiKeys)
     .where(eq(apiKeys.id, keyId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!key || key.userId !== user.id) {
     return errorResponse(c, Errors.notFound('API key'));
@@ -404,7 +404,7 @@ auth.get('/users/recent', sessionAuth, async (c) => {
     .from(users)
     .orderBy(desc(users.createdAt))
     .limit(limit)
-    .all();
+    ;
 
   return successResponse(c, {
     users: recentUsers.map((u) => ({
@@ -426,12 +426,12 @@ auth.get('/users/stats', sessionAuth, async (c) => {
   const [totalResult] = await db
     .select({ total: count() })
     .from(users)
-    .all();
+    ;
 
   const [latestResult] = await db
     .select({ lastSignup: max(users.createdAt) })
     .from(users)
-    .all();
+    ;
 
   return successResponse(c, {
     total_users: totalResult?.total || 0,

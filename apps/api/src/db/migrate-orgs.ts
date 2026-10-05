@@ -22,7 +22,7 @@ import { logger } from '../lib/logger.js';
 async function migrateOrgs() {
   logger.info('Starting org migration...');
 
-  const allUsers = await db.select().from(users).all();
+  const allUsers = await db.select().from(users);
   logger.info({ count: allUsers.length }, 'Found users to migrate');
 
   let migrated = 0;
@@ -43,7 +43,7 @@ async function migrateOrgs() {
     const existingSlug = await db.select({ id: organizations.id })
       .from(organizations)
       .where(eq(organizations.slug, slug))
-      .get();
+      .limit(1).then((r) => r[0]);
 
     if (existingSlug) {
       slug = `${emailLocal}-${user.id.slice(-4)}`;

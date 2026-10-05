@@ -229,7 +229,7 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
     .select()
     .from(viewerSessions)
     .where(eq(viewerSessions.token, sha256(sessionToken)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!session || new Date(session.expiresAt) < new Date() || session.linkId !== linkId) {
     ws.send(JSON.stringify({ type: 'error', code: 'UNAUTHORIZED', message: 'Session invalid or expired' }));
@@ -237,7 +237,7 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
     return;
   }
 
-  const link = await db.select().from(links).where(eq(links.id, linkId)).get();
+  const link = await db.select().from(links).where(eq(links.id, linkId)).limit(1).then((r) => r[0]);
   if (!link) {
     ws.send(JSON.stringify({ type: 'error', code: 'NOT_FOUND', message: 'Link not found' }));
     ws.close(4404, 'not found');

@@ -21,7 +21,7 @@ export async function addDomain(userId: string, domain: string, orgId?: string) 
   // Check if domain is already registered
   const existing = await db.select().from(customDomains)
     .where(eq(customDomains.domain, domain.toLowerCase()))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (existing) {
     throw new Error('Domain is already registered');
@@ -53,7 +53,7 @@ export async function verifyDomain(userId: string, domainId: string, orgId?: str
   const ownerCondition = orgId ? eq(customDomains.orgId, orgId) : eq(customDomains.userId, userId);
   const domain = await db.select().from(customDomains)
     .where(and(eq(customDomains.id, domainId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!domain) {
     throw new Error('Domain not found');
@@ -102,7 +102,7 @@ export async function listDomains(userId: string, orgId?: string) {
   const ownerCondition = orgId ? eq(customDomains.orgId, orgId) : eq(customDomains.userId, userId);
   return db.select().from(customDomains)
     .where(ownerCondition)
-    .all();
+    ;
 }
 
 /**
@@ -115,7 +115,7 @@ export async function resolveCustomDomain(hostname: string) {
       eq(customDomains.domain, hostname.toLowerCase()),
       eq(customDomains.verified, true),
     ))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   return domain || null;
 }
@@ -127,7 +127,7 @@ export async function deleteDomain(userId: string, domainId: string, orgId?: str
   const ownerCondition = orgId ? eq(customDomains.orgId, orgId) : eq(customDomains.userId, userId);
   const domain = await db.select().from(customDomains)
     .where(and(eq(customDomains.id, domainId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!domain) {
     throw new Error('Domain not found');

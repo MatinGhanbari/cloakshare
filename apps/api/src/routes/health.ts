@@ -15,7 +15,7 @@ health.get('/health', async (c) => {
   // Database check
   try {
     const dbStart = Date.now();
-    await db.run(sql`SELECT 1`);
+    await db.execute(sql`SELECT 1`);
     checks.database = { status: 'ok', latency_ms: Date.now() - dbStart };
   } catch (err) {
     healthy = false;

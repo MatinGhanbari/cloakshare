@@ -14,12 +14,11 @@ export const config = {
   // Mode
   mode: (process.env.CLOAK_MODE || 'self-hosted') as CloakMode,
 
-  // Database
+  // Database — PostgreSQL only.
+  // The connection string is read from DATABASE_URL (local Docker or Render/Supabase).
   database: {
-    provider: (process.env.DB_PROVIDER || 'sqlite') as DatabaseProvider,
-    sqlitePath: process.env.SQLITE_PATH || './data/cloak.db',
-    tursoUrl: process.env.TURSO_DATABASE_URL,
-    tursoToken: process.env.TURSO_AUTH_TOKEN,
+    provider: (process.env.DB_PROVIDER || 'postgres') as DatabaseProvider,
+    url: process.env.DATABASE_URL || '',
   },
 
   // Storage

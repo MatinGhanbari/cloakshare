@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libreoffice-writer \
     libreoffice-calc \
     libreoffice-impress \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Use jemalloc to prevent Sharp/libvips memory fragmentation

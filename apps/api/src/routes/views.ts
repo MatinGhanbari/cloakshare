@@ -54,7 +54,7 @@ viewsRouter.get('/v1/viewer/:token', async (c) => {
     .select()
     .from(links)
     .where(eq(links.id, linkId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));
@@ -100,7 +100,7 @@ viewsRouter.get('/v1/viewer/:token', async (c) => {
   }
 
   // Determine badge visibility based on link owner's plan
-  const linkOwner = await db.select({ plan: users.plan }).from(users).where(eq(users.id, link.userId)).get();
+  const linkOwner = await db.select({ plan: users.plan }).from(users).where(eq(users.id, link.userId)).limit(1).then((r) => r[0]);
   const showBadge = !linkOwner || linkOwner.plan === 'free';
 
   // Restricted links: the viewer signs in with a group credential instead of an email.
@@ -110,7 +110,7 @@ viewsRouter.get('/v1/viewer/:token', async (c) => {
       .select({ name: viewerGroups.name })
       .from(viewerGroups)
       .where(eq(viewerGroups.id, link.accessGroupId))
-      .get();
+      .limit(1).then((r) => r[0]);
     accessGroupName = group?.name ?? null;
   }
 
@@ -158,7 +158,7 @@ viewsRouter.post(
       .select()
       .from(links)
       .where(eq(links.id, linkId))
-      .get();
+      .limit(1).then((r) => r[0]);
 
     if (!link || link.status !== LINK_STATUS.ACTIVE) {
       return errorResponse(c, Errors.notFound('Link'));
@@ -182,7 +182,7 @@ viewsRouter.post(
     }
 
     // Check monthly view limit for link owner's plan
-    const linkOwner = await db.select({ plan: users.plan }).from(users).where(eq(users.id, link.userId)).get();
+    const linkOwner = await db.select({ plan: users.plan }).from(users).where(eq(users.id, link.userId)).limit(1).then((r) => r[0]);
     if (linkOwner) {
       const ownerPlan = linkOwner.plan as Plan;
       const planLimits = PLAN_LIMITS[ownerPlan];
@@ -192,7 +192,7 @@ viewsRouter.post(
           .where(and(
             eq(views.linkId, linkId),
             like(views.createdAt, `${currentMonth}%`),
-          )).get();
+          )).limit(1).then((r) => r[0]);
         if ((monthlyViews?.count ?? 0) >= planLimits.viewsPerMonth) {
           return errorResponse(c, Errors.limitReached('This document has reached its monthly view limit.'));
         }
@@ -218,7 +218,7 @@ viewsRouter.post(
             eq(viewerCredentials.studentId, studentId),
           ),
         )
-        .get();
+        .limit(1).then((r) => r[0]);
 
       // Identical response for "unknown student ID" and "wrong national ID" so the
       // endpoint cannot be used to enumerate which student IDs are authorized.
@@ -347,7 +347,7 @@ viewsRouter.post(
     // Send email notification to link owner if configured (async, non-blocking)
     if (link.notifyEmail || config.features.emailNotifications) {
       const owner = await db.select({ email: users.email }).from(users)
-        .where(eq(users.id, link.userId)).get();
+        .where(eq(users.id, link.userId)).limit(1).then((r) => r[0]);
       if (owner && (link.notifyEmail || owner.email)) {
         sendViewNotification({
           ownerEmail: link.notifyEmail || owner.email,
@@ -402,7 +402,7 @@ viewsRouter.post(
           .select({ id: viewerSessions.id })
           .from(viewerSessions)
           .where(eq(viewerSessions.token, sessionTokenHash))
-          .get())!.id;
+          .limit(1).then((r) => r[0]))!.id;
 
         const watermarkedUrls = await generateWatermarkedPages(
           linkId,
@@ -465,7 +465,7 @@ viewsRouter.post('/v1/viewer/:token/sign-segment', async (c) => {
     .select()
     .from(viewerSessions)
     .where(eq(viewerSessions.token, sha256(sessionToken)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!session || new Date(session.expiresAt) < new Date()) {
     return errorResponse(c, Errors.unauthorized('Session expired'));
@@ -504,7 +504,7 @@ viewsRouter.get('/v1/viewer/:token/page/:pageNumber', async (c) => {
     .select()
     .from(viewerSessions)
     .where(eq(viewerSessions.token, sha256(sessionToken)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!session || new Date(session.expiresAt) < new Date()) {
     return errorResponse(c, Errors.unauthorized('Session expired. Please re-verify.'));
@@ -514,7 +514,7 @@ viewsRouter.get('/v1/viewer/:token/page/:pageNumber', async (c) => {
     return errorResponse(c, Errors.forbidden('Session mismatch'));
   }
 
-  const link = await db.select().from(links).where(eq(links.id, linkId)).get();
+  const link = await db.select().from(links).where(eq(links.id, linkId)).limit(1).then((r) => r[0]);
   if (!link) return errorResponse(c, Errors.notFound('Link'));
 
   // Temporarily paused by the owner.
@@ -580,7 +580,7 @@ viewsRouter.post('/v1/viewer/:token/track', async (c) => {
     .select()
     .from(views)
     .where(eq(views.sessionToken, sha256(sessionToken)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!view) {
     return c.body(null, 204);
@@ -614,7 +614,7 @@ viewsRouter.post('/v1/viewer/:token/track', async (c) => {
     .select({ pageCount: links.pageCount })
     .from(links)
     .where(eq(links.id, view.linkId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   const pageCount = link?.pageCount || 1;
   const completionRate = parseFloat((pagesViewed / pageCount).toFixed(2));

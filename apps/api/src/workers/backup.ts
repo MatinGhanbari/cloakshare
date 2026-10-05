@@ -1,41 +1,70 @@
-import { copyFile, readdir, unlink, stat } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { createWriteStream } from 'node:fs';
+import { mkdir, readdir, unlink, rename, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { mkdir } from 'node:fs/promises';
 import { config } from '../lib/config.js';
 import { logger } from '../lib/logger.js';
 
-const BACKUP_DIR = resolve(config.database.sqlitePath, '..', 'backups');
+const execFileAsync = promisify(execFile);
+const BACKUP_DIR = resolve(process.env.BACKUP_DIR || './data/backups');
 
 let backupTimer: ReturnType<typeof setInterval> | null = null;
 
 async function performBackup() {
+  const connectionString = config.database.url;
+  if (!connectionString) {
+    logger.warn('BACKUP_ENABLED is true but DATABASE_URL is not set; skipping database backup.');
+    return;
+  }
+
   try {
-    const dbPath = resolve(config.database.sqlitePath);
     await mkdir(BACKUP_DIR, { recursive: true });
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFilename = `cloak-${timestamp}.db`;
-    const backupPath = join(BACKUP_DIR, backupFilename);
+    const backupPath = join(BACKUP_DIR, `cloak-${timestamp}.sql`);
+    const tmpPath = `${backupPath}.tmp`;
 
-    // WAL checkpoint to flush all writes to the main DB file
-    const { createClient } = await import('@libsql/client');
-    const client = createClient({ url: `file:${dbPath}` });
-    await client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
-    client.close();
+    // Stream a logical dump straight to disk. In production we recommend relying on
+    // your provider's managed backups (Supabase / RDS); this is a best-effort local copy.
+    const child = execFile('pg_dump', [
+      '--no-owner',
+      '--if-exists',
+      '--clean',
+      connectionString,
+    ], { maxBuffer: 64 * 1024 * 1024 });
 
-    // Copy the DB file
-    await copyFile(dbPath, backupPath);
+    const writeStream = createWriteStream(tmpPath);
+    child.stdout?.pipe(writeStream);
+
+    let stderr = '';
+    child.stderr?.on('data', (chunk) => { stderr += chunk.toString(); });
+
+    const exitCode: number = await new Promise((resolveExit) => {
+      child.on('close', (code) => resolveExit(code ?? 1));
+    });
+    await new Promise<void>((res) => writeStream.on('finish', () => res()));
+
+    if (exitCode !== 0) {
+      throw new Error(`pg_dump exited with code ${exitCode}: ${stderr}`);
+    }
+
+    await rename(tmpPath, backupPath);
 
     const backupStat = await stat(backupPath);
     logger.info(
       { backupPath, sizeBytes: backupStat.size },
-      `Database backup created: ${backupFilename}`,
+      'Database backup created',
     );
 
     // Rotate old backups — keep only the most recent N
     await rotateBackups();
   } catch (error) {
-    logger.error({ error }, 'Database backup failed');
+    logger.error(
+      { error },
+      'Database backup failed. Ensure `pg_dump` (postgresql-client) is installed, ' +
+      'or rely on your database provider\'s managed backups (Supabase / RDS).',
+    );
   }
 }
 
@@ -43,7 +72,7 @@ async function rotateBackups() {
   try {
     const files = await readdir(BACKUP_DIR);
     const backups = files
-      .filter((f) => f.startsWith('cloak-') && f.endsWith('.db'))
+      .filter((f) => f.startsWith('cloak-') && f.endsWith('.sql'))
       .sort()
       .reverse(); // newest first
 

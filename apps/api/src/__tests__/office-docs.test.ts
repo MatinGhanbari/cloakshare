@@ -148,7 +148,7 @@ describe('Office Document Conversion', () => {
       const job = await db.select()
         .from(renderingJobs)
         .where(eq(renderingJobs.linkId, linkId))
-        .get();
+        .limit(1).then((r) => r[0]);
 
       expect(job).toBeDefined();
       expect(job!.status).toBe('pending');
@@ -165,7 +165,7 @@ describe('Office Document Conversion', () => {
       const job = await db.select()
         .from(renderingJobs)
         .where(eq(renderingJobs.linkId, linkId))
-        .get();
+        .limit(1).then((r) => r[0]);
 
       expect(job).toBeDefined();
       expect(job!.sourceKey).toMatch(/^temp\/.+\/tracked-upload\.pptx$/);

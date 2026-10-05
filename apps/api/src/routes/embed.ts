@@ -17,7 +17,7 @@ embedRouter.get('/v1/embed/:id', async (c) => {
 
   const link = await db.select().from(links)
     .where(eq(links.id, linkId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));
@@ -54,7 +54,7 @@ embedRouter.get('/v1/embed/:id/snippet', async (c) => {
   const link = await db.select({ id: links.id, status: links.status })
     .from(links)
     .where(eq(links.id, linkId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));

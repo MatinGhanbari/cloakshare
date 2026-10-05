@@ -25,7 +25,7 @@ gdprRouter.delete('/v1/viewers/:email', apiKeyAuth, async (c) => {
   const orgId = c.get('orgId') as string | undefined;
   const ownerCondition = orgId ? eq(links.orgId, orgId) : eq(links.userId, user.id);
   const userLinks = await db.select({ id: links.id }).from(links)
-    .where(ownerCondition).all();
+    .where(ownerCondition);
   const userLinkIds = userLinks.map((l) => l.id);
 
   if (userLinkIds.length === 0) {

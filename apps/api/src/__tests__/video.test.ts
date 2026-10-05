@@ -494,7 +494,7 @@ describe('Video Pipeline', () => {
       const view = await db.select()
         .from(views)
         .where(eq(views.sessionToken, sha256(sessionToken)))
-        .get();
+        .limit(1).then((r) => r[0]);
 
       expect(view).toBeDefined();
       expect(view!.videoWatchTime).toBe(55);

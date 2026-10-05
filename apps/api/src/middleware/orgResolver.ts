@@ -43,10 +43,10 @@ export async function orgResolver(c: AnyContext, next: Next) {
 
   // Look up org and membership
   const [org, membership] = await Promise.all([
-    db.select().from(organizations).where(eq(organizations.id, orgId)).get(),
+    db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1).then((r) => r[0]),
     db.select().from(orgMembers)
       .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, user.id)))
-      .get(),
+      .limit(1).then((r) => r[0]),
   ]);
 
   if (!org) {

@@ -37,7 +37,7 @@ export async function enforceUsageLimits(c: Context<{ Variables: Record<string, 
         like(links.createdAt, `${currentMonth}%`),
       ),
     )
-    .get();
+    .limit(1).then((r) => r[0]);
 
   const linkCount = result?.count ?? 0;
 

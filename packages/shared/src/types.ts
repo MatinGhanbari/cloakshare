@@ -123,7 +123,7 @@ export interface VideoMetadata {
 
 // Storage mode
 export type StorageProvider = 'local' | 's3';
-export type DatabaseProvider = 'sqlite' | 'turso';
+export type DatabaseProvider = 'postgres';
 export type CloakMode = 'self-hosted' | 'cloud';
 
 // Organization types

@@ -1,1 +1,0 @@
-ALTER TABLE `links` ADD `disabled_at` text;

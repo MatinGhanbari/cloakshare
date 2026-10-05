@@ -60,7 +60,7 @@ auditRouter.get('/v1/org/audit-log', sessionAuth, orgResolver, requirePermission
     .where(and(...conditions))
     .orderBy(desc(auditLog.createdAt))
     .limit(limit + 1)
-    .all();
+    ;
 
   const hasMore = entries.length > limit;
   const results = entries.slice(0, limit);

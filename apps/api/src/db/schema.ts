@@ -1,11 +1,11 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, integer, real, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // ============================================
 // USERS & AUTH
 // ============================================
 
-export const users = sqliteTable('users', {
+export const users = pgTable('users', {
   id: text('id').primaryKey(), // nanoid
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
@@ -15,13 +15,13 @@ export const users = sqliteTable('users', {
   plan: text('plan').notNull().default('free'), // free | starter | growth | scale
   defaultOrgId: text('default_org_id'), // Active org for dashboard sessions
   spendingCap: integer('spending_cap'), // Monthly spending cap in cents, null = unlimited
-  emailVerified: integer('email_verified', { mode: 'boolean' }).default(false),
+  emailVerified: boolean('email_verified').default(false),
   emailVerifiedAt: text('email_verified_at'),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const apiKeys = sqliteTable('api_keys', {
+export const apiKeys = pgTable('api_keys', {
   id: text('id').primaryKey(), // nanoid
   userId: text('user_id').notNull().references(() => users.id),
   orgId: text('org_id'), // Organization this key belongs to
@@ -40,7 +40,7 @@ export const apiKeys = sqliteTable('api_keys', {
 // SESSIONS (Dashboard auth)
 // ============================================
 
-export const sessions = sqliteTable('sessions', {
+export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id),
   token: text('token').notNull().unique(),
@@ -57,7 +57,7 @@ export const sessions = sqliteTable('sessions', {
 // LINKS
 // ============================================
 
-export const links = sqliteTable('links', {
+export const links = pgTable('links', {
   id: text('id').primaryKey(), // nanoid (used in secure URL token)
   userId: text('user_id').notNull().references(() => users.id),
   orgId: text('org_id'), // Organization that owns this link
@@ -81,13 +81,13 @@ export const links = sqliteTable('links', {
   // Security rules
   expiresAt: text('expires_at'), // ISO timestamp, null = never
   maxViews: integer('max_views'), // null = unlimited
-  requireEmail: integer('require_email', { mode: 'boolean' }).default(true),
+  requireEmail: boolean('require_email').default(true),
   allowedDomains: text('allowed_domains'), // JSON array: ["@acme.com"]
   passwordHash: text('password_hash'), // bcrypt hash of password
-  blockDownload: integer('block_download', { mode: 'boolean' }).default(true),
+  blockDownload: boolean('block_download').default(true),
 
   // Watermark config
-  watermarkEnabled: integer('watermark_enabled', { mode: 'boolean' }).default(true),
+  watermarkEnabled: boolean('watermark_enabled').default(true),
   watermarkTemplate: text('watermark_template').default('{{email}} · {{date}} · {{session_id}}'),
 
   // Notification
@@ -132,7 +132,7 @@ export const links = sqliteTable('links', {
 // VIEWS (Analytics Events)
 // ============================================
 
-export const views = sqliteTable('views', {
+export const views = pgTable('views', {
   id: text('id').primaryKey(), // nanoid
   linkId: text('link_id').notNull().references(() => links.id),
 
@@ -158,7 +158,7 @@ export const views = sqliteTable('views', {
 
   // Session
   sessionToken: text('session_token'), // Unique per view session
-  returnVisit: integer('return_visit', { mode: 'boolean' }).default(false),
+  returnVisit: boolean('return_visit').default(false),
 
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   endedAt: text('ended_at'),
@@ -173,7 +173,7 @@ export const views = sqliteTable('views', {
 // VIEWER SESSIONS (Email gate auth)
 // ============================================
 
-export const viewerSessions = sqliteTable('viewer_sessions', {
+export const viewerSessions = pgTable('viewer_sessions', {
   id: text('id').primaryKey(),
   linkId: text('link_id').notNull().references(() => links.id),
   viewerEmail: text('viewer_email').notNull(),
@@ -195,7 +195,7 @@ export const viewerSessions = sqliteTable('viewer_sessions', {
  * Links can be restricted to a group; members sign in with their student ID
  * (username) and national ID (password).
  */
-export const viewerGroups = sqliteTable('viewer_groups', {
+export const viewerGroups = pgTable('viewer_groups', {
   id: text('id').primaryKey(),
   orgId: text('org_id').notNull(),
   name: text('name').notNull(),
@@ -208,7 +208,7 @@ export const viewerGroups = sqliteTable('viewer_groups', {
  * One authorized viewer inside a group.
  * The national ID acts as the password, so only its hash is stored.
  */
-export const viewerCredentials = sqliteTable('viewer_credentials', {
+export const viewerCredentials = pgTable('viewer_credentials', {
   id: text('id').primaryKey(),
   groupId: text('group_id').notNull().references(() => viewerGroups.id),
   studentId: text('student_id').notNull(),
@@ -225,18 +225,18 @@ export const viewerCredentials = sqliteTable('viewer_credentials', {
 // WEBHOOKS
 // ============================================
 
-export const webhookEndpoints = sqliteTable('webhook_endpoints', {
+export const webhookEndpoints = pgTable('webhook_endpoints', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id),
   orgId: text('org_id'), // Organization this endpoint belongs to
   url: text('url').notNull(),
   secret: text('secret').notNull(), // For HMAC signing
   events: text('events').notNull(), // JSON array: ["link.viewed", "link.expired"]
-  active: integer('active', { mode: 'boolean' }).default(true),
+  active: boolean('active').default(true),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const webhookDeliveries = sqliteTable('webhook_deliveries', {
+export const webhookDeliveries = pgTable('webhook_deliveries', {
   id: text('id').primaryKey(),
   endpointId: text('endpoint_id').notNull().references(() => webhookEndpoints.id),
   event: text('event').notNull(),
@@ -257,12 +257,12 @@ export const webhookDeliveries = sqliteTable('webhook_deliveries', {
 // CUSTOM DOMAINS
 // ============================================
 
-export const customDomains = sqliteTable('custom_domains', {
+export const customDomains = pgTable('custom_domains', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id),
   orgId: text('org_id'), // Organization this domain belongs to
   domain: text('domain').notNull().unique(), // "docs.their-saas.com"
-  verified: integer('verified', { mode: 'boolean' }).default(false),
+  verified: boolean('verified').default(false),
   verifiedAt: text('verified_at'),
   cnameTarget: text('cname_target').notNull(), // "view.cloakshare.dev"
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -272,13 +272,13 @@ export const customDomains = sqliteTable('custom_domains', {
 // USAGE TRACKING (for billing)
 // ============================================
 
-export const usageRecords = sqliteTable('usage_records', {
+export const usageRecords = pgTable('usage_records', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id),
   orgId: text('org_id'), // Organization for billing
   type: text('type').notNull(), // link_created | view_recorded
   quantity: integer('quantity').notNull().default(1),
-  stripeReported: integer('stripe_reported', { mode: 'boolean' }).default(false),
+  stripeReported: boolean('stripe_reported').default(false),
   periodStart: text('period_start').notNull(), // Billing period
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
@@ -289,7 +289,7 @@ export const usageRecords = sqliteTable('usage_records', {
 // ORGANIZATIONS
 // ============================================
 
-export const organizations = sqliteTable('organizations', {
+export const organizations = pgTable('organizations', {
   id: text('id').primaryKey(), // nanoid with org_ prefix
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(), // URL-safe identifier
@@ -300,7 +300,7 @@ export const organizations = sqliteTable('organizations', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const orgMembers = sqliteTable('org_members', {
+export const orgMembers = pgTable('org_members', {
   id: text('id').primaryKey(), // nanoid with mem_ prefix
   orgId: text('org_id').notNull().references(() => organizations.id),
   userId: text('user_id').notNull().references(() => users.id),
@@ -311,7 +311,7 @@ export const orgMembers = sqliteTable('org_members', {
   index('idx_org_members_user_id').on(table.userId),
 ]);
 
-export const orgInvites = sqliteTable('org_invites', {
+export const orgInvites = pgTable('org_invites', {
   id: text('id').primaryKey(), // nanoid with inv_ prefix
   orgId: text('org_id').notNull().references(() => organizations.id),
   email: text('email').notNull(),
@@ -333,7 +333,7 @@ export const orgInvites = sqliteTable('org_invites', {
 // AUDIT LOG
 // ============================================
 
-export const auditLog = sqliteTable('audit_log', {
+export const auditLog = pgTable('audit_log', {
   id: text('id').primaryKey(), // nanoid with aud_ prefix
   orgId: text('org_id').notNull(),
   actorId: text('actor_id').notNull(), // user ID or "system"
@@ -359,7 +359,7 @@ export const auditLog = sqliteTable('audit_log', {
 // RENDERING JOBS (Background queue)
 // ============================================
 
-export const renderingJobs = sqliteTable('rendering_jobs', {
+export const renderingJobs = pgTable('rendering_jobs', {
   id: text('id').primaryKey(),
   linkId: text('link_id').notNull().references(() => links.id),
   sourceKey: text('source_key').notNull(), // temp/{uploadId}/{filename} — location of uploaded file
@@ -379,7 +379,7 @@ export const renderingJobs = sqliteTable('rendering_jobs', {
 // NOTIFICATIONS (Real-time view alerts)
 // ============================================
 
-export const notifications = sqliteTable('notifications', {
+export const notifications = pgTable('notifications', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id),
   orgId: text('org_id'),
@@ -388,7 +388,7 @@ export const notifications = sqliteTable('notifications', {
   linkName: text('link_name'),
   message: text('message').notNull(),
   metadata: text('metadata'), // JSON: { viewer_email, device, country, ... }
-  read: integer('read', { mode: 'boolean' }).notNull().default(false),
+  read: boolean('read').notNull().default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
   index('idx_notifications_user_id').on(table.userId),

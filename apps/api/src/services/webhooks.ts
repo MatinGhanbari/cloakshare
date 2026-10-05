@@ -44,7 +44,7 @@ export async function dispatchWebhook(
     .select({ userId: links.userId, id: links.id, name: links.name, status: links.status })
     .from(links)
     .where(eq(links.id, linkId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) return;
 
@@ -58,7 +58,7 @@ export async function dispatchWebhook(
         eq(webhookEndpoints.active, true),
       )
     )
-    .all();
+    ;
 
   // Filter to endpoints that subscribe to this event
   const matching = endpoints.filter((ep) => {
@@ -117,7 +117,7 @@ export async function processWebhookDeliveries() {
       )
     )
     .limit(10)
-    .all();
+    ;
 
   for (const delivery of pending) {
     await attemptDelivery(delivery);
@@ -132,7 +132,7 @@ async function attemptDelivery(delivery: typeof webhookDeliveries.$inferSelect) 
     .select()
     .from(webhookEndpoints)
     .where(eq(webhookEndpoints.id, delivery.endpointId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!endpoint || !endpoint.active) {
     await db.update(webhookDeliveries)

@@ -12,7 +12,7 @@ const RETENTION_INTERVAL = 24 * 60 * 60 * 1000; // Run daily
  */
 async function cleanupAuditLog() {
   try {
-    const orgs = await db.select({ id: organizations.id, plan: organizations.plan }).from(organizations).all();
+    const orgs = await db.select({ id: organizations.id, plan: organizations.plan }).from(organizations);
 
     let totalDeleted = 0;
 

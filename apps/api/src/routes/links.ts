@@ -480,12 +480,12 @@ linksRouter.get('/v1/links', apiKeyAuth, async (c) => {
       .orderBy(desc(links.createdAt))
       .limit(limit)
       .offset(offset)
-      .all(),
+      ,
     db
       .select({ count: count() })
       .from(links)
       .where(and(...conditions))
-      .get(),
+      .limit(1).then((r) => r[0]),
   ]);
 
   const total = totalResult?.count ?? 0;
@@ -529,7 +529,7 @@ linksRouter.get('/v1/links/:id', apiKeyAuth, async (c) => {
     .select()
     .from(links)
     .where(and(eq(links.id, linkId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));
@@ -542,7 +542,7 @@ linksRouter.get('/v1/links/:id', apiKeyAuth, async (c) => {
     .where(eq(views.linkId, linkId))
     .orderBy(desc(views.createdAt))
     .limit(10)
-    .all();
+    ;
 
   return successResponse(c, {
     id: link.id,
@@ -602,7 +602,7 @@ linksRouter.delete('/v1/links/:id', apiKeyAuth, async (c) => {
     .select()
     .from(links)
     .where(and(eq(links.id, linkId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));
@@ -646,7 +646,7 @@ linksRouter.get('/v1/links/:id/analytics', apiKeyAuth, rateLimiter('analytics'),
     .select()
     .from(links)
     .where(and(eq(links.id, linkId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));
@@ -656,7 +656,7 @@ linksRouter.get('/v1/links/:id/analytics', apiKeyAuth, rateLimiter('analytics'),
     .select()
     .from(views)
     .where(eq(views.linkId, linkId))
-    .all();
+    ;
 
   const totalViews = allViews.length;
   const uniqueEmails = new Set(allViews.map((v) => v.viewerEmail).filter(Boolean));
@@ -710,7 +710,7 @@ linksRouter.patch('/v1/links/:id/branding', apiKeyAuth, async (c) => {
     .select()
     .from(links)
     .where(and(eq(links.id, linkId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return errorResponse(c, Errors.notFound('Link'));
@@ -761,7 +761,7 @@ linksRouter.patch('/v1/links/:id/access', apiKeyAuth, async (c) => {
     .select()
     .from(links)
     .where(and(eq(links.id, linkId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
   if (!link) return errorResponse(c, Errors.notFound('Link'));
 
   const body = (await c.req.json().catch(() => ({}))) as { access_group_id?: string | null };
@@ -778,7 +778,7 @@ linksRouter.patch('/v1/links/:id/access', apiKeyAuth, async (c) => {
       .select({ id: viewerGroups.id })
       .from(viewerGroups)
       .where(and(eq(viewerGroups.id, groupId), eq(viewerGroups.orgId, scope)))
-      .get();
+      .limit(1).then((r) => r[0]);
     if (!group) return errorResponse(c, Errors.notFound('Viewer group'));
   }
 
@@ -817,7 +817,7 @@ linksRouter.patch('/v1/links/:id/state', apiKeyAuth, async (c) => {
     .select()
     .from(links)
     .where(and(eq(links.id, linkId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
   if (!link) return errorResponse(c, Errors.notFound('Link'));
 
   const body = (await c.req.json().catch(() => ({}))) as { disabled?: boolean };
@@ -854,7 +854,7 @@ linksRouter.get('/v1/links/:id/progress', async (c) => {
     .select({ id: links.id, status: links.status })
     .from(links)
     .where(eq(links.id, linkId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!link) {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Link not found' } }, 404);
@@ -884,7 +884,7 @@ linksRouter.get('/v1/links/:id/progress', async (c) => {
         })
         .from(renderingJobs)
         .where(eq(renderingJobs.linkId, linkId))
-        .get();
+        .limit(1).then((r) => r[0]);
 
       if (!job) break;
 

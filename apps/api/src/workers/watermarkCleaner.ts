@@ -19,7 +19,7 @@ async function cleanExpiredWatermarks() {
       .select({ id: viewerSessions.id, linkId: viewerSessions.linkId })
       .from(viewerSessions)
       .where(lt(viewerSessions.expiresAt, cutoff))
-      .all();
+      ;
 
     if (expired.length === 0) return;
 

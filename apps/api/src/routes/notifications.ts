@@ -34,15 +34,15 @@ notificationsRouter.get('/v1/notifications', apiKeyAuth, async (c) => {
       .orderBy(desc(notifications.createdAt))
       .limit(limit)
       .offset(offset)
-      .all(),
+      ,
     db.select({ count: count() })
       .from(notifications)
       .where(and(...conditions))
-      .get(),
+      .limit(1).then((r) => r[0]),
     db.select({ count: count() })
       .from(notifications)
       .where(and(eq(notifications.userId, user.id), eq(notifications.read, false)))
-      .get(),
+      .limit(1).then((r) => r[0]),
   ]);
 
   const total = totalResult?.count ?? 0;
@@ -136,7 +136,7 @@ notificationsRouter.get('/v1/notifications/stream', apiKeyAuth, async (c) => {
         .where(and(...conditions))
         .orderBy(desc(notifications.createdAt))
         .limit(10)
-        .all();
+        ;
 
       // Only send notifications we haven't sent yet
       for (const n of newNotifications) {

@@ -77,7 +77,7 @@ demoRouter.post(
     }
 
     // Get or create a demo system user
-    let demoUser = await db.select().from(users).where(eq(users.email, 'demo@cloakshare.dev')).get();
+    let demoUser = await db.select().from(users).where(eq(users.email, 'demo@cloakshare.dev')).limit(1).then((r) => r[0]);
     if (!demoUser) {
       const demoUserId = generateId('usr');
       await db.insert(users).values({
@@ -86,7 +86,7 @@ demoRouter.post(
         passwordHash: 'demo-no-login',
         plan: config.defaultPlan,
       });
-      demoUser = await db.select().from(users).where(eq(users.id, demoUserId)).get();
+      demoUser = await db.select().from(users).where(eq(users.id, demoUserId)).limit(1).then((r) => r[0]);
     }
 
     // Upload to storage

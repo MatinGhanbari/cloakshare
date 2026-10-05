@@ -102,7 +102,7 @@ export async function isLastOwner(orgId: string, userId: string): Promise<boolea
     .select({ id: orgMembers.id, userId: orgMembers.userId })
     .from(orgMembers)
     .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.role, 'owner')))
-    .all();
+    ;
 
   return owners.length === 1 && owners[0].userId === userId;
 }

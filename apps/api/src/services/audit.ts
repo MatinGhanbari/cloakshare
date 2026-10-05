@@ -38,7 +38,7 @@ export function logAudit(entry: AuditEntry): void {
         ipAddress: entry.ipAddress || null,
         userAgent: entry.userAgent || null,
       })
-      .run();
+      ;
   } catch (err) {
     logger.error({ err, action: entry.action }, 'Failed to write audit log');
   }

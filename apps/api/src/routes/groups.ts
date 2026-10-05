@@ -56,7 +56,7 @@ async function ownedGroup(c: Ctx, groupId: string) {
       .select()
       .from(viewerGroups)
       .where(and(eq(viewerGroups.id, groupId), eq(viewerGroups.orgId, scope)))
-      .get()) ?? null
+      .limit(1).then((r) => r[0])) ?? null
   );
 }
 
@@ -74,7 +74,7 @@ groupsRouter.get('/v1/groups', apiKeyAuth, async (c) => {
     .select()
     .from(viewerGroups)
     .where(eq(viewerGroups.orgId, orgId))
-    .all();
+    ;
 
   const ids = groups.map((g) => g.id);
   const counts = ids.length
@@ -83,7 +83,7 @@ groupsRouter.get('/v1/groups', apiKeyAuth, async (c) => {
         .from(viewerCredentials)
         .where(inArray(viewerCredentials.groupId, ids))
         .groupBy(viewerCredentials.groupId)
-        .all()
+        
     : [];
   const countByGroup = new Map(counts.map((r) => [r.groupId, r.total]));
 
@@ -94,7 +94,7 @@ groupsRouter.get('/v1/groups', apiKeyAuth, async (c) => {
         .from(links)
         .where(inArray(links.accessGroupId, ids))
         .groupBy(links.accessGroupId)
-        .all()
+        
     : [];
   const linksByGroup = new Map(linkRows.map((r) => [r.groupId, r.total]));
 
@@ -166,7 +166,7 @@ groupsRouter.get('/v1/groups/:id/credentials', apiKeyAuth, async (c) => {
     })
     .from(viewerCredentials)
     .where(eq(viewerCredentials.groupId, group.id))
-    .all();
+    ;
 
   return successResponse(c, {
     group: { id: group.id, name: group.name },
@@ -199,7 +199,7 @@ groupsRouter.post('/v1/groups/:id/credentials', apiKeyAuth, async (c) => {
     .select({ id: viewerCredentials.id })
     .from(viewerCredentials)
     .where(and(eq(viewerCredentials.groupId, group.id), eq(viewerCredentials.studentId, studentId)))
-    .get();
+    .limit(1).then((r) => r[0]);
   if (existing) {
     return errorResponse(c, Errors.validation('This student ID is already in the group'));
   }
@@ -268,7 +268,7 @@ groupsRouter.post('/v1/groups/:id/credentials/bulk', apiKeyAuth, async (c) => {
     .select({ studentId: viewerCredentials.studentId })
     .from(viewerCredentials)
     .where(eq(viewerCredentials.groupId, group.id))
-    .all();
+    ;
   const known = new Set(existing.map((r) => r.studentId));
 
   const added: string[] = [];
@@ -311,7 +311,7 @@ groupsRouter.delete('/v1/groups/:id/credentials/:credentialId', apiKeyAuth, asyn
         eq(viewerCredentials.groupId, group.id),
       ),
     )
-    .get();
+    .limit(1).then((r) => r[0]);
   if (!credential) return errorResponse(c, Errors.notFound('Credential'));
 
   await db.delete(viewerCredentials).where(eq(viewerCredentials.id, credential.id));

@@ -87,7 +87,7 @@ webhooksRouter.get('/v1/webhooks', apiKeyAuth, async (c) => {
     .select()
     .from(webhookEndpoints)
     .where(ownerCondition)
-    .all();
+    ;
 
   return successResponse(c, {
     webhooks: endpoints.map((ep) => ({
@@ -114,7 +114,7 @@ webhooksRouter.get('/v1/webhooks/:id', apiKeyAuth, async (c) => {
     .select()
     .from(webhookEndpoints)
     .where(and(eq(webhookEndpoints.id, endpointId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!endpoint) {
     return errorResponse(c, Errors.notFound('Webhook endpoint'));
@@ -126,7 +126,7 @@ webhooksRouter.get('/v1/webhooks/:id', apiKeyAuth, async (c) => {
     .where(eq(webhookDeliveries.endpointId, endpointId))
     .orderBy(desc(webhookDeliveries.createdAt))
     .limit(20)
-    .all();
+    ;
 
   return successResponse(c, {
     id: endpoint.id,
@@ -160,7 +160,7 @@ webhooksRouter.delete('/v1/webhooks/:id', apiKeyAuth, async (c) => {
     .select()
     .from(webhookEndpoints)
     .where(and(eq(webhookEndpoints.id, endpointId), ownerCondition))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!endpoint) {
     return errorResponse(c, Errors.notFound('Webhook endpoint'));

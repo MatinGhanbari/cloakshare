@@ -28,7 +28,7 @@ export async function reportUsage(
   userId: string,
   type: 'link_created' | 'view_recorded',
 ) {
-  const user = await db.select().from(users).where(eq(users.id, userId)).get();
+  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1).then((r) => r[0]);
   if (!user) return;
 
   // Free tier has hard limits, not metered — skip Stripe reporting
@@ -76,7 +76,7 @@ export async function createCheckoutSession(
   plan: 'starter' | 'growth' | 'scale',
   annual = false,
 ): Promise<string> {
-  const user = await db.select().from(users).where(eq(users.id, userId)).get();
+  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1).then((r) => r[0]);
   if (!user) throw new Error('User not found');
 
   const s = getStripe();
@@ -120,7 +120,7 @@ export async function createCheckoutSession(
  * Create a Stripe Billing Portal session for managing subscription.
  */
 export async function createPortalSession(userId: string): Promise<string> {
-  const user = await db.select().from(users).where(eq(users.id, userId)).get();
+  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1).then((r) => r[0]);
   if (!user?.stripeCustomerId) throw new Error('No Stripe customer');
 
   const session = await getStripe().billingPortal.sessions.create({
@@ -157,7 +157,7 @@ export async function handleStripeWebhook(body: string, signature: string) {
         }).where(eq(users.id, userId));
 
         // Sync plan to user's default organization
-        const updatedUser = await db.select({ defaultOrgId: users.defaultOrgId }).from(users).where(eq(users.id, userId)).get();
+        const updatedUser = await db.select({ defaultOrgId: users.defaultOrgId }).from(users).where(eq(users.id, userId)).limit(1).then((r) => r[0]);
         if (updatedUser?.defaultOrgId) {
           await db.update(organizations).set({
             plan,
@@ -173,7 +173,7 @@ export async function handleStripeWebhook(body: string, signature: string) {
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription;
       const user = await db.select().from(users)
-        .where(eq(users.stripeSubscriptionId, sub.id)).get();
+        .where(eq(users.stripeSubscriptionId, sub.id)).limit(1).then((r) => r[0]);
       if (user) {
         const status = sub.status;
         if (status === 'canceled' || status === 'unpaid') {
@@ -193,7 +193,7 @@ export async function handleStripeWebhook(body: string, signature: string) {
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription;
       const user = await db.select().from(users)
-        .where(eq(users.stripeSubscriptionId, sub.id)).get();
+        .where(eq(users.stripeSubscriptionId, sub.id)).limit(1).then((r) => r[0]);
       if (user) {
         const now = new Date().toISOString();
         await db.update(users).set({

@@ -25,7 +25,7 @@ export async function sessionAuth(c: Context<{ Variables: Record<string, any> }>
         gt(sessions.expiresAt, new Date().toISOString()),
       ),
     )
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!session) {
     return errorResponse(c, Errors.unauthorized('Session expired'));
@@ -35,7 +35,7 @@ export async function sessionAuth(c: Context<{ Variables: Record<string, any> }>
     .select()
     .from(users)
     .where(eq(users.id, session.userId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!user) {
     return errorResponse(c, Errors.unauthorized('User not found'));

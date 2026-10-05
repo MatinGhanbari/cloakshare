@@ -1,22 +1,43 @@
-# Cloak — Self-hosted secure document sharing
+# Cloak — Self-hosted secure document sharing (full stack: app + PostgreSQL)
 # Quick start: docker compose up
 # Full docs: https://github.com/cloakshare/cloakshare/blob/main/docs/self-hosting.md
+#
+# The database password comes from your environment (.env file or exported var):
+#   POSTGRES_PASSWORD=your-strong-password
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env or environment}
+      POSTGRES_DB: cloak
+    volumes:
+      - cloak_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   cloak:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     ports:
       - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       - NODE_ENV=production
       - PORT=3000
       - CLOAK_MODE=self-hosted
       - STORAGE_PROVIDER=local
       - STORAGE_LOCAL_PATH=/data/renders
-      - DB_PROVIDER=sqlite
-      - SQLITE_PATH=/data/cloak.db
+      - DB_PROVIDER=postgres
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env or environment}@postgres:5432/cloak
       - SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET in .env}
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - CLOAK_SIGNING_SECRET=${CLOAK_SIGNING_SECRET:?Set CLOAK_SIGNING_SECRET in .env}
@@ -33,3 +54,4 @@ services:
 
 volumes:
   cloak_data:
+  cloak_postgres_data:

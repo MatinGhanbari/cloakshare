@@ -37,7 +37,7 @@ teamsRouter.get('/v1/org/members', sessionAuth, orgResolver, requirePermission('
       .from(orgMembers)
       .innerJoin(users, eq(orgMembers.userId, users.id))
       .where(eq(orgMembers.orgId, orgId))
-      .all(),
+      ,
     db.select()
       .from(orgInvites)
       .where(and(
@@ -46,7 +46,7 @@ teamsRouter.get('/v1/org/members', sessionAuth, orgResolver, requirePermission('
         isNull(orgInvites.revokedAt),
         gt(orgInvites.expiresAt, new Date().toISOString()),
       ))
-      .all(),
+      ,
   ]);
 
   return successResponse(c, {
@@ -91,8 +91,8 @@ teamsRouter.post('/v1/org/members/invite', sessionAuth, orgResolver, requirePerm
   }
 
   // Seat limit: check current member count against plan limit
-  const memberCount = await db.select({ count: count() }).from(orgMembers).where(eq(orgMembers.orgId, orgId)).get();
-  const pendingCount = await db.select({ count: count() }).from(orgInvites).where(and(eq(orgInvites.orgId, orgId), isNull(orgInvites.acceptedAt), isNull(orgInvites.revokedAt))).get();
+  const memberCount = await db.select({ count: count() }).from(orgMembers).where(eq(orgMembers.orgId, orgId)).limit(1).then((r) => r[0]);
+  const pendingCount = await db.select({ count: count() }).from(orgInvites).where(and(eq(orgInvites.orgId, orgId), isNull(orgInvites.acceptedAt), isNull(orgInvites.revokedAt))).limit(1).then((r) => r[0]);
   const totalSeats = (memberCount?.count ?? 0) + (pendingCount?.count ?? 0);
   if (totalSeats >= seatLimit.included) {
     return errorResponse(c, Errors.limitReached(`Your ${orgPlan} plan includes ${seatLimit.included} seats. Contact support for additional seats.`));
@@ -109,12 +109,12 @@ teamsRouter.post('/v1/org/members/invite', sessionAuth, orgResolver, requirePerm
   }
 
   // Check if already a member
-  const existingUser = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).get();
+  const existingUser = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1).then((r) => r[0]);
   if (existingUser) {
     const existingMember = await db.select({ id: orgMembers.id })
       .from(orgMembers)
       .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, existingUser.id)))
-      .get();
+      .limit(1).then((r) => r[0]);
     if (existingMember) {
       return errorResponse(c, Errors.validation('User is already a member of this organization'));
     }
@@ -129,7 +129,7 @@ teamsRouter.post('/v1/org/members/invite', sessionAuth, orgResolver, requirePerm
       isNull(orgInvites.acceptedAt),
       isNull(orgInvites.revokedAt),
     ))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (existingInvite) {
     return errorResponse(c, Errors.validation('An invite is already pending for this email'));
@@ -200,7 +200,7 @@ teamsRouter.post('/v1/org/invites/accept', sessionAuth, async (c) => {
       isNull(orgInvites.acceptedAt),
       isNull(orgInvites.revokedAt),
     ))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!invite) {
     return errorResponse(c, Errors.notFound('Invite'));
@@ -220,7 +220,7 @@ teamsRouter.post('/v1/org/invites/accept', sessionAuth, async (c) => {
   const existingMember = await db.select({ id: orgMembers.id })
     .from(orgMembers)
     .where(and(eq(orgMembers.orgId, invite.orgId), eq(orgMembers.userId, user.id)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (existingMember) {
     return errorResponse(c, Errors.validation('You are already a member of this organization'));
@@ -239,7 +239,7 @@ teamsRouter.post('/v1/org/invites/accept', sessionAuth, async (c) => {
     .set({ acceptedAt: new Date().toISOString() })
     .where(eq(orgInvites.id, invite.id));
 
-  const org = await db.select().from(organizations).where(eq(organizations.id, invite.orgId)).get();
+  const org = await db.select().from(organizations).where(eq(organizations.id, invite.orgId)).limit(1).then((r) => r[0]);
 
   logger.info({ orgId: invite.orgId, userId: user.id, role: invite.role }, 'Invite accepted');
 
@@ -269,7 +269,7 @@ teamsRouter.delete('/v1/org/invites/:id', sessionAuth, orgResolver, requirePermi
       isNull(orgInvites.acceptedAt),
       isNull(orgInvites.revokedAt),
     ))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!invite) {
     return errorResponse(c, Errors.notFound('Invite'));
@@ -299,7 +299,7 @@ teamsRouter.patch('/v1/org/members/:id/role', sessionAuth, orgResolver, requireP
   const member = await db.select()
     .from(orgMembers)
     .where(and(eq(orgMembers.id, memberId), eq(orgMembers.orgId, orgId)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!member) {
     return errorResponse(c, Errors.notFound('Member'));
@@ -347,7 +347,7 @@ teamsRouter.delete('/v1/org/members/:id', sessionAuth, orgResolver, requirePermi
   const member = await db.select()
     .from(orgMembers)
     .where(and(eq(orgMembers.id, memberId), eq(orgMembers.orgId, orgId)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!member) {
     return errorResponse(c, Errors.notFound('Member'));
@@ -415,7 +415,7 @@ teamsRouter.patch('/v1/org/settings', sessionAuth, orgResolver, requirePermissio
     const existing = await db.select({ id: organizations.id })
       .from(organizations)
       .where(eq(organizations.slug, slug))
-      .get();
+      .limit(1).then((r) => r[0]);
     if (existing && existing.id !== org.id) {
       return errorResponse(c, Errors.validation('This slug is already taken'));
     }
@@ -452,7 +452,7 @@ teamsRouter.post('/v1/org/transfer', sessionAuth, orgResolver, requirePermission
   const newOwnerMembership = await db.select()
     .from(orgMembers)
     .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, new_owner_id)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!newOwnerMembership) {
     return errorResponse(c, Errors.notFound('New owner must be an existing member'));
@@ -462,7 +462,7 @@ teamsRouter.post('/v1/org/transfer', sessionAuth, orgResolver, requirePermission
   const currentMembership = await db.select()
     .from(orgMembers)
     .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, user.id)))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!currentMembership) {
     return errorResponse(c, Errors.internal());

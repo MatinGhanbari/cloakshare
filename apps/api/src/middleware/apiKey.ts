@@ -19,7 +19,7 @@ export async function apiKeyAuth(c: Context<{ Variables: Record<string, any> }>,
     .select()
     .from(apiKeys)
     .where(eq(apiKeys.keyHash, keyHash))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!apiKey || apiKey.revokedAt) {
     return errorResponse(c, Errors.unauthorized());
@@ -29,7 +29,7 @@ export async function apiKeyAuth(c: Context<{ Variables: Record<string, any> }>,
     .select()
     .from(users)
     .where(eq(users.id, apiKey.userId))
-    .get();
+    .limit(1).then((r) => r[0]);
 
   if (!user) {
     return errorResponse(c, Errors.unauthorized());
@@ -40,7 +40,7 @@ export async function apiKeyAuth(c: Context<{ Variables: Record<string, any> }>,
     db.update(apiKeys)
       .set({ lastUsedAt: new Date().toISOString() })
       .where(eq(apiKeys.id, apiKey.id))
-      .run();
+      ;
   } catch {
     // Non-critical — don't block auth on lastUsedAt tracking failures
   }

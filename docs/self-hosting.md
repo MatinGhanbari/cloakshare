@@ -60,10 +60,15 @@ openssl rand -hex 32  # Use output for each secret below
 
 ### Database
 
+CloakShare uses **PostgreSQL**. For local development, start a database with
+`docker compose -f docker-compose.db.yml up -d` (the password is read from
+`POSTGRES_PASSWORD` in your environment). On Render, point `DATABASE_URL` at your
+Supabase connection string.
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DB_PROVIDER` | `sqlite` | `sqlite` (self-hosted) or `turso` (cloud) |
-| `SQLITE_PATH` | `./data/cloak.db` | Path to SQLite database file |
+| `DB_PROVIDER` | `postgres` | Always `postgres` |
+| `DATABASE_URL` | _(none)_ | PostgreSQL connection string, e.g. `postgresql://postgres:password@localhost:5432/cloak` (local) or the Supabase URL on Render |
 
 ### Storage
 

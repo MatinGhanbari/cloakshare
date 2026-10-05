@@ -28,7 +28,7 @@ async function claimJob() {
     .where(eq(renderingJobs.status, 'pending'))
     .orderBy(asc(renderingJobs.createdAt))
     .limit(1)
-    .get();
+    .then((r) => r[0]);
 
   if (!pendingJob) return null;
 
@@ -67,7 +67,7 @@ async function processJob(job: { id: string; linkId: string; sourceKey: string; 
       .select()
       .from(links)
       .where(eq(links.id, linkId))
-      .get();
+      .limit(1).then((r) => r[0]);
 
     if (!link) {
       logger.error({ jobId, linkId }, 'Link not found for rendering job');
@@ -86,7 +86,7 @@ async function processJob(job: { id: string; linkId: string; sourceKey: string; 
       db.update(renderingJobs)
         .set({ progress: JSON.stringify(progress) })
         .where(eq(renderingJobs.id, jobId))
-        .run();
+        ;
     };
 
     // Convert office documents to PDF before rendering
@@ -108,7 +108,7 @@ async function processJob(job: { id: string; linkId: string; sourceKey: string; 
         db.update(renderingJobs)
           .set({ progress: JSON.stringify(progress) })
           .where(eq(renderingJobs.id, jobId))
-          .run();
+          ;
       };
 
       const videoResult = await transcodeVideo(
@@ -153,7 +153,7 @@ async function processJob(job: { id: string; linkId: string; sourceKey: string; 
 
       // Send email notification
       const videoOwner = await db.select({ email: users.email }).from(users)
-        .where(eq(users.id, link.userId)).get();
+        .where(eq(users.id, link.userId)).limit(1).then((r) => r[0]);
       if (videoOwner) {
         sendLinkReadyNotification({
           ownerEmail: videoOwner.email,
@@ -202,7 +202,7 @@ async function processJob(job: { id: string; linkId: string; sourceKey: string; 
 
     // Send email notification to owner
     const owner = await db.select({ email: users.email }).from(users)
-      .where(eq(users.id, link.userId)).get();
+      .where(eq(users.id, link.userId)).limit(1).then((r) => r[0]);
     if (owner) {
       sendLinkReadyNotification({
         ownerEmail: owner.email,
