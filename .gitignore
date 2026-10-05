@@ -10,3 +10,5 @@ apps/api/data/
 
 .env
 .env.*
+!.env.example
+apps/site/.astro/
