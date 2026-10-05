@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { proxy } from 'hono/proxy';
 import { randomBytes } from 'crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -123,9 +125,13 @@ app.use('/v/s/*', async (c, next) => {
   // SPA-friendly CSP: allow the app's own bundled scripts/styles (served from /v on the
   // same origin) and block framing. The restrictive 'script-src none' from the old
   // server-rendered viewer would break the Vite SPA, so we scope it to 'self'.
+  // In development the page is served from :3000 while the Vite dev server (and therefore
+  // the HMR websocket) lives on another port, so connect-src is widened for localhost.
   c.header(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'",
+    config.isProd
+      ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'"
+      : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*; frame-ancestors 'none'",
   );
 });
 
@@ -278,6 +284,49 @@ app.notFound((c) => {
 });
 
 // ============================================
+// DEV GATEWAY — one origin (:3000) for the whole app
+// In development the dashboard and viewer are served by their own Vite dev servers so HMR
+// works. Instead of making the developer open two extra ports, the API proxies /dashboard/*
+// and /v/* to those servers: http://localhost:3000 is the only URL that ever needs to be
+// opened. Disabled in production, where the built SPAs are served from apps/api/public.
+// Registered before the static handlers so it takes precedence in development.
+// ============================================
+if (config.devProxy) {
+  const upstreams: Array<{ prefix: string; port: number; packageName: string }> = [
+    { prefix: '/dashboard', port: config.devServers.dashboardPort, packageName: '@cloak/web' },
+    { prefix: '/v', port: config.devServers.viewerPort, packageName: '@cloak/viewer' },
+  ];
+
+  for (const { prefix, port, packageName } of upstreams) {
+    const forward = async (c: Context) => {
+      const target = new URL(c.req.url);
+      target.protocol = 'http:';
+      target.hostname = '127.0.0.1';
+      target.port = String(port);
+
+      try {
+        return await proxy(target.toString(), { raw: c.req.raw });
+      } catch {
+        // The Vite dev server is not running (e.g. the API was started on its own).
+        // Say so explicitly rather than returning an empty page.
+        logger.warn({ packageName, port }, `Dev proxy target unreachable: ${packageName} on port ${port}`);
+        return c.html(
+          `<!doctype html><html><body style="font-family:system-ui;padding:2rem;max-width:40rem">` +
+            `<h1>${packageName} dev server is not running</h1>` +
+            `<p>Nothing is listening on <code>127.0.0.1:${port}</code>.</p>` +
+            `<p>Start the full stack with <code>pnpm dev</code> (or <code>pnpm --filter ${packageName} dev</code>), ` +
+            `then reload this page.</p></body></html>`,
+          503,
+        );
+      }
+    };
+
+    app.all(prefix, forward);
+    app.all(`${prefix}/*`, forward);
+  }
+}
+
+// ============================================
 // STATIC FRONTEND HOSTING (dashboard + viewer)
 // Served from the same origin so there are no cross-origin calls. At image build time the
 // built dashboard/viewer are copied into apps/api/public/{dashboard,viewer}. Paths resolve
@@ -302,21 +351,31 @@ try {
 // Root → dashboard
 app.get('/', (c) => c.redirect('/dashboard/', 302));
 
-// Dashboard SPA (Vite base /dashboard/)
-app.use('/dashboard/*', serveStatic({
-  root: staticRoot('dashboard'),
-  rewriteRequestPath: (p) => p.replace(/^\/dashboard/, '') || '/',
-}));
-app.get('/dashboard/*', (c) => c.html(dashboardIndex));
-app.get('/dashboard', (c) => c.redirect('/dashboard/', 302));
+// Dashboard SPA (Vite base /dashboard/). Only registered when a build is present, so the
+// dev gateway (or the 404 handler) takes over cleanly instead of serveStatic logging
+// "root path not found" on every start.
+if (dashboardIndex) {
+  app.use('/dashboard/*', serveStatic({
+    root: staticRoot('dashboard'),
+    rewriteRequestPath: (p) => p.replace(/^\/dashboard/, '') || '/',
+  }));
+  app.get('/dashboard/*', (c) => c.html(dashboardIndex));
+  app.get('/dashboard', (c) => c.redirect('/dashboard/', 302));
+} else if (!config.devProxy) {
+  logger.warn('No dashboard build found in apps/api/public/dashboard — run `pnpm build` or set DEV_PROXY=true.');
+}
 
 // Viewer SPA (Vite base /v/)
-app.use('/v/*', serveStatic({
-  root: staticRoot('viewer'),
-  rewriteRequestPath: (p) => p.replace(/^\/v/, '') || '/',
-}));
-app.get('/v/*', (c) => c.html(viewerIndex));
-app.get('/v', (c) => c.redirect('/v/', 302));
+if (viewerIndex) {
+  app.use('/v/*', serveStatic({
+    root: staticRoot('viewer'),
+    rewriteRequestPath: (p) => p.replace(/^\/v/, '') || '/',
+  }));
+  app.get('/v/*', (c) => c.html(viewerIndex));
+  app.get('/v', (c) => c.redirect('/v/', 302));
+} else if (!config.devProxy) {
+  logger.warn('No viewer build found in apps/api/public/viewer — run `pnpm build` or set DEV_PROXY=true.');
+}
 
 // ============================================
 // START SERVER

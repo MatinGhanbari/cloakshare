@@ -2,14 +2,30 @@ import type { CloakMode, StorageProvider, DatabaseProvider, Plan } from '@cloak/
 
 const INSECURE_DEFAULT = 'change-me-in-production';
 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
 export const config = {
   // Server
   port: parseInt(process.env.PORT || '3000', 10),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv: NODE_ENV,
   apiUrl: process.env.API_URL || 'http://localhost:3000',
   viewerUrl: process.env.VIEWER_URL || 'http://localhost:3000',
   dashboardUrl: process.env.DASHBOARD_URL || process.env.WEB_URL || 'http://localhost:3000',
   apiVersion: 'v1',
+
+  // Development gateway.
+  // The dashboard and viewer have their own Vite dev servers (so HMR works), but the
+  // developer should only ever have to open one URL. When enabled, the API reverse-proxies
+  // /dashboard/* and /v/* to those dev servers, so http://localhost:3000 serves the whole
+  // app. Only ever active when NODE_ENV=development — in production the built SPAs are
+  // served from apps/api/public, so the proxy is forced off there regardless of DEV_PROXY.
+  devProxy: NODE_ENV === 'development' && process.env.DEV_PROXY !== 'false',
+
+  // Internal ports of the Vite dev servers the dev gateway forwards to.
+  devServers: {
+    dashboardPort: parseInt(process.env.DASHBOARD_DEV_PORT || '5174', 10),
+    viewerPort: parseInt(process.env.VIEWER_DEV_PORT || '5173', 10),
+  },
 
   // Mode
   mode: (process.env.CLOAK_MODE || 'self-hosted') as CloakMode,
