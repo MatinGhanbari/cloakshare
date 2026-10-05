@@ -155,7 +155,7 @@ export default function Team() {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
+                className="bg-input border border-border rounded-md px-3 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
               >
                 <option value="viewer">Viewer</option>
                 <option value="member">Member</option>
