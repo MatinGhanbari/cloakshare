@@ -112,11 +112,20 @@
           <button id="prev-btn" class="nav-btn" disabled>&larr;</button>
           <span id="page-indicator" class="page-indicator">1 / 1</span>
           <button id="next-btn" class="nav-btn">&rarr;</button>
+          <span class="nav-divider"></span>
+          <button id="zoom-out-btn" class="nav-btn" title="Zoom out (&minus;)" aria-label="Zoom out">&minus;</button>
+          <span id="zoom-indicator" class="page-indicator">100%</span>
+          <button id="zoom-in-btn" class="nav-btn" title="Zoom in (+)" aria-label="Zoom in">&plus;</button>
+          <button id="zoom-fit-btn" class="nav-btn" title="Fit to width" aria-label="Fit to width">Fit</button>
         </div>
         <div class="viewer-header-right"></div>
       </header>
       <main id="viewer-body" class="viewer-body">
         <canvas id="doc-canvas"></canvas>
+        <div id="page-loading" class="page-loading" hidden>
+          <div class="page-loading-spinner"></div>
+          <span>Loading page…</span>
+        </div>
       </main>
       <!-- Fixed bottom-right badge per design system -->
       <div class="secured-badge">

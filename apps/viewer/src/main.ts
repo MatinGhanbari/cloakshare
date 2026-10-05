@@ -47,6 +47,11 @@ const $docName = document.getElementById('doc-name')!;
 const $prevBtn = document.getElementById('prev-btn') as HTMLButtonElement;
 const $nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
 const $pageIndicator = document.getElementById('page-indicator')!;
+const $pageLoading = document.getElementById('page-loading') as HTMLDivElement;
+const $zoomInBtn = document.getElementById('zoom-in-btn') as HTMLButtonElement;
+const $zoomOutBtn = document.getElementById('zoom-out-btn') as HTMLButtonElement;
+const $zoomFitBtn = document.getElementById('zoom-fit-btn') as HTMLButtonElement;
+const $zoomIndicator = document.getElementById('zoom-indicator')!;
 const $canvas = document.getElementById('doc-canvas') as HTMLCanvasElement;
 const $viewerBody = document.getElementById('viewer-body')!;
 
@@ -122,6 +127,12 @@ let currentScale = 1;
 const tileBitmaps = new Map<string, ImageBitmap>(); // `${page}:${col}-${row}` -> bitmap
 const tileHeaders = new Map<string, TileHeader>(); // `${page}:${col}-${row}` -> placement
 let scrollThrottle: ReturnType<typeof setTimeout> | null = null;
+
+// Zoom: a multiplier applied on top of fit-to-width.
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 4;
+const ZOOM_STEP = 1.25;
+let zoomFactor = 1;
 let trackingInterval: ReturnType<typeof setInterval> | null = null;
 let pageTimes: Record<number, number> = {};
 let pageStartTime = Date.now();
@@ -358,7 +369,9 @@ function renderPage(pageNum: number) {
   // Document pages arrive as WebSocket tiles, never as a whole-page image.
   if (!pageGeo || pageGeo.page !== pageNum) {
     // Geometry for this page is not known yet — request it; onPage() re-renders.
+    // Show the spinner meanwhile so navigation to an unloaded page is visible.
     requestPageTiles(pageNum);
+    updatePageLoading(pageNum);
     return;
   }
 
@@ -366,9 +379,10 @@ function renderPage(pageNum: number) {
   const ctx = $canvas.getContext('2d')!;
   const dpr = window.devicePixelRatio || 1;
 
-  // Size canvas to the page aspect, scaled to the container
+  // Size canvas to the page aspect, scaled to the container, times the zoom level
   const containerWidth = $viewerBody.clientWidth - 48; // padding
-  const scale = Math.min(1, containerWidth / geo.pageWidth);
+  const fitScale = containerWidth / geo.pageWidth;
+  const scale = fitScale * zoomFactor;
   currentScale = scale;
   const displayWidth = geo.pageWidth * scale;
   const displayHeight = geo.pageHeight * scale;
@@ -386,6 +400,7 @@ function renderPage(pageNum: number) {
   $pageIndicator.textContent = `${pageNum} / ${totalPages}`;
   $prevBtn.disabled = pageNum <= 1;
   $nextBtn.disabled = pageNum >= totalPages;
+  updatePageLoading();
 }
 
 /** Paint every tile we currently hold for `page` at its scaled position. */
@@ -427,6 +442,82 @@ function visibleImageRect() {
   const y = Math.max(0, Math.floor(topPx * toImage));
   const h = Math.max(1, Math.ceil((bottomPx - topPx) * toImage));
   return { x: 0, y, w: geo.pageWidth, h };
+}
+
+// ============================================
+// LOADING STATE
+// ============================================
+
+/** Has any tile for this page arrived yet? */
+function pageHasTiles(page: number): boolean {
+  const prefix = `${page}:`;
+  for (const key of tileBitmaps.keys()) {
+    if (key.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+/** Show the spinner while the given page has no tiles to draw yet. */
+function updatePageLoading(page: number = currentPage) {
+  $pageLoading.hidden = pageHasTiles(page);
+}
+
+// ============================================
+// ZOOM
+// ============================================
+
+function updateZoomIndicator() {
+  $zoomIndicator.textContent = `${Math.round(zoomFactor * 100)}%`;
+}
+
+function applyZoom(next: number) {
+  const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next));
+  if (Math.abs(clamped - zoomFactor) < 0.001) return;
+  zoomFactor = clamped;
+  updateZoomIndicator();
+  if (pageGeo) renderPage(pageGeo.page);
+  // A larger canvas exposes more of the page, so refresh the visible band.
+  requestPageTiles(currentPage, visibleImageRect());
+}
+
+function setupZoom() {
+  updateZoomIndicator();
+  $zoomInBtn.addEventListener('click', () => applyZoom(zoomFactor * ZOOM_STEP));
+  $zoomOutBtn.addEventListener('click', () => applyZoom(zoomFactor / ZOOM_STEP));
+  $zoomFitBtn.addEventListener('click', () => applyZoom(1));
+
+  // Ctrl/Cmd + wheel zooms, matching the usual document-viewer convention.
+  $viewerBody.addEventListener(
+    'wheel',
+    (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      applyZoom(e.deltaY < 0 ? zoomFactor * ZOOM_STEP : zoomFactor / ZOOM_STEP);
+    },
+    { passive: false },
+  );
+
+  document.addEventListener('keydown', (e) => {
+    if ($viewer.classList.contains('hidden')) return;
+    if (!e.ctrlKey && !e.metaKey) return;
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      applyZoom(zoomFactor * ZOOM_STEP);
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      applyZoom(zoomFactor / ZOOM_STEP);
+    } else if (e.key === '0') {
+      e.preventDefault();
+      applyZoom(1);
+    }
+  });
+}
+
+/** Warm the pages either side of the current one so navigation feels instant. */
+function preloadAdjacentPages(page: number) {
+  for (const neighbour of [page - 1, page + 1]) {
+    if (neighbour >= 1 && neighbour <= totalPages) requestPageTiles(neighbour);
+  }
 }
 
 /**
@@ -841,6 +932,8 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     renderPage(currentPage);
     // Ask for just the visible band now that the page geometry is known.
     requestPageTiles(currentPage, visibleImageRect());
+    // Warm the neighbouring pages for instant navigation.
+    preloadAdjacentPages(currentPage);
   };
 
   tileStream.onTile = (header, bitmap) => {
@@ -848,7 +941,10 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     if (tileBitmaps.has(key)) return; // already held
     tileBitmaps.set(key, bitmap);
     tileHeaders.set(key, header);
-    if (header.page === currentPage) drawTiles(header.page);
+    if (header.page === currentPage) {
+      drawTiles(header.page);
+      updatePageLoading();
+    }
   };
 
   tileStream.onError = (code, message) => {
@@ -875,6 +971,7 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
 
   setupNavigation();
   setupProtections();
+  setupZoom();
 
   // Start tracking (5-second interval per spec)
   trackingInterval = setInterval(() => {

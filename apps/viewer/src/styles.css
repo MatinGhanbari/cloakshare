@@ -400,6 +400,65 @@ html, body {
   border-color: var(--text-tertiary);
 }
 
+/* Zoom controls sit in the same group as the page navigation. */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--border-default);
+}
+
+#zoom-fit-btn {
+  width: auto;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+#zoom-indicator {
+  min-width: 44px;
+  text-align: center;
+}
+
+/* Per-page loading state — shown while a page's tiles are still arriving. */
+.page-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-base, #0b0b0f);
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 13px;
+  z-index: 5;
+}
+
+.page-loading[hidden] {
+  display: none;
+}
+
+.page-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border-default, #2a2a33);
+  border-top-color: var(--text-primary, #fafafa);
+  border-radius: 50%;
+  animation: cloak-spin 700ms linear infinite;
+}
+
+@keyframes cloak-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loading-spinner {
+    animation-duration: 2s;
+  }
+}
+
 .nav-btn:disabled {
   opacity: 0.25;
   cursor: not-allowed;
