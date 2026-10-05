@@ -128,7 +128,12 @@
           <button id="zoom-in-btn" class="nav-btn" title="Zoom in (+)" aria-label="Zoom in">&plus;</button>
           <button id="zoom-fit-btn" class="nav-btn" title="Fit to width" aria-label="Fit to width">Fit</button>
         </div>
-        <div class="viewer-header-right"></div>
+        <div class="viewer-header-right">
+          <button id="theme-toggle" class="nav-btn" type="button" title="Switch light / dark theme" aria-label="Switch light or dark theme">
+            <svg id="theme-icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            <svg id="theme-icon-sun" class="hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </button>
+        </div>
       </header>
       <main id="viewer-body" class="viewer-body">
         <canvas id="doc-canvas"></canvas>

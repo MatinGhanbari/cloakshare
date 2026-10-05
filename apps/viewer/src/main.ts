@@ -4,6 +4,7 @@
 
 import Hls from 'hls.js';
 import { TileStream, type PageGeometry, type TileHeader } from './tiles';
+import { initTheme, setupThemeToggle } from './theme';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -134,6 +135,7 @@ let currentScale = 1;
 const tileBitmaps = new Map<string, ImageBitmap>(); // `${page}:${col}-${row}` -> bitmap
 const tileHeaders = new Map<string, TileHeader>(); // `${page}:${col}-${row}` -> placement
 let scrollThrottle: ReturnType<typeof setTimeout> | null = null;
+let rateLimitRetries = 0;
 
 // Zoom: a multiplier applied on top of fit-to-width.
 const ZOOM_MIN = 0.5;
@@ -462,8 +464,16 @@ function drawTiles(page: number) {
 }
 
 /** Ask the server for the tiles covering the page (or the visible band, if known). */
+let lastRequestKey = '';
 function requestPageTiles(page: number, rect?: { x: number; y: number; w: number; h: number }) {
   if (!tileStream) return;
+  // The scroll handler fires often. Skip a request that is effectively the same viewport as
+  // the previous one so we do not burn the per-session request budget for nothing.
+  const key = rect
+    ? `${page}:${Math.round(rect.x)}:${Math.round(rect.y)}:${Math.round(rect.w)}:${Math.round(rect.h)}`
+    : `${page}:full`;
+  if (key === lastRequestKey) return;
+  lastRequestKey = key;
   tileStream.requestPage(page, rect);
 }
 
@@ -978,6 +988,7 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   tileStream.onTile = (header, bitmap) => {
     const key = `${header.page}:${header.col}-${header.row}`;
     if (tileBitmaps.has(key)) return; // already held
+    rateLimitRetries = 0; // a successful tile clears the back-off counter
     tileBitmaps.set(key, bitmap);
     tileHeaders.set(key, header);
     if (header.page === currentPage) {
@@ -989,10 +1000,18 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   tileStream.onError = (code, message) => {
     console.error('[tiles]', code, message);
     if (code === 'RATE_LIMITED') {
-      // Server budget exhausted — back off and retry the current page.
-      setTimeout(() => {
-        if (session) requestPageTiles(currentPage);
-      }, 3000);
+      // Back off progressively and give up rather than retrying forever — a tight retry loop
+      // against a rate-limited session is what exhausted the server's resources before.
+      rateLimitRetries += 1;
+      if (rateLimitRetries > 4) {
+        console.warn('[tiles] still rate limited after several retries; stopping');
+        return;
+      }
+      lastRequestKey = ''; // allow the retry through the de-duplication guard
+      setTimeout(
+        () => requestPageTiles(currentPage, visibleImageRect()),
+        2000 * rateLimitRetries,
+      );
     }
   };
 
@@ -1185,5 +1204,7 @@ async function init() {
   }
 }
 
-// Boot
+// Boot — apply the theme first so the gate and the viewer paint in the right palette.
+initTheme();
+setupThemeToggle();
 init();

@@ -48,6 +48,45 @@
   /* Fonts */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
   --font-sans: 'JetBrains Mono', monospace; /* Viewer uses mono throughout for that terminal feel */
+
+  color-scheme: dark;
+}
+
+/*
+ * Light theme. Every colour is already a variable, so switching is a single override block
+ * keyed off `data-theme="light"` on <html>.
+ */
+[data-theme='light'] {
+  --bg-root: #f4f4f5;
+  --bg-surface: #ffffff;
+  --bg-elevated: #fafafa;
+  --bg-hover: #eaeaec;
+  --bg-input: #ffffff;
+
+  --border-default: #e4e4e7;
+  --border-subtle: #efeff1;
+  --border-hover: rgba(0, 128, 63, 0.3);
+
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-tertiary: #71717a;
+  --text-inverse: #fafafa;
+
+  /* The neon accent is unreadable on white; #00803F scores 5.05:1 against white,
+     which passes WCAG AA both as text on the page and as a button background. */
+  --accent: #00803f;
+  --accent-hover: #006b34;
+  --accent-muted: rgba(0, 128, 63, 0.12);
+
+  --error: #dc2626;
+  --warning: #b45309;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(0, 128, 63, 0.12);
+
+  color-scheme: light;
 }
 
 html, body {
@@ -428,7 +467,7 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: var(--bg-base, #0b0b0f);
+  background: var(--bg-root);
   color: var(--text-secondary, #a1a1aa);
   font-size: 13px;
   z-index: 5;
