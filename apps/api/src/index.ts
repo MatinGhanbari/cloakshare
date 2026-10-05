@@ -28,6 +28,7 @@ import domainsRouter from './routes/domains.js';
 import gdprRouter from './routes/gdpr.js';
 import embedRouter from './routes/embed.js';
 import teamsRouter from './routes/teams.js';
+import groupsRouter from './routes/groups.js';
 import auditRouter from './routes/audit.js';
 import notificationsRouter from './routes/notifications.js';
 import demoRouter from './routes/demo.js';
@@ -178,6 +179,9 @@ app.route('/', embedRouter);
 
 // Teams & org management
 app.route('/', teamsRouter);
+
+// Viewer groups & credentials (restricted link access)
+app.route('/', groupsRouter);
 
 // Audit log
 app.route('/', auditRouter);
