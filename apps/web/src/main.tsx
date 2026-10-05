@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './lib/auth';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Links from './pages/Links';
+import Upload from './pages/Upload';
+import Groups from './pages/Groups';
 import LinkDetail from './pages/LinkDetail';
 import ApiKeys from './pages/ApiKeys';
 import Settings from './pages/Settings';
@@ -49,6 +51,8 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Links />} />
             <Route path="links" element={<Links />} />
+            <Route path="upload" element={<Upload />} />
+            <Route path="groups" element={<Groups />} />
             <Route path="links/:id" element={<LinkDetail />} />
             <Route path="api-keys" element={<ApiKeys />} />
             <Route path="team" element={<Team />} />
