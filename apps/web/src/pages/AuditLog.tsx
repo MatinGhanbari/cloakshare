@@ -62,7 +62,7 @@ export default function AuditLog() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
           <p className="text-text-secondary font-sans text-sm mb-2">Audit log requires a Growth or Scale plan.</p>
-          <a href="/dashboard/billing" className="text-accent text-sm font-sans font-medium hover:text-accent-hover transition-colors duration-150">
+          <a href="/billing" className="text-accent text-sm font-sans font-medium hover:text-accent-hover transition-colors duration-150">
             Upgrade your plan
           </a>
         </div>

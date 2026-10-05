@@ -2,7 +2,10 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { randomBytes } from 'crypto';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { config } from './lib/config.js';
 import { logger } from './lib/logger.js';
 import { AppError, errorResponse } from './lib/errors.js';
@@ -77,7 +80,7 @@ app.use('/v1/time', cors({
 app.use('*', cors({
   origin: config.isDev
     ? (origin: string) => origin || '*'
-    : [config.viewerUrl, config.apiUrl, ...config.corsOrigins],
+    : [config.apiUrl, ...config.corsOrigins],
   credentials: true,
   allowHeaders: ['Content-Type', 'Authorization', 'X-Session-Token', 'X-Org-Id', 'X-Request-Id'],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -112,12 +115,18 @@ app.use('*', async (c, next) => {
   }, `${c.req.method} ${c.req.path} ${c.res.status} ${ms}ms`);
 });
 
-// Security headers for viewer routes
-app.use('/s/*', async (c, next) => {
+// Security headers for viewer routes (the viewer SPA is now served under /v)
+app.use('/v/s/*', async (c, next) => {
   await next();
   c.header('Permissions-Policy', 'display-capture=()');
   c.header('X-Frame-Options', 'DENY');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'none'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'");
+  // SPA-friendly CSP: allow the app's own bundled scripts/styles (served from /v on the
+  // same origin) and block framing. The restrictive 'script-src none' from the old
+  // server-rendered viewer would break the Vite SPA, so we scope it to 'self'.
+  c.header(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'",
+  );
 });
 
 app.use('/embed/*', async (c, next) => {
@@ -267,6 +276,47 @@ app.notFound((c) => {
     404,
   );
 });
+
+// ============================================
+// STATIC FRONTEND HOSTING (dashboard + viewer)
+// Served from the same origin so there are no cross-origin calls. At image build time the
+// built dashboard/viewer are copied into apps/api/public/{dashboard,viewer}. Paths resolve
+// relative to this module file, so they work regardless of the process CWD.
+// ============================================
+const staticRoot = (sub: string) =>
+  fileURLToPath(new URL(`../public/${sub}`, import.meta.url));
+
+let dashboardIndex = '';
+let viewerIndex = '';
+try {
+  dashboardIndex = readFileSync(fileURLToPath(new URL('../public/dashboard/index.html', import.meta.url)), 'utf-8');
+} catch {
+  dashboardIndex = '';
+}
+try {
+  viewerIndex = readFileSync(fileURLToPath(new URL('../public/viewer/index.html', import.meta.url)), 'utf-8');
+} catch {
+  viewerIndex = '';
+}
+
+// Root → dashboard
+app.get('/', (c) => c.redirect('/dashboard/', 302));
+
+// Dashboard SPA (Vite base /dashboard/)
+app.use('/dashboard/*', serveStatic({
+  root: staticRoot('dashboard'),
+  rewriteRequestPath: (p) => p.replace(/^\/dashboard/, '') || '/',
+}));
+app.get('/dashboard/*', (c) => c.html(dashboardIndex));
+app.get('/dashboard', (c) => c.redirect('/dashboard/', 302));
+
+// Viewer SPA (Vite base /v/)
+app.use('/v/*', serveStatic({
+  root: staticRoot('viewer'),
+  rewriteRequestPath: (p) => p.replace(/^\/v/, '') || '/',
+}));
+app.get('/v/*', (c) => c.html(viewerIndex));
+app.get('/v', (c) => c.redirect('/v/', 302));
 
 // ============================================
 // START SERVER

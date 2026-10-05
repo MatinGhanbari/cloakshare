@@ -20,7 +20,7 @@ export default function Login() {
     try {
       await login(email, password);
       trackLogin(email);
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Login failed');
     } finally {

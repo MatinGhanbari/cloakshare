@@ -4,6 +4,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.VITE_APP_BASE || '/dashboard/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

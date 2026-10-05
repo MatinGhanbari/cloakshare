@@ -20,7 +20,13 @@
  * Plaintext inside:    [4-byte BE header length][header JSON][webp bytes]
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined'
+    ? window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000'
+      : window.location.origin
+    : 'http://localhost:3000');
 
 export interface TileHeader {
   page: number;

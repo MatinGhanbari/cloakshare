@@ -75,7 +75,7 @@ export default function LinkDetail() {
         setLink(linkData);
         setAnalytics(analyticsData);
       })
-      .catch(() => navigate('/dashboard/links'))
+      .catch(() => navigate('/links'))
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
@@ -135,7 +135,7 @@ export default function LinkDetail() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <button onClick={() => navigate('/dashboard/links')} className="text-xs text-text-tertiary font-sans hover:text-text-secondary transition-colors duration-150 mb-2 block">
+          <button onClick={() => navigate('/links')} className="text-xs text-text-tertiary font-sans hover:text-text-secondary transition-colors duration-150 mb-2 block">
             &larr; Back to links
           </button>
           <h1 className="font-sans font-semibold text-xl text-foreground">{link.name || <span className="font-mono">{link.id}</span>}</h1>

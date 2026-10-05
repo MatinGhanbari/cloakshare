@@ -47,7 +47,7 @@ export default function Register() {
             </div>
 
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/')}
               className="w-full bg-accent text-background font-sans font-medium text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors"
             >
               Go to Dashboard

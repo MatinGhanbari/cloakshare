@@ -6,7 +6,13 @@ import Hls from 'hls.js';
 import { TileStream, type PageGeometry, type TileHeader } from './tiles';
 import { initTheme, setupThemeToggle } from './theme';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined'
+    ? window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000'
+      : window.location.origin
+    : 'http://localhost:3000');
 
 // DOM elements
 const $loading = document.getElementById('loading')!;
@@ -168,7 +174,9 @@ let videoWatermarkRaf = 0;
 
 function getToken(): string | null {
   const path = window.location.pathname;
-  const match = path.match(/^\/s\/(.+)$/);
+  // The viewer is mounted under a base path (e.g. /v), so the link id lives at
+  // /<base>/s/<id>. Match the trailing /s/<id> segment regardless of the prefix.
+  const match = path.match(/\/s\/(.+)$/);
   return match ? match[1] : null;
 }
 
