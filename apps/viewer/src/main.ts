@@ -576,11 +576,14 @@ function setupZoom() {
   });
 }
 
-/** Warm the pages either side of the current one so navigation feels instant. */
+/**
+ * Warm the page after the current one so forward navigation is instant.
+ * Only the next page is preloaded: reading is overwhelmingly forward, and preloading both
+ * directions doubled the per-session page budget for no real benefit.
+ */
 function preloadAdjacentPages(page: number) {
-  for (const neighbour of [page - 1, page + 1]) {
-    if (neighbour >= 1 && neighbour <= totalPages) requestPageTiles(neighbour);
-  }
+  const next = page + 1;
+  if (next >= 1 && next <= totalPages) requestPageTiles(next);
 }
 
 /**
@@ -991,10 +994,16 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   tileStream = new TileStream();
 
   tileStream.onPage = (geo) => {
+    // The server sends a `page` message for EVERY viewport request, including the ones we
+    // fire to preload a neighbouring page. Treating a preload's geometry as the current
+    // page's made renderPage() believe it had no geometry for the page on screen, so it
+    // re-requested it — which preloaded again — a ping-pong that burned the whole
+    // per-session request budget in seconds and left the viewer stuck on a spinner.
+    if (geo.page !== currentPage) return;
+
     pageGeo = geo;
     renderPage(currentPage);
-    // Warm the neighbouring pages so navigation is instant. Their tiles land in the cache
-    // without ever being revealed for the page currently on screen.
+    // Warm the next page so forward navigation is instant.
     preloadAdjacentPages(currentPage);
   };
 
@@ -1035,13 +1044,16 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     }
 
     if (code === 'RATE_LIMITED') {
+      // The budget refills every minute, so the current page is worth retrying — but slowly,
+      // and never the preload, so the retry itself cannot keep the budget exhausted.
+      // A tight loop here is what previously hammered the server.
       rateLimitRetries += 1;
-      if (rateLimitRetries > 4) {
-        console.warn('[tiles] still rate limited after several retries; stopping');
+      if (rateLimitRetries > 12) {
+        console.warn('[tiles] still rate limited; giving up on this page');
         return;
       }
       lastRequestKey = ''; // allow the retry through the de-duplication guard
-      setTimeout(() => requestPageTiles(currentPage, visibleImageRect()), 2000 * rateLimitRetries);
+      setTimeout(() => requestPageTiles(currentPage), 10_000);
     }
   };
 
