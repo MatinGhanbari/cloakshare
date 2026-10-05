@@ -17,6 +17,19 @@ export default function LinkDetail() {
   const [accessGroupId, setAccessGroupId] = useState('');
   const [savingAccess, setSavingAccess] = useState(false);
   const [accessSaved, setAccessSaved] = useState(false);
+  
+  const splitDuration = (totalSeconds = 0) => {
+    const secs = Math.max(0, Math.floor(totalSeconds));
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+
+    if (h > 0) return { primary: `${h}h`, secondary: m > 0 ? `${m}m` : null };
+    if (m > 0) return { primary: `${m}m`, secondary: s > 0 ? `${s}s` : null };
+    return { primary: `${s}s`, secondary: null };
+  };
+
+  const { primary, secondary } = splitDuration(analytics?.avg_duration);
 
   useEffect(() => {
     groupsApi
@@ -191,20 +204,30 @@ export default function LinkDetail() {
         </div>
       )}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-surface border border-border rounded-lg p-5 card-glow">
-          <p className="text-xs text-text-tertiary font-sans uppercase tracking-wider mb-1">Total Views</p>
-          <p className="text-2xl font-mono font-semibold text-foreground tabular-nums">{link.view_count}</p>
-        </div>
-        <div className="bg-surface border border-border rounded-lg p-5 card-glow">
-          <p className="text-xs text-text-tertiary font-sans uppercase tracking-wider mb-1">Unique Viewers</p>
-          <p className="text-2xl font-mono font-semibold text-foreground tabular-nums">{analytics?.unique_viewers ?? 0}</p>
-        </div>
-        <div className="bg-surface border border-border rounded-lg p-5 card-glow">
-          <p className="text-xs text-text-tertiary font-sans uppercase tracking-wider mb-1">{link.file_type === 'video' ? 'Avg Watch Time' : 'Avg Duration'}</p>
-          <p className="text-2xl font-mono font-semibold text-foreground tabular-nums">{analytics?.avg_duration ?? 0}s</p>
-        </div>
+      {/* Stats. Data breathes in the open, without a container per number. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile
+          label="Total views"
+          value={link.view_count}
+          icon={<EyeIcon size={14} />}
+        />
+        <StatTile
+          label="Unique viewers"
+          value={analytics?.unique_viewers ?? 0}
+          icon={<LockIcon size={14} />}
+        />
+        <StatTile
+          label={isVideo ? 'Avg watch time' : 'Avg duration'}
+          icon={<ClockIcon size={14} />}
+          value={
+            <span className="inline-flex items-baseline gap-1 tabular-nums">
+              <span className="text-2xl font-semibold text-foreground">{primary}</span>
+              {secondary && (
+                <span className="text-sm font-medium text-muted-foreground">{secondary}</span>
+              )}
+            </span>
+          }
+        />
       </div>
 
       {/* Secure URL */}
