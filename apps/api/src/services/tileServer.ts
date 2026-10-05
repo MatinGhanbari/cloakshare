@@ -48,6 +48,12 @@ const MAX_TILES_PER_REQUEST = 48;
  *  costs a bounded number of new tiles per minute. */
 const NEW_TILES_PER_MINUTE = Number(process.env.TILE_RATE_LIMIT ?? 60);
 const NEW_PAGES_PER_MINUTE = Number(process.env.PAGE_RATE_LIMIT ?? 3);
+/**
+ * Safety valve on TOTAL viewport requests. Re-requesting a page the viewer has already seen
+ * is free (so scrolling is cheap), which would otherwise let a client hammer the same page
+ * without limit and exhaust server resources.
+ */
+const VIEWPORT_REQUESTS_PER_MINUTE = Number(process.env.VIEWPORT_RATE_LIMIT ?? 60);
 
 const WINDOW_MS = 60_000;
 
@@ -61,6 +67,7 @@ interface SessionState {
   seenPages: Set<number>;
   newTiles: Budget;
   newPages: Budget;
+  requests: Budget;
 }
 
 const sessionState = new Map<string, SessionState>();
@@ -186,6 +193,7 @@ async function readTile(
   row: number,
   pageWidth: number,
   pageHeight: number,
+  source: Buffer,
 ): Promise<{ bytes: Buffer; cached: boolean }> {
   const storage = createStorage();
   const tileKey = `watermarked/${linkId}/${sessionId}/tiles/${page}/${col}-${row}.webp`;
@@ -194,10 +202,10 @@ async function readTile(
     return { bytes: Buffer.from(await storage.download(tileKey)), cached: true };
   }
 
-  // The per-viewer watermarked page is the only source we ever slice from.
-  const sourceKey = `watermarked/${linkId}/${sessionId}/page-${page}.webp`;
-  const source = Buffer.from(await storage.download(sourceKey));
-
+  // Slice from the watermarked page held in memory by the caller.
+  // Reading it once per request instead of once per tile matters: a 1600x2263 page is
+  // ~500 KB, and re-reading it for each of ~20 tiles exhausted the file-descriptor limit
+  // under concurrent viewport requests (EMFILE: too many open files).
   const left = col * TILE_SIZE;
   const top = row * TILE_SIZE;
   const width = Math.min(TILE_SIZE, pageWidth - left);
@@ -253,6 +261,7 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
     seenPages: new Set<number>(),
     newTiles: { count: 0, windowStart: Date.now() },
     newPages: { count: 0, windowStart: Date.now() },
+    requests: { count: 0, windowStart: Date.now() },
   };
   sessionState.set(session.id, state);
 
@@ -339,6 +348,18 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
     // TypeScript will not keep the narrowing above across the awaits below.
     const tc: TransportCrypto = transport;
 
+    // Safety valve on total requests, independent of the new-page and new-tile budgets.
+    if (!charge(state.requests, VIEWPORT_REQUESTS_PER_MINUTE)) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          code: 'RATE_LIMITED',
+          message: `Too many page requests. Limit is ${VIEWPORT_REQUESTS_PER_MINUTE} per minute.`,
+        }),
+      );
+      return;
+    }
+
     const page = Math.trunc(Number(msg.page));
     if (!Number.isFinite(page) || page < 1 || page > (link.pageCount || 0)) {
       ws.send(JSON.stringify({ type: 'error', code: 'BAD_REQUEST', message: 'Page out of range' }));
@@ -367,7 +388,9 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
 
       const storage = createStorage();
       const sourceKey = `watermarked/${linkId}/${session.id}/page-${page}.webp`;
-      const meta = await sharp(Buffer.from(await storage.download(sourceKey))).metadata();
+      // Read the watermarked page ONCE per request and reuse the buffer for every tile.
+      const source = Buffer.from(await storage.download(sourceKey));
+      const meta = await sharp(source).metadata();
       const pageWidth = meta.width ?? 0;
       const pageHeight = meta.height ?? 0;
       if (!pageWidth || !pageHeight) {
@@ -408,7 +431,16 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
             return;
           }
 
-          const tile = await readTile(linkId, session.id, page, col, row, pageWidth, pageHeight);
+          const tile = await readTile(
+            linkId,
+            session.id,
+            page,
+            col,
+            row,
+            pageWidth,
+            pageHeight,
+            source,
+          );
           ws.send(
             sealFrame(
               encodeTileFrame(
