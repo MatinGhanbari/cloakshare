@@ -242,6 +242,15 @@ export const linksApi = {
     request<{ id: string; status: string; revoked_at: string }>(`/v1/links/${id}`, {
       method: 'DELETE',
     }),
+
+  /**
+   * Delete the link and everything it owns: the record, its view history, the viewer sessions and
+   * the rendered pages in storage. Unlike revoking, this cannot be undone.
+   */
+  purge: (id: string) =>
+    request<{ id: string; deleted: boolean; storage_cleaned: boolean }>(`/v1/links/${id}/permanent`, {
+      method: 'DELETE',
+    }),
 };
 
 // Viewer groups — academic access control

@@ -98,6 +98,7 @@ export const WEBHOOK_EVENTS = [
   'link.viewed',
   'link.expired',
   'link.revoked',
+  'link.deleted',
   'link.ready',
   'link.render_failed',
   'link.max_views_reached',

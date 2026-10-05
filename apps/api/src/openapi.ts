@@ -366,7 +366,7 @@ export const openApiSpec = {
                 type: 'object',
                 properties: {
                   url: { type: 'string', format: 'uri', example: 'https://your-app.com/webhook' },
-                  events: { type: 'array', items: { type: 'string', enum: ['link.created', 'link.viewed', 'link.expired', 'link.revoked', 'link.ready', 'link.render_failed'] } },
+                  events: { type: 'array', items: { type: 'string', enum: ['link.created', 'link.viewed', 'link.expired', 'link.revoked', 'link.deleted', 'link.ready', 'link.render_failed', 'link.max_views_reached', 'link.password_failed'] } },
                 },
                 required: ['url', 'events'],
               },

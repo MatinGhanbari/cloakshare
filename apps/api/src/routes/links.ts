@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { eq, and, desc, count } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { links, views, renderingJobs, viewerGroups } from '../db/schema.js';
+import { links, views, renderingJobs, viewerSessions, notifications, viewerGroups } from '../db/schema.js';
 import { apiKeyAuth } from '../middleware/apiKey.js';
 import { enforceUsageLimits } from '../middleware/usage.js';
 import { rateLimiter } from '../middleware/rateLimit.js';
@@ -629,6 +629,92 @@ linksRouter.delete('/v1/links/:id', apiKeyAuth, async (c) => {
     id: linkId,
     status: 'revoked',
     revoked_at: now,
+  });
+});
+
+// ============================================
+// DELETE /v1/links/:id/permanent — Delete a link and everything belonging to it
+// ============================================
+
+/**
+ * Hard delete. `DELETE /v1/links/:id` only revokes, which stops access but keeps the link, its
+ * analytics and its rendered pages; this removes them for good.
+ *
+ * Order matters here. The webhook has to be dispatched while the row still exists (dispatchWebhook
+ * looks the link up to find its owner and returns silently if it is gone), the dependent rows have
+ * to be deleted before the link (none of them declare ON DELETE CASCADE), and the storage sweep
+ * comes last because it is the slow part.
+ *
+ * Deliberately kept: audit entries (the record of who did what must not be erasable by deleting the
+ * thing it describes) and notifications, which are the owner's own history and carry a denormalised
+ * link name, so they are detached rather than deleted.
+ */
+linksRouter.delete('/v1/links/:id/permanent', apiKeyAuth, async (c) => {
+  const user = c.get('user') as { id: string };
+  const orgId = c.get('orgId') as string | undefined;
+  const linkId = c.req.param('id');
+
+  const ownerCondition = orgId ? eq(links.orgId, orgId) : eq(links.userId, user.id);
+  const link = await db
+    .select()
+    .from(links)
+    .where(and(eq(links.id, linkId), ownerCondition))
+    .limit(1).then((r) => r[0]);
+
+  if (!link) {
+    return errorResponse(c, Errors.notFound('Link'));
+  }
+
+  // The uploaded original lives at temp/<uploadId>/<filename>, outside renders/<linkId>/, and the
+  // renderer only removes it once a render finishes — so an unfinished or failed job leaves it
+  // behind. Capture the keys before the job rows go.
+  const jobs = await db
+    .select({ sourceKey: renderingJobs.sourceKey })
+    .from(renderingJobs)
+    .where(eq(renderingJobs.linkId, linkId));
+
+  await dispatchWebhook(linkId, 'link.deleted', {
+    file_type: link.fileType,
+    page_count: link.pageCount,
+  }).catch((err) => logger.warn({ err, linkId }, 'Webhook dispatch failed'));
+
+  // No ON DELETE CASCADE on any of these, so they go first or the link delete fails on the FK.
+  await db.delete(views).where(eq(views.linkId, linkId));
+  await db.delete(viewerSessions).where(eq(viewerSessions.linkId, linkId));
+  await db.delete(renderingJobs).where(eq(renderingJobs.linkId, linkId));
+  await db.update(notifications).set({ linkId: null }).where(eq(notifications.linkId, linkId));
+
+  await db.delete(links).where(eq(links.id, linkId));
+
+  logger.info({ linkId, userId: user.id, fileType: link.fileType }, 'Link deleted permanently');
+
+  logAudit({
+    ...auditorFromContext(c),
+    action: 'link.deleted',
+    resourceType: 'link',
+    resourceId: linkId,
+    resourceLabel: link.name || link.originalFilename || linkId,
+    metadata: { file_type: link.fileType, page_count: link.pageCount, status: link.status },
+  });
+
+  // Best-effort sweep of everything the link owned. The rows above are what make the link
+  // reachable, so it is already gone either way; a sweep that fails leaves unreferenced objects
+  // behind, which is reported rather than hidden.
+  const storage = createStorage();
+  const prefixes = [`renders/${linkId}/`, `watermarked/${linkId}/`];
+  const results = await Promise.allSettled([
+    ...prefixes.map((prefix) => storage.deletePrefix(prefix)),
+    ...jobs.map((job) => storage.delete(job.sourceKey)),
+  ]);
+  const failed = results.filter((r) => r.status === 'rejected').length;
+  if (failed > 0) {
+    logger.error({ linkId, failed }, 'Link deleted but storage cleanup was incomplete');
+  }
+
+  return successResponse(c, {
+    id: linkId,
+    deleted: true,
+    storage_cleaned: failed === 0,
   });
 });
 
