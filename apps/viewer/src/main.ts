@@ -406,10 +406,12 @@ function setupGate(meta: LinkMetadata) {
   }
 
   // Title
-  $gateTitle.textContent = meta.name ? `View "${meta.name}"` : 'View document';
-  $gateSubtitle.textContent = meta.requires_credentials
-    ? `Sign in with your student ID to open this document${
-        meta.access_group_name ? ` — ${meta.access_group_name}` : ''
+  $gateTitle.innerHTML = meta.name ? `"${meta.name}"` : 'View document';
+  $gateSubtitle.innerHTML = meta.requires_credentials
+    ? `Sign in with your student ID to open this document
+      </br>
+      ${
+        meta.access_group_name ? `${meta.access_group_name}` : ''
       }.`
     : meta.require_email
       ? 'Enter your email to access this document.'
