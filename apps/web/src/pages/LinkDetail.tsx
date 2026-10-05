@@ -45,6 +45,26 @@ export default function LinkDetail() {
     }
   };
 
+  /** Temporarily pause or resume the link without revoking it. */
+  const [savingState, setSavingState] = useState(false);
+  const toggleDisabled = async () => {
+    if (!link) return;
+    setSavingState(true);
+    try {
+      const next = !link.disabled;
+      await linksApi.setState(link.id, next);
+      setLink({
+        ...link,
+        disabled: next,
+        disabled_at: next ? new Date().toISOString() : null,
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not change the link state');
+    } finally {
+      setSavingState(false);
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     Promise.all([
@@ -200,6 +220,37 @@ export default function LinkDetail() {
         </div>
         <div className="bg-input border border-border rounded-md p-3">
           <code className="text-sm text-text-secondary font-mono break-all select-all">{link.secure_url}</code>
+        </div>
+      </div>
+
+      {/* Link state */}
+      <div className="bg-surface border border-border rounded-lg p-5 mb-8">
+        <h2 className="font-sans font-medium text-sm text-foreground mb-1">Link state</h2>
+        <p className="text-xs text-text-tertiary font-sans mb-4">
+          Disabling pauses the link temporarily — viewers see an "unavailable" message. The link
+          keeps its expiry and settings, so re-enabling restores exactly what it was. To end access
+          permanently, revoke it instead.
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void toggleDisabled()}
+            disabled={savingState || link.status === 'revoked'}
+            className={`font-sans font-medium text-sm px-4 py-2.5 rounded-md transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+              link.disabled
+                ? 'bg-accent text-background hover:bg-accent-hover'
+                : 'border border-border hover:bg-hover'
+            }`}
+          >
+            {savingState ? 'Saving…' : link.disabled ? 'Enable link' : 'Disable link'}
+          </button>
+          <span className="text-xs font-sans text-text-tertiary">
+            {link.status === 'revoked'
+              ? 'Revoked links cannot be re-enabled.'
+              : link.disabled
+                ? 'Currently disabled — viewers cannot open it.'
+                : 'Currently enabled.'}
+          </span>
         </div>
       </div>
 

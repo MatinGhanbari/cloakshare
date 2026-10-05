@@ -8,6 +8,8 @@ interface LinkItem {
   name: string | null;
   original_filename: string | null;
   access_group_id: string | null;
+  disabled: boolean;
+  disabled_at: string | null;
   file_type: string;
   page_count: number;
   status: string;
@@ -37,6 +39,22 @@ export default function Links() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  /** Temporarily pause or resume a link without revoking it. */
+  const toggleDisabled = async (link: LinkItem) => {
+    setBusyId(link.id);
+    setError('');
+    try {
+      const next = !link.disabled;
+      await linksApi.setState(link.id, next);
+      setLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, disabled: next } : l)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not change the link state');
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -100,6 +118,7 @@ export default function Links() {
                   <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-4 py-3">Views</th>
                   <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-4 py-3">Type</th>
                   <th className="text-right text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-4 py-3">Created</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
@@ -131,6 +150,11 @@ export default function Links() {
                           <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
                           <span className={`text-xs font-sans ${status.text}`}>{link.status}</span>
                         </span>
+                        {link.disabled && (
+                          <span className="block mt-1 text-[11px] font-sans text-warning">
+                            Disabled
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-sm font-mono text-text-secondary tabular-nums">{link.view_count}</span>
@@ -140,6 +164,16 @@ export default function Links() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span className="text-xs font-sans text-text-tertiary">{timeAgo(link.created_at)}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => void toggleDisabled(link)}
+                          disabled={busyId === link.id}
+                          className="text-xs font-sans px-3 py-1.5 rounded-md border border-border hover:bg-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {busyId === link.id ? '…' : link.disabled ? 'Enable' : 'Disable'}
+                        </button>
                       </td>
                     </tr>
                   );

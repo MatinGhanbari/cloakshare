@@ -90,6 +90,8 @@ export const linksApi = {
         name: string | null;
         original_filename: string | null;
         access_group_id: string | null;
+        disabled: boolean;
+        disabled_at: string | null;
         file_type: string;
         page_count: number;
         status: string;
@@ -109,6 +111,8 @@ export const linksApi = {
       original_filename: string | null;
       file_size: number | null;
       access_group_id: string | null;
+      disabled: boolean;
+      disabled_at: string | null;
       file_type: string;
       page_count: number;
       status: string;
@@ -200,6 +204,16 @@ export const linksApi = {
       method: 'PATCH',
       body: JSON.stringify({ access_group_id: accessGroupId }),
     }),
+
+  /**
+   * Temporarily pause or resume a link. Unlike revoking, this keeps the link's real
+   * status and expiry, so re-enabling restores exactly what it was.
+   */
+  setState: (id: string, disabled: boolean) =>
+    request<{ id: string; disabled: boolean; disabled_at: string | null }>(
+      `/v1/links/${id}/state`,
+      { method: 'PATCH', body: JSON.stringify({ disabled }) },
+    ),
 
   analytics: (id: string) =>
     request<{
