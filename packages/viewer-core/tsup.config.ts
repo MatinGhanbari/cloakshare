@@ -15,7 +15,7 @@ export default defineConfig([
   {
     entry: ['src/index.ts'],
     format: ['iife'],
-    globalName: 'CloakViewer',
+    globalName: 'ScriniumViewer',
     sourcemap: true,
     minify: true,
     // No external — but pdfjs-dist won't be bundled because we use indirect import()

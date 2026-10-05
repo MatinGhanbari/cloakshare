@@ -100,7 +100,7 @@ export async function sendViewNotification(params: {
           </div>
         </div>
         <p style="text-align: center; color: #52525B; font-size: 11px; margin-top: 16px;">
-          Sent by Cloak &middot; Manage notifications in your <a href="${dashboardUrl}/dashboard/settings" style="color: #71717A;">settings</a>
+          Sent by Scrinium &middot; Manage notifications in your <a href="${dashboardUrl}/dashboard/settings" style="color: #71717A;">settings</a>
         </p>
       </div>
     `,
@@ -126,7 +126,7 @@ export async function sendTeamInviteEmail(params: {
 
   await sendEmail({
     to: inviteeEmail,
-    subject: `You've been invited to join ${safeOrgName} on Cloak`,
+    subject: `You've been invited to join ${safeOrgName} on Scrinium`,
     html: `
       <div style="font-family: 'JetBrains Mono', monospace, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 0;">
         <div style="background: #09090B; border-radius: 8px; padding: 24px; color: #FAFAFA;">
@@ -147,7 +147,7 @@ export async function sendTeamInviteEmail(params: {
           </p>
         </div>
         <p style="text-align: center; color: #52525B; font-size: 11px; margin-top: 16px;">
-          Sent by Cloak &middot; If you didn't expect this, you can ignore it.
+          Sent by Scrinium &middot; If you didn't expect this, you can ignore it.
         </p>
       </div>
     `,

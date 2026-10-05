@@ -120,7 +120,7 @@ export interface AuditEntry {
   created_at: string;
 }
 
-export interface CloakShareOptions {
+export interface ScriniumOptions {
   baseUrl?: string;
   timeout?: number;
   maxRetries?: number;

@@ -1,10 +1,10 @@
-# CloakShare
+# Scrinium
 
 > Secure document & video sharing with analytics
 
-## What CloakShare Does
+## What Scrinium Does
 
-CloakShare lets teams securely share documents with watermarks, email gates, expiry, per-page analytics, and webhooks. Supports PDF, DOCX, PPTX, XLSX, MP4, MOV. Self-hostable or managed cloud. DocSend alternative.
+Scrinium lets teams securely share documents with watermarks, email gates, expiry, per-page analytics, and webhooks. Supports PDF, DOCX, PPTX, XLSX, MP4, MOV. Self-hostable or managed cloud. DocSend alternative.
 
 ## Key Capabilities
 
@@ -21,7 +21,7 @@ CloakShare lets teams securely share documents with watermarks, email gates, exp
 - **Growth**: $99/mo — 2.5K links, 25K views
 - **Scale**: $299/mo — 10K links, 100K views
 
-## Who Uses CloakShare
+## Who Uses Scrinium
 
 - sales professionals
 - account executives
@@ -33,7 +33,7 @@ CloakShare lets teams securely share documents with watermarks, email gates, exp
 
 - Homepage: https://cloakshare.dev
 - Documentation: https://cloakshare.dev/docs
-- GitHub: https://github.com/CloakShare/cloakshare
+- GitHub: https://github.com/Scrinium/cloakshare
 
 ## Contact
 

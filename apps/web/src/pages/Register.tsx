@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { ApiError } from '../lib/api';
 import { trackSignup } from '../lib/analytics';
+import { Button, CopyField, Field, InlineError, Input, Panel, PanelHeader } from '../components/ui';
+import { CheckIcon } from '../components/icons';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -31,85 +33,90 @@ export default function Register() {
 
   if (apiKey) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-10">
         <div className="w-full max-w-md">
-          <div className="bg-surface border border-border rounded-lg p-8">
-            <div className="flex items-center gap-2 mb-2">
-              <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h2 className="font-sans font-semibold text-lg text-foreground">Account created</h2>
-            </div>
-            <p className="text-sm text-text-secondary font-sans mb-4">Save your API key — it won't be shown again.</p>
-
-            <div className="bg-input border border-border rounded-md p-3 mb-6">
-              <code className="text-sm text-accent font-mono break-all select-all">{apiKey}</code>
-            </div>
-
-            <button
+          <Panel className="p-8">
+            <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-control border border-accent-line bg-accent-muted text-accent">
+              <CheckIcon size={16} />
+            </span>
+            <PanelHeader
+              title="Account created"
+              description="Save your API key now. It is shown once and cannot be retrieved later."
+            />
+            <CopyField value={apiKey} className="mt-4" />
+            <Button
+              variant="primary"
+              className="mt-5 w-full"
               onClick={() => navigate('/')}
-              className="w-full bg-accent text-background font-sans font-medium text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors"
             >
-              Go to Dashboard
-            </button>
-          </div>
+              Go to the dashboard
+            </Button>
+          </Panel>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="font-mono font-bold text-xl text-foreground tracking-tight">CloakShare</h1>
-          <p className="text-sm text-text-secondary mt-2 font-sans">Create your account</p>
+        <div className="mb-8 text-center">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+            <span className="font-mono text-xl font-bold tracking-tight text-foreground">
+              Scrinium
+            </span>
+          </span>
+          <p className="mt-2 text-sm text-text-secondary">Create your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-surface border border-border rounded-lg p-8 card-glow">
-          <div className="mb-5">
-            <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary"
-              placeholder="you@company.com"
-              required
-            />
-          </div>
+        <Panel className="card-glow p-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <Field label="Email" htmlFor="register-email">
+              <Input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoComplete="email"
+                required
+              />
+            </Field>
 
-          <div className="mb-6">
-            <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary"
-              placeholder="••••••••"
-              minLength={8}
-              required
-            />
-          </div>
+            <Field
+              label="Password"
+              htmlFor="register-password"
+              hint="At least 8 characters."
+            >
+              <Input
+                id="register-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Choose a password"
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </Field>
 
-          {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2 mb-4">
-              <p className="text-sm text-destructive font-sans">{error}</p>
-            </div>
-          )}
+            {error && <InlineError>{error}</InlineError>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent text-background font-sans font-medium text-sm py-2.5 rounded-md hover:bg-accent-hover hover:-translate-y-px hover:shadow-glow active:translate-y-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {loading ? 'Creating...' : 'Create Account'}
-          </button>
-        </form>
+            <Button type="submit" variant="primary" loading={loading} className="w-full">
+              Create account
+            </Button>
+          </form>
+        </Panel>
 
-        <p className="text-center text-sm text-text-tertiary mt-5 font-sans">
+        <p className="mt-5 text-center text-sm text-text-tertiary">
           Already have an account?{' '}
-          <Link to="/login" className="text-accent hover:underline transition-colors">Sign in</Link>
+          <Link
+            to="/login"
+            className="text-accent transition-colors duration-150 ease-expo hover:text-accent-hover"
+          >
+            Sign in
+          </Link>
         </p>
       </div>
     </div>

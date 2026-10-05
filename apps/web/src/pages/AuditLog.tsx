@@ -1,6 +1,22 @@
 import { useState, useEffect, Fragment } from 'react';
+import { Link } from 'react-router-dom';
 import { auditApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import {
+  Button,
+  Chip,
+  EmptyState,
+  InlineError,
+  PageHeader,
+  Select,
+  Skeleton,
+  Table,
+  Td,
+  Th,
+  Tr,
+  buttonStyles,
+} from '../components/ui';
+import { AuditIcon, ChevronRightIcon } from '../components/icons';
 
 interface AuditEntry {
   id: string;
@@ -24,6 +40,7 @@ export default function AuditLog() {
 
   useEffect(() => {
     loadEntries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionFilter]);
 
   async function loadEntries(loadCursor?: string) {
@@ -53,40 +70,47 @@ export default function AuditLog() {
   }
 
   const plan = activeOrg?.plan || 'free';
+
   if (plan === 'free' || plan === 'starter') {
     return (
       <div>
-        <h1 className="font-sans font-semibold text-xl text-foreground mb-8">Audit Log</h1>
-        <div className="bg-surface border border-border rounded-lg p-8 text-center">
-          <svg className="w-10 h-10 text-text-tertiary mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <p className="text-text-secondary font-sans text-sm mb-2">Audit log requires a Growth or Scale plan.</p>
-          <a href="/billing" className="text-accent text-sm font-sans font-medium hover:text-accent-hover transition-colors duration-150">
-            Upgrade your plan
-          </a>
-        </div>
+        <PageHeader title="Audit log" />
+        <EmptyState
+          icon={<AuditIcon size={18} />}
+          title="Audit log requires a Growth or Scale plan"
+          description="Every link, key and membership change is recorded with its actor, resource and IP address."
+          action={
+            <Link to="/billing" className={buttonStyles('primary', 'sm')}>
+              View plans
+            </Link>
+          }
+        />
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="font-sans font-semibold text-xl text-foreground mb-2">Audit Log</h1>
-      <p className="text-sm text-text-secondary font-sans mb-6">Activity history for your organization</p>
+      <PageHeader
+        title="Audit log"
+        description="Activity history for your organization."
+      />
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 mb-6 text-destructive text-sm font-sans">
-          {error}
+        <div className="mb-6 max-w-3xl">
+          <InlineError>{error}</InlineError>
         </div>
       )}
 
-      {/* Filter */}
-      <div className="mb-6">
-        <select
+      <div className="mb-4">
+        <Select
+          aria-label="Filter by action"
           value={actionFilter}
-          onChange={(e) => { setActionFilter(e.target.value); setCursor(null); }}
-          className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground font-sans focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
+          onChange={(e) => {
+            setActionFilter(e.target.value);
+            setCursor(null);
+          }}
+          className="w-full sm:w-64"
         >
           <option value="">All actions</option>
           <option value="link.created">Link created</option>
@@ -98,96 +122,120 @@ export default function AuditLog() {
           <option value="member.role_changed">Role changed</option>
           <option value="member.removed">Member removed</option>
           <option value="org.ownership_transferred">Ownership transferred</option>
-        </select>
+        </Select>
       </div>
 
-      {/* Entries */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden">
-        {entries.length === 0 && !loading ? (
-          <div className="p-8 text-center">
-            <svg className="w-10 h-10 text-text-tertiary mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <p className="text-text-secondary font-sans text-sm">No audit log entries found.</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border-subtle">
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Time</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Actor</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Action</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Resource</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">IP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
+      {entries.length === 0 && !loading ? (
+        <EmptyState
+          icon={<AuditIcon size={18} />}
+          title="No audit log entries"
+          description={
+            actionFilter
+              ? 'No entries match this filter. Try selecting all actions.'
+              : 'Activity will appear here as soon as someone changes something.'
+          }
+        />
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Time</Th>
+              <Th>Actor</Th>
+              <Th>Action</Th>
+              <Th className="md:hidden lg:table-cell">Resource</Th>
+              <Th className="md:hidden lg:table-cell">IP</Th>
+              <Th align="right">
+                <span className="sr-only">Details</span>
+              </Th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry) => {
+              const expanded = expandedId === entry.id;
+              return (
                 <Fragment key={entry.id}>
-                  <tr
-                    className="border-b border-border-subtle last:border-0 cursor-pointer hover:bg-hover transition-colors duration-150"
-                    onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
+                  <Tr
+                    className="cursor-pointer"
+                    onClick={() => setExpandedId(expanded ? null : entry.id)}
                   >
-                    <td className="px-5 py-3 text-xs text-text-tertiary font-mono whitespace-nowrap tabular-nums">
-                      {new Date(entry.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-5 py-3 text-sm text-foreground font-sans">
-                      {entry.actor.label}
-                      {entry.actor.type === 'api_key' && (
-                        <span className="text-[10px] font-sans text-text-tertiary ml-1 bg-elevated px-1 py-0.5 rounded">key</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-sm text-foreground font-sans capitalize">
-                      {formatAction(entry.action)}
-                    </td>
-                    <td className="px-5 py-3 text-sm text-text-tertiary font-mono">
-                      {entry.resource ? (
-                        <span>{entry.resource.label || entry.resource.id}</span>
-                      ) : <span className="text-text-tertiary">-</span>}
-                    </td>
-                    <td className="px-5 py-3 text-xs text-text-tertiary font-mono tabular-nums">
-                      {entry.ip_address || '-'}
-                    </td>
-                  </tr>
-                  {expandedId === entry.id && entry.metadata && (
-                    <tr key={`${entry.id}-meta`}>
-                      <td colSpan={5} className="px-5 py-3 bg-background border-b border-border-subtle">
-                        <pre className="text-xs text-text-secondary font-mono overflow-x-auto">
+                    <Td label="Time">
+                      <span className="whitespace-nowrap font-mono text-xs tabular-nums text-text-tertiary">
+                        {new Date(entry.created_at).toLocaleString()}
+                      </span>
+                    </Td>
+                    <Td label="Actor">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="text-sm text-foreground">{entry.actor.label}</span>
+                        {entry.actor.type === 'api_key' && <Chip>key</Chip>}
+                      </span>
+                    </Td>
+                    <Td label="Action">
+                      <span className="text-sm capitalize text-foreground">
+                        {formatAction(entry.action)}
+                      </span>
+                    </Td>
+                    <Td label="Resource" className="md:hidden lg:table-cell">
+                      <span className="font-mono text-xs text-text-tertiary">
+                        {entry.resource ? entry.resource.label || entry.resource.id : 'None'}
+                      </span>
+                    </Td>
+                    <Td label="IP" className="md:hidden lg:table-cell">
+                      <span className="font-mono text-xs tabular-nums text-text-tertiary">
+                        {entry.ip_address || 'Unknown'}
+                      </span>
+                    </Td>
+                    <Td align="right">
+                      {entry.metadata ? (
+                        <span
+                          className={`inline-flex text-text-tertiary transition-transform duration-150 ease-expo ${
+                            expanded ? 'rotate-90' : ''
+                          }`}
+                        >
+                          <ChevronRightIcon size={14} />
+                        </span>
+                      ) : null}
+                    </Td>
+                  </Tr>
+                  {expanded && entry.metadata && (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        data-span=""
+                        className="border-b border-border-subtle bg-background px-4 py-3"
+                      >
+                        <pre className="overflow-x-auto font-mono text-xs text-text-secondary">
                           {JSON.stringify(entry.metadata, null, 2)}
                         </pre>
                       </td>
                     </tr>
                   )}
                 </Fragment>
-              ))}
-            </tbody>
-          </table>
-        )}
+              );
+            })}
+          </tbody>
+        </Table>
+      )}
 
-        {loading && (
-          <div className="p-6 space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="skeleton h-3 w-28 rounded" />
-                <div className="skeleton h-3 w-24 rounded" />
-                <div className="skeleton h-3 w-20 rounded" />
-                <div className="skeleton h-3 w-32 rounded ml-auto" />
-              </div>
-            ))}
-          </div>
-        )}
+      {loading && (
+        <div className="mt-4 space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="ml-auto h-3 w-28" />
+            </div>
+          ))}
+        </div>
+      )}
 
-        {hasMore && !loading && (
-          <div className="p-4 text-center border-t border-border-subtle">
-            <button
-              onClick={() => cursor && loadEntries(cursor)}
-              className="text-accent text-sm font-sans font-medium hover:text-accent-hover transition-colors duration-150"
-            >
-              Load more
-            </button>
-          </div>
-        )}
-      </div>
+      {hasMore && !loading && (
+        <div className="mt-4 text-center">
+          <Button variant="secondary" size="sm" onClick={() => cursor && loadEntries(cursor)}>
+            Load more
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,10 +27,10 @@ import Base from '../../layouts/Base.astro';
           <li><strong>The 5 things every secure sharing setup needs:</strong> tokenized per-recipient links, dynamic watermarks, view-time analytics, expiry, and revocable access. Anything missing one of these is hobbled.</li>
           <li><strong>Email + PDF is the default that should be avoided.</strong> PDFs leak through inbox forwarding, screenshot, and download. No visibility, no recall.</li>
           <li><strong>Google Drive links are not secure sharing.</strong> "Anyone with the link" is the default; even restricted access can be re-shared trivially. No analytics, no watermarks, no expiry.</li>
-          <li><strong>DocSend and Papermark dominate at different price points.</strong> DocSend at $45-$150/user/mo, Papermark and CloakShare as open-source alternatives at $0-$20/user/mo.</li>
+          <li><strong>DocSend and Papermark dominate at different price points.</strong> DocSend at $45-$150/user/mo, Papermark and Scrinium as open-source alternatives at $0-$20/user/mo.</li>
           <li><strong>Watermarks aren't optional</strong> — they're the single biggest deterrent to deliberate leaks. Per-recipient dynamic watermarks ("john@acme.com · 2026-05-12 · session-id") create immediate forensic trail.</li>
           <li><strong>Generate strong passwords for share-link protection</strong> via our <a href="/tools/password-generator" class="text-accent hover:underline">free password generator</a> — cryptographically secure, with real-time entropy and crack-time estimates.</li>
-          <li><strong>Self-hosting is meaningful for legal, healthcare, and regulated industries.</strong> Most secure-sharing platforms are SaaS-only; the few that self-host (CloakShare, Papermark) win in compliance-sensitive segments.</li>
+          <li><strong>Self-hosting is meaningful for legal, healthcare, and regulated industries.</strong> Most secure-sharing platforms are SaaS-only; the few that self-host (Scrinium, Papermark) win in compliance-sensitive segments.</li>
         </ul>
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">The 5 Requirements That Actually Matter</h2>
@@ -84,7 +84,7 @@ import Base from '../../layouts/Base.astro';
           <strong>Cost:</strong> $0-$15/user/mo. <strong>Security:</strong> Weak. <strong>Analytics:</strong> Minimal.
         </p>
         <p>
-          "Anyone with the link" is the easy default and the most common security failure. Even restricted-access links can be re-shared by recipients in seconds. No watermarks, no expiry by default, no per-page analytics. See <a href="/compare/google-docs" class="text-accent hover:underline">CloakShare vs Google Docs</a>.
+          "Anyone with the link" is the easy default and the most common security failure. Even restricted-access links can be re-shared by recipients in seconds. No watermarks, no expiry by default, no per-page analytics. See <a href="/compare/google-docs" class="text-accent hover:underline">Scrinium vs Google Docs</a>.
         </p>
 
         <h3 class="font-mono font-medium text-lg text-foreground mt-6 mb-3">DocSend (Dropbox)</h3>
@@ -92,7 +92,7 @@ import Base from '../../layouts/Base.astro';
           <strong>Cost:</strong> $45-$150/user/mo. <strong>Security:</strong> Strong. <strong>Analytics:</strong> Detailed.
         </p>
         <p>
-          The market leader. Per-recipient links, watermarks, page analytics, expiry, NDA gates. Pricing scales aggressively with seat count. Best for established sales teams that can absorb the per-user cost. See <a href="/compare/docsend" class="text-accent hover:underline">CloakShare vs DocSend</a> and <a href="/blog/docsend-pricing-2026" class="text-accent hover:underline">DocSend pricing 2026</a>.
+          The market leader. Per-recipient links, watermarks, page analytics, expiry, NDA gates. Pricing scales aggressively with seat count. Best for established sales teams that can absorb the per-user cost. See <a href="/compare/docsend" class="text-accent hover:underline">Scrinium vs DocSend</a> and <a href="/blog/docsend-pricing-2026" class="text-accent hover:underline">DocSend pricing 2026</a>.
         </p>
 
         <h3 class="font-mono font-medium text-lg text-foreground mt-6 mb-3">PandaDoc</h3>
@@ -100,7 +100,7 @@ import Base from '../../layouts/Base.astro';
           <strong>Cost:</strong> $19-$49/user/mo. <strong>Security:</strong> Strong. <strong>Analytics:</strong> Good.
         </p>
         <p>
-          Hybrid e-signature + document-sharing platform. Strong for proposals and contracts that need both viewing analytics AND signature workflow. Less ideal for pure document sharing. See <a href="/compare/pandapdoc" class="text-accent hover:underline">CloakShare vs PandaDoc</a>.
+          Hybrid e-signature + document-sharing platform. Strong for proposals and contracts that need both viewing analytics AND signature workflow. Less ideal for pure document sharing. See <a href="/compare/pandapdoc" class="text-accent hover:underline">Scrinium vs PandaDoc</a>.
         </p>
 
         <h3 class="font-mono font-medium text-lg text-foreground mt-6 mb-3">Papermark</h3>
@@ -108,10 +108,10 @@ import Base from '../../layouts/Base.astro';
           <strong>Cost:</strong> $0 (open-source) - $59/user/mo. <strong>Security:</strong> Strong. <strong>Analytics:</strong> Good.
         </p>
         <p>
-          The leading open-source alternative. Self-host or use managed cloud. Active development, well-positioned for founder use-cases. See <a href="/compare/papermark" class="text-accent hover:underline">CloakShare vs Papermark</a>.
+          The leading open-source alternative. Self-host or use managed cloud. Active development, well-positioned for founder use-cases. See <a href="/compare/papermark" class="text-accent hover:underline">Scrinium vs Papermark</a>.
         </p>
 
-        <h3 class="font-mono font-medium text-lg text-foreground mt-6 mb-3">CloakShare</h3>
+        <h3 class="font-mono font-medium text-lg text-foreground mt-6 mb-3">Scrinium</h3>
         <p>
           <strong>Cost:</strong> $0 (open-source self-host) - $19/user/mo. <strong>Security:</strong> Strong. <strong>Analytics:</strong> Detailed page-level.
         </p>
@@ -175,7 +175,7 @@ import Base from '../../layouts/Base.astro';
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">The Self-Hosting Decision</h2>
         <p>
-          Most secure-sharing platforms are SaaS-only. The few that support self-hosting (CloakShare, Papermark) win in three segments:
+          Most secure-sharing platforms are SaaS-only. The few that support self-hosting (Scrinium, Papermark) win in three segments:
         </p>
         <ul class="list-disc pl-6 space-y-2">
           <li><strong>Regulated industries</strong> — legal, healthcare, finance, defense. Compliance teams require data residency control.</li>
@@ -183,7 +183,7 @@ import Base from '../../layouts/Base.astro';
           <li><strong>Open-source-aligned teams</strong> — companies whose buyers care about the code being inspectable.</li>
         </ul>
         <p>
-          See <a href="/blog/self-host-document-sharing" class="text-accent hover:underline">the self-hosting deep-dive</a> for the architecture and operational requirements. <a href="/self-hosted" class="text-accent hover:underline">CloakShare's self-hosted setup</a> is single-binary plus PostgreSQL plus any S3-compatible storage.
+          See <a href="/blog/self-host-document-sharing" class="text-accent hover:underline">the self-hosting deep-dive</a> for the architecture and operational requirements. <a href="/self-hosted" class="text-accent hover:underline">Scrinium's self-hosted setup</a> is single-binary plus PostgreSQL plus any S3-compatible storage.
         </p>
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">The Build-vs-Buy Decision</h2>
@@ -196,7 +196,7 @@ import Base from '../../layouts/Base.astro';
           <li><strong>Feature parity with commercial tools:</strong> 12-18 months of follow-on work.</li>
         </ul>
         <p>
-          Use an open-source self-hosted platform (CloakShare, Papermark) if you need control. Use a managed SaaS (DocSend, CloakShare cloud) if you don't. Don't build.
+          Use an open-source self-hosted platform (Scrinium, Papermark) if you need control. Use a managed SaaS (DocSend, Scrinium cloud) if you don't. Don't build.
         </p>
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Common Failure Modes</h2>
@@ -213,7 +213,7 @@ import Base from '../../layouts/Base.astro';
         <ul class="list-disc pl-6 space-y-2">
           <li>The 5 things every secure sharing setup needs: per-recipient tokens, watermarks, analytics, expiry, revocable access.</li>
           <li>Email + PDF is the default that should be avoided; Google Drive links are not secure sharing.</li>
-          <li>DocSend at $45-$150/user/mo or CloakShare/Papermark at $0-$20/user/mo. Pick based on per-seat budget and self-hosting need.</li>
+          <li>DocSend at $45-$150/user/mo or Scrinium/Papermark at $0-$20/user/mo. Pick based on per-seat budget and self-hosting need.</li>
           <li>Watermarks are non-negotiable — server-side composited, per-recipient text.</li>
           <li>Use <a href="/tools/password-generator" class="text-accent hover:underline">strong passwords</a> for any password-protected share links.</li>
           <li>Self-host when in regulated industry or when buyers do vendor security review.</li>

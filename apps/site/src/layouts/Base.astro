@@ -46,7 +46,7 @@ const canonicalUrl = canonical ? `${siteUrl}${canonical}` : `${siteUrl}${Astro.u
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={`${siteUrl}${ogImage}`} />
-    <meta property="og:site_name" content="CloakShare" />
+    <meta property="og:site_name" content="Scrinium" />
     {publishedAt && <meta property="article:published_time" content={publishedAt} />}
 
     <!-- Twitter Card -->
@@ -68,7 +68,7 @@ const canonicalUrl = canonical ? `${siteUrl}${canonical}` : `${siteUrl}${Astro.u
     <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "CloakShare",
+      "name": "Scrinium",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Cross-platform",
       "description": "Open-source API for secure document and video sharing with watermarks, tracking, and expiry.",

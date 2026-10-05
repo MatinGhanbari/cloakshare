@@ -1,10 +1,10 @@
-# CloakShare
+# Scrinium
 
 > Open-source API for secure document and video sharing. Tokenized links with dynamic watermarks, email gates, expiry, and per-page analytics. Self-hostable DocSend alternative.
 
-## What CloakShare Does
+## What Scrinium Does
 
-CloakShare is an API-first platform for sharing documents and videos securely. It renders documents on HTML5 Canvas (not DOM text), making content resistant to copy/paste, downloading, and screenshot tools. Each viewer gets a dynamically watermarked copy with their email embedded. It tracks per-page engagement, supports HLS video streaming, and integrates into any app via Web Components or React.
+Scrinium is an API-first platform for sharing documents and videos securely. It renders documents on HTML5 Canvas (not DOM text), making content resistant to copy/paste, downloading, and screenshot tools. Each viewer gets a dynamically watermarked copy with their email embedded. It tracks per-page engagement, supports HLS video streaming, and integrates into any app via Web Components or React.
 
 ## Free Tools (no signup required)
 

@@ -1,5 +1,5 @@
 /** Props accepted by <cloak-viewer> */
-export interface CloakViewerProps {
+export interface ScriniumViewerProps {
   src: string;
   watermark?: string;
   emailGate?: boolean;
@@ -17,7 +17,7 @@ export interface CloakViewerProps {
 }
 
 /** Emitted on each page view */
-export interface CloakViewEvent {
+export interface ScriniumViewEvent {
   page: number;
   email: string | null;
   timestamp: string;
@@ -29,19 +29,19 @@ export interface CloakViewEvent {
 }
 
 /** Emitted when viewer is ready */
-export interface CloakReadyEvent {
+export interface ScriniumReadyEvent {
   pageCount: number;
   format: string;
 }
 
 /** Emitted on error */
-export interface CloakErrorEvent {
-  code: CloakErrorCode;
+export interface ScriniumErrorEvent {
+  code: ScriniumErrorCode;
   message: string;
   details?: string;
 }
 
-export type CloakErrorCode =
+export type ScriniumErrorCode =
   | 'LOAD_FAILED'
   | 'PARSE_FAILED'
   | 'EXPIRED'

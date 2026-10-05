@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Load test script for CloakShare API.
+ * Load test script for Scrinium API.
  *
  * Usage:
  *   npx tsx scripts/load-test.ts [options]

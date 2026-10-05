@@ -10,6 +10,9 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "lucide": "1.52.0",
+    "lucide-react": "^1.52.0",
+    "morphicons": "^1.7.1",
     "posthog-js": "^1.360.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

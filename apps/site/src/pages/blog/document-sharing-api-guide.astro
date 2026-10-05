@@ -14,22 +14,22 @@ import Base from '../../layouts/Base.astro';
         <p>
           If your application handles sensitive documents — investor updates, legal contracts,
           <a href="/use-cases/training-content" class="text-accent hover:underline">training materials</a>, <a href="/use-cases/proposal-tracking" class="text-accent hover:underline">sales proposals</a> — you need more than a file upload and a public URL.
-          You need watermarks, view tracking, access controls, and expiry. Cloak's API lets you
+          You need watermarks, view tracking, access controls, and expiry. Scrinium's API lets you
           add all of this with a few REST calls or our Node.js SDK. This guide covers the core
           integration patterns.
         </p>
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Creating a secure link</h2>
         <p>
-          The fundamental operation in Cloak is creating a link. Upload a file (PDF, DOCX, MP4,
+          The fundamental operation in Scrinium is creating a link. Upload a file (PDF, DOCX, MP4,
           or any supported format), set your security rules, and get back a tokenized URL. The
-          recipient views the content in Cloak's browser-based viewer — no downloads.
+          recipient views the content in Scrinium's browser-based viewer — no downloads.
         </p>
         <div class="bg-surface border border-border rounded-lg p-5 my-8">
           <pre class="text-sm font-mono text-text-secondary overflow-x-auto"><span class="text-text-tertiary">// Node.js SDK</span>
-import Cloak from '@cloakshare/sdk';
+import Scrinium from '@cloakshare/sdk';
 
-const cloak = new Cloak('ck_live_xxx');
+const cloak = new Scrinium('ck_live_xxx');
 
 const link = await cloak.links.create({'{'}
   file: './quarterly-report.pdf',
@@ -44,7 +44,7 @@ console.log(link.secure_url);
 <span class="text-accent">// https://view.cloakshare.dev/s/lnk_mN7pR3</span></pre>
         </div>
         <p>
-          The same endpoint handles video files. Upload an MP4 and Cloak transcodes it to HLS
+          The same endpoint handles video files. Upload an MP4 and Scrinium transcodes it to HLS
           automatically. The returned link streams the video with the same watermark and analytics
           features.
         </p>
@@ -83,7 +83,7 @@ console.log(videoLink.type);
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Tracking analytics via webhooks</h2>
         <p>
           Polling the analytics API works, but webhooks give you real-time data. Register a
-          webhook endpoint and Cloak will POST events as they happen — link viewed, page turned,
+          webhook endpoint and Scrinium will POST events as they happen — link viewed, page turned,
           video watched, download attempted.
         </p>
         <div class="bg-surface border border-border rounded-lg p-5 my-8">
@@ -113,7 +113,7 @@ app.post('/api/cloak-events', (req, res) => {'{'}
         </div>
         <p>
           Webhook payloads are signed with your secret using HMAC-SHA256. Verify the signature
-          in your handler to ensure the request came from Cloak.
+          in your handler to ensure the request came from Scrinium.
         </p>
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Querying analytics directly</h2>
@@ -160,7 +160,7 @@ for (const viewer of analytics.viewers) {'{'}
           when you're ready.
         </p>
         <p>
-          Cloak is open source. Explore the code, file issues, or contribute at
+          Scrinium is open source. Explore the code, file issues, or contribute at
           <a href="https://github.com/cloakshare/cloakshare" class="text-accent hover:underline">github.com/cloakshare/cloakshare</a>.
           Self-host for unlimited usage with no per-user fees.
         </p>

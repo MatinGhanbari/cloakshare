@@ -59,11 +59,11 @@ npm install @cloakshare/react
 ```
 
 ```jsx
-import { CloakViewer } from '@cloakshare/react';
+import { ScriniumViewer } from '@cloakshare/react';
 
 function App() {
   return (
-    <CloakViewer
+    <ScriniumViewer
       src="/deck.pdf"
       watermark="{{email}} · {{date}}"
       emailGate
@@ -123,10 +123,10 @@ import '@cloakshare/viewer';
 | `theme` | `"dark"` | `"dark"` | Viewer theme |
 | `allow-download` | `boolean` | `false` | Show download button |
 | `expires` | `string` | `""` | ISO 8601 expiry timestamp (e.g., `2026-04-01T00:00:00Z`) |
-| `api-key` | `string` | `""` | CloakShare API key. Enables Office docs, video, and server-side analytics |
+| `api-key` | `string` | `""` | Scrinium API key. Enables Office docs, video, and server-side analytics |
 | `api-url` | `string` | `"https://api.cloakshare.dev"` | API endpoint. Override for self-hosted instances |
 | `renderer` | `"auto" \| "external"` | `"auto"` | Set to `"external"` to skip bundled PDF.js (use if your app already loads PDF.js) |
-| `branding` | `boolean` | `true` | Show "Secured by CloakShare" badge |
+| `branding` | `boolean` | `true` | Show "Secured by Scrinium" badge |
 | `width` | `string` | `"100%"` | Component width |
 | `height` | `string` | `"600px"` | Component height |
 
@@ -179,7 +179,7 @@ viewer.addEventListener('cloak:email-submitted', (e) => {
 | `PASSWORD_REQUIRED` | Password needed but not provided |
 | `PASSWORD_INCORRECT` | Wrong password entered |
 | `EMAIL_REQUIRED` | Email gate active, no email submitted |
-| `API_ERROR` | CloakShare API returned an error |
+| `API_ERROR` | Scrinium API returned an error |
 | `API_UNAUTHORIZED` | Invalid or missing API key |
 | `UNSUPPORTED_FORMAT` | File type not supported in current mode (e.g., .docx without API key) |
 | `RENDER_ERROR` | Canvas rendering failed (WebGL context lost, memory exceeded) |
@@ -284,7 +284,7 @@ Client-only mode with local documents works fully offline — something DocSend 
 
 ## Self-Hosted
 
-Point the viewer at your own CloakShare instance:
+Point the viewer at your own Scrinium instance:
 
 ```html
 <cloak-viewer
@@ -298,7 +298,7 @@ Point the viewer at your own CloakShare instance:
 
 ## Links
 
-- [CloakShare Website](https://cloakshare.dev)
+- [Scrinium Website](https://cloakshare.dev)
 - [Documentation](https://docs.cloakshare.dev)
 - [GitHub](https://github.com/cloakshare/cloakshare)
 - [npm: @cloakshare/react](https://www.npmjs.com/package/@cloakshare/react) — React wrapper

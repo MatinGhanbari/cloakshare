@@ -413,13 +413,13 @@ if (!process.env.VITEST) {
     mode: config.mode,
     storage: config.storage.provider,
     database: config.database.provider,
-  }, `Cloak API starting on port ${port}`);
+  }, `Scrinium API starting on port ${port}`);
 
   const server = serve({
     fetch: app.fetch,
     port,
   }, (info) => {
-    logger.info(`Cloak API listening on http://localhost:${info.port}`);
+    logger.info(`Scrinium API listening on http://localhost:${info.port}`);
 
     // Start background workers
     startRenderWorker();

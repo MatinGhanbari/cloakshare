@@ -1,4 +1,4 @@
-# CloakShare Marketing Content
+# Scrinium Marketing Content
 
 > Personal reference file. Do not commit to GitHub.
 
@@ -10,7 +10,7 @@
 
 ### Tags: `typescript`, `api`, `opensource`, `webdev`
 
-### Cover Image Alt: CloakShare — secure document sharing API
+### Cover Image Alt: Scrinium — secure document sharing API
 
 ---
 
@@ -18,12 +18,12 @@ You're building an app that needs to share sensitive documents — investor deck
 
 No view tracking. No watermarks. No expiry. No way to revoke access.
 
-I built CloakShare to fix this. It's an open-source API (MIT licensed) that turns any document into a tracked, watermarked, expiring secure link. Here's how to add it to your app in 10 minutes.
+I built Scrinium to fix this. It's an open-source API (MIT licensed) that turns any document into a tracked, watermarked, expiring secure link. Here's how to add it to your app in 10 minutes.
 
 ### What we're building
 
 A simple integration that:
-1. Uploads a PDF to CloakShare
+1. Uploads a PDF to Scrinium
 2. Gets back a secure viewer link
 3. Tracks who views it and which pages they read
 4. Watermarks every page with the viewer's email
@@ -31,7 +31,7 @@ A simple integration that:
 ### Prerequisites
 
 - Node.js 18+
-- A CloakShare API key (free at [cloakshare.dev](https://cloakshare.dev)) — or self-host with Docker
+- A Scrinium API key (free at [cloakshare.dev](https://cloakshare.dev)) — or self-host with Docker
 
 ### Step 1: Install the SDK
 
@@ -42,9 +42,9 @@ npm install @cloakshare/sdk
 ### Step 2: Upload a document and create a secure link
 
 ```typescript
-import CloakShare from '@cloakshare/sdk';
+import Scrinium from '@cloakshare/sdk';
 
-const cloak = new CloakShare({ apiKey: 'ck_live_xxx' });
+const cloak = new Scrinium({ apiKey: 'ck_live_xxx' });
 
 const link = await cloak.links.create({
   file: './proposal.pdf',
@@ -98,7 +98,7 @@ const webhook = await cloak.webhooks.create({
 });
 ```
 
-CloakShare sends webhook events with HMAC-SHA256 signatures. You get notified the moment someone opens your document.
+Scrinium sends webhook events with HMAC-SHA256 signatures. You get notified the moment someone opens your document.
 
 ### Step 6: Verify webhook signatures
 
@@ -143,7 +143,7 @@ This is a Web Component — works in React, Vue, Svelte, Angular, or plain HTML.
 
 ### Self-hosting
 
-Don't want to use the cloud? CloakShare is fully self-hostable:
+Don't want to use the cloud? Scrinium is fully self-hostable:
 
 ```bash
 git clone https://github.com/cloakshare/cloakshare.git
@@ -168,7 +168,7 @@ SQLite database, local file storage, 1GB RAM. Runs on any VPS. Plug in S3-compat
 
 ### Comparison
 
-| | CloakShare | DocSend | Google Drive |
+| | Scrinium | DocSend | Google Drive |
 |-|-----------|---------|-------------|
 | Per-page analytics | Yes | Yes | No |
 | Watermarks | Yes | Yes | No |
@@ -195,7 +195,7 @@ Star the repo if this is useful. Issues and PRs welcome — we label beginner-fr
 
 **Body:**
 
-I've been building CloakShare — an open-source (MIT licensed) secure document sharing API. Think DocSend but self-hostable, API-first, and free.
+I've been building Scrinium — an open-source (MIT licensed) secure document sharing API. Think DocSend but self-hostable, API-first, and free.
 
 **What it does:**
 - Upload a PDF, get a secure viewer link
@@ -255,17 +255,17 @@ Happy to answer questions about the architecture or help with setup.
 
 ### 2b. r/opensource
 
-**Title:** CloakShare — MIT-licensed DocSend alternative with per-page analytics, watermarks, and self-hosting
+**Title:** Scrinium — MIT-licensed DocSend alternative with per-page analytics, watermarks, and self-hosting
 
 **Body:**
 
-I open-sourced CloakShare, a secure document sharing API. Upload a file, get a tracked, watermarked, expiring viewer link.
+I open-sourced Scrinium, a secure document sharing API. Upload a file, get a tracked, watermarked, expiring viewer link.
 
 **Why MIT instead of AGPL:**
 
 The closest open-source alternative (Papermark) uses AGPL. That means if you modify their code and deploy it — even internally — you're legally required to open-source your changes. For a startup embedding document sharing into their product, that's a non-starter. Legal teams see AGPL and kill the integration.
 
-MIT has no such restriction. Fork CloakShare, modify it, embed it in your proprietary product, deploy it on your servers. No strings attached.
+MIT has no such restriction. Fork Scrinium, modify it, embed it in your proprietary product, deploy it on your servers. No strings attached.
 
 **What makes it different:**
 - **API-first** — not a dashboard you click through. One API call to create a secure link.
@@ -295,11 +295,11 @@ Feedback welcome. What features would you want from something like this?
 
 ### 2c. Show HN (Second Launch)
 
-**Title:** Show HN: CloakShare — Embeddable secure document viewer (Web Component, free for PDF)
+**Title:** Show HN: Scrinium — Embeddable secure document viewer (Web Component, free for PDF)
 
 **Body:**
 
-Last month I launched CloakShare, an open-source DocSend alternative (MIT licensed). Today I'm shipping the embeddable viewer as an npm package.
+Last month I launched Scrinium, an open-source DocSend alternative (MIT licensed). Today I'm shipping the embeddable viewer as an npm package.
 
 **One line of code:**
 ```html
@@ -326,7 +326,7 @@ No npm package combines document viewing + watermarking + email gates + view tra
 
 **Free vs paid:**
 - PDF + images: free forever, no API key, runs client-side
-- Office docs + video: requires CloakShare API (server-side processing)
+- Office docs + video: requires Scrinium API (server-side processing)
 
 **Technical details:**
 - Canvas-based rendering (no downloadable file URLs)
@@ -345,13 +345,13 @@ Live demo: https://cloakshare.dev/embed
 
 ### 3a. Console.dev
 
-**Subject:** CloakShare — open-source secure document sharing API (MIT)
+**Subject:** Scrinium — open-source secure document sharing API (MIT)
 
 Hi Console team,
 
-I'd love to submit CloakShare for consideration in Console.
+I'd love to submit Scrinium for consideration in Console.
 
-**CloakShare** is an open-source (MIT licensed) API for secure document and video sharing. Upload a file, get a tracked, watermarked, expiring viewer link. Think DocSend but API-first, self-hostable, and free.
+**Scrinium** is an open-source (MIT licensed) API for secure document and video sharing. Upload a file, get a tracked, watermarked, expiring viewer link. Think DocSend but API-first, self-hostable, and free.
 
 **Why it's interesting for your audience:**
 
@@ -377,15 +377,15 @@ Best,
 
 ### 3b. TLDR Newsletter
 
-**Subject:** Open-source DocSend alternative — CloakShare (MIT, self-hostable, API-first)
+**Subject:** Open-source DocSend alternative — Scrinium (MIT, self-hostable, API-first)
 
 Hi TLDR team,
 
 Quick pitch for TLDR Open Source or TLDR Web Dev:
 
-**CloakShare** is an MIT-licensed secure document sharing API. One API call turns any PDF, Office doc, or video into a tracked, watermarked, expiring viewer link.
+**Scrinium** is an MIT-licensed secure document sharing API. One API call turns any PDF, Office doc, or video into a tracked, watermarked, expiring viewer link.
 
-**The hook:** DocSend charges $45/user/month. Papermark (the open-source alternative) is AGPL. CloakShare is MIT — free to fork, modify, and embed. Self-host with Docker or use the free cloud tier.
+**The hook:** DocSend charges $45/user/month. Papermark (the open-source alternative) is AGPL. Scrinium is MIT — free to fork, modify, and embed. Self-host with Docker or use the free cloud tier.
 
 **Key features:**
 - Per-page analytics (which slides held attention, not just "link opened")
@@ -410,17 +410,17 @@ Best,
 
 ### 3c. Changelog
 
-**Subject:** CloakShare — open-source DocSend alternative for developers
+**Subject:** Scrinium — open-source DocSend alternative for developers
 
 Hi Changelog team,
 
-I built CloakShare, an open-source (MIT licensed) secure document sharing API. I think it'd be a good fit for Changelog News or the podcast.
+I built Scrinium, an open-source (MIT licensed) secure document sharing API. I think it'd be a good fit for Changelog News or the podcast.
 
 **The story:**
 
 Every developer tool that handles sensitive content (LMS platforms, deal rooms, investor portals, HR tools) needs document sharing with access controls. The options are: pay DocSend $45/user/month, use Papermark (AGPL — viral license), or build it yourself.
 
-I built CloakShare as the missing infrastructure layer. Upload a file via API, get a secure viewer link back. Per-page analytics, dynamic watermarks, email gates, expiry, webhooks. MIT licensed, self-hostable with Docker, and ships an embeddable viewer as an npm package.
+I built Scrinium as the missing infrastructure layer. Upload a file via API, get a secure viewer link back. Per-page analytics, dynamic watermarks, email gates, expiry, webhooks. MIT licensed, self-hostable with Docker, and ships an embeddable viewer as an npm package.
 
 **What makes it different from Papermark:**
 1. MIT vs AGPL — developers can embed without licensing anxiety
@@ -495,7 +495,7 @@ With API key (server-side processing):
 - Analytics dashboard
 
 **Tweet 5:**
-I'm building CloakShare in public. It's the full-stack secure document sharing API behind this viewer.
+I'm building Scrinium in public. It's the full-stack secure document sharing API behind this viewer.
 
 Open source. MIT licensed. Self-hostable with Docker.
 
@@ -516,19 +516,19 @@ If you're building something that shares sensitive documents, try it and tell me
 
 ---
 
-### 4b. Comparison Thread — CloakShare vs DocSend
+### 4b. Comparison Thread — Scrinium vs DocSend
 
 **Tweet 1:**
 DocSend charges $45/user/month.
 
 For a 5-person sales team sharing proposals, that's $2,700/year.
 
-Here's what you get for free with CloakShare (open source, MIT licensed):
+Here's what you get for free with Scrinium (open source, MIT licensed):
 
 **Tweet 2:**
 Per-page analytics:
 - DocSend: Yes ($45/user/mo)
-- CloakShare: Yes (free, self-hosted)
+- Scrinium: Yes (free, self-hosted)
 
 Which slides held attention? Did they skip pricing? Did they come back?
 
@@ -537,14 +537,14 @@ Same data. $0/year instead of $2,700.
 **Tweet 3:**
 Watermarks:
 - DocSend: Static text
-- CloakShare: Dynamic templates — viewer email, date, session ID
+- Scrinium: Dynamic templates — viewer email, date, session ID
 
 Every page stamped with WHO is reading it and WHEN. Deters forwarding because the leak is traceable.
 
 **Tweet 4:**
 API access:
 - DocSend: No real API
-- CloakShare: API-first. One curl command to create a secure link.
+- Scrinium: API-first. One curl command to create a secure link.
 
 ```
 curl -X POST https://api.cloakshare.dev/v1/links \
@@ -556,14 +556,14 @@ curl -X POST https://api.cloakshare.dev/v1/links \
 **Tweet 5:**
 Self-hosting:
 - DocSend: No
-- CloakShare: `docker compose up`
+- Scrinium: `docker compose up`
 
 Your documents on your infrastructure. SQLite, local storage, 1GB RAM. Useful for healthcare, legal, government — anyone with data sovereignty requirements.
 
 **Tweet 6:**
 Open source:
 - DocSend: Proprietary
-- CloakShare: MIT licensed
+- Scrinium: MIT licensed
 
 Read every line of code that touches your data. Fork it. Modify it. Embed it in your product. No licensing anxiety.
 
@@ -571,31 +571,31 @@ github.com/cloakshare/cloakshare
 
 ---
 
-### 4c. Comparison Thread — CloakShare vs Papermark
+### 4c. Comparison Thread — Scrinium vs Papermark
 
 **Tweet 1:**
 Papermark is great. $900K ARR, 6.9K GitHub stars, 2-person team. Respect.
 
-But if you're a developer choosing between Papermark and CloakShare, here's an honest comparison:
+But if you're a developer choosing between Papermark and Scrinium, here's an honest comparison:
 
 **Tweet 2:**
 License:
 - Papermark: AGPL
-- CloakShare: MIT
+- Scrinium: MIT
 
 AGPL means if you modify the code and deploy it (even internally), you must open-source your changes. MIT has no such restriction. Fork it, embed it, ship it. Your legal team will thank you.
 
 **Tweet 3:**
 Architecture:
 - Papermark: Dashboard-first (Next.js app with API bolted on)
-- CloakShare: API-first (Hono API with viewer as separate component)
+- Scrinium: API-first (Hono API with viewer as separate component)
 
 If you're integrating document sharing into YOUR product, you need an API, not a dashboard.
 
 **Tweet 4:**
 Embeddable viewer:
 - Papermark: No npm package. Links only.
-- CloakShare: Web Component npm package. Drop into any app.
+- Scrinium: Web Component npm package. Drop into any app.
 
 ```html
 <cloak-viewer src="/deck.pdf" watermark="{{email}}" email-gate />
@@ -606,16 +606,16 @@ Free for PDF & images. No API key needed.
 **Tweet 5:**
 Video support:
 - Papermark: No
-- CloakShare: Yes — MP4, MOV, WEBM with HLS streaming and watermark overlays
+- Scrinium: Yes — MP4, MOV, WEBM with HLS streaming and watermark overlays
 
-If you share training videos, product demos, or investor updates alongside docs — CloakShare handles both.
+If you share training videos, product demos, or investor updates alongside docs — Scrinium handles both.
 
 **Tweet 6:**
 Both are open source. Both solve real problems. Choose based on your use case:
 
 - Need a ready-made dashboard? Papermark.
-- Need an API to embed in your product? CloakShare.
-- Care about license freedom? CloakShare (MIT).
+- Need an API to embed in your product? Scrinium.
+- Care about license freedom? Scrinium (MIT).
 
 github.com/cloakshare/cloakshare
 
@@ -626,7 +626,7 @@ github.com/cloakshare/cloakshare
 **Tweet 1:**
 We track which pages someone reads in a shared PDF, how long they spend on each page, and their scroll depth.
 
-Here's the technical architecture behind per-page analytics in CloakShare:
+Here's the technical architecture behind per-page analytics in Scrinium:
 
 **Tweet 2:**
 Step 1: Server-side rendering
@@ -681,7 +681,7 @@ github.com/cloakshare/cloakshare
 **Tweet 1:**
 Most document viewers add watermarks with CSS overlays. You can remove them in 5 seconds with DevTools.
 
-Here's how CloakShare does watermarks that actually work:
+Here's how Scrinium does watermarks that actually work:
 
 **Tweet 2:**
 Client-side mode:
@@ -733,7 +733,7 @@ Here's what you don't know:
 - Whether your financials are in a competitor's inbox
 
 **Tweet 2:**
-With CloakShare, you upload the deck once and get a secure link.
+With Scrinium, you upload the deck once and get a secure link.
 
 When an investor opens it, you see:
 - 3:15 PM — investor@sequoia.com opened the deck

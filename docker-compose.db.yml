@@ -1,4 +1,4 @@
-# Cloak — local PostgreSQL ONLY
+# Scrinium — local PostgreSQL ONLY
 #
 # Brings up just the database for local development. The API (run via
 # `pnpm --filter @cloak/api dev` or the full docker-compose.yml) connects to it

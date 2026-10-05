@@ -1,13 +1,13 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
 /**
- * Verify a webhook signature from CloakShare.
+ * Verify a webhook signature from Scrinium.
  *
  * @example
  * // Express
  * app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
  *   const signature = req.headers['x-cloakshare-signature'];
- *   const isValid = CloakShare.webhooks.verify(req.body, signature, process.env.WEBHOOK_SECRET);
+ *   const isValid = Scrinium.webhooks.verify(req.body, signature, process.env.WEBHOOK_SECRET);
  *   if (!isValid) return res.status(401).send('Invalid signature');
  *   // Handle event...
  * });
@@ -17,7 +17,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
  * app.post('/webhook', async (c) => {
  *   const body = await c.req.text();
  *   const signature = c.req.header('x-cloakshare-signature');
- *   const isValid = CloakShare.webhooks.verify(body, signature, process.env.WEBHOOK_SECRET);
+ *   const isValid = Scrinium.webhooks.verify(body, signature, process.env.WEBHOOK_SECRET);
  *   // ...
  * });
  */

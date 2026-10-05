@@ -1,6 +1,22 @@
 import { useState, useEffect } from 'react';
 import { teamsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import {
+  Button,
+  Chip,
+  Field,
+  InlineError,
+  Input,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  Select,
+  Skeleton,
+  Table,
+  Td,
+  Th,
+  Tr,
+} from '../components/ui';
 
 interface Member {
   id: string;
@@ -19,11 +35,10 @@ interface Invite {
   expires_at: string;
 }
 
-const roleBadge: Record<string, string> = {
-  owner: 'bg-accent/15 text-accent',
-  admin: 'bg-warning/15 text-warning',
-  member: 'bg-elevated text-text-secondary',
-  viewer: 'bg-elevated text-text-tertiary',
+const roleTone = (role: string): 'accent' | 'warning' | 'neutral' => {
+  if (role === 'owner') return 'accent';
+  if (role === 'admin') return 'warning';
+  return 'neutral';
 };
 
 export default function Team() {
@@ -107,14 +122,14 @@ export default function Team() {
   if (loading) {
     return (
       <div>
-        <h1 className="font-sans font-semibold text-xl text-foreground mb-8">Team</h1>
+        <Skeleton className="mb-8 h-6 w-32" />
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-surface border border-border rounded-lg p-4 flex items-center gap-3">
-              <div className="skeleton w-8 h-8 rounded-full" />
-              <div className="skeleton h-4 w-32 rounded" />
-              <div className="skeleton h-3 w-16 rounded ml-auto" />
-            </div>
+            <Panel key={i} className="flex items-center gap-3 p-4">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="ml-auto h-3 w-16" />
+            </Panel>
           ))}
         </div>
       </div>
@@ -123,168 +138,186 @@ export default function Team() {
 
   return (
     <div>
-      <h1 className="font-sans font-semibold text-xl text-foreground mb-2">Team</h1>
-      {activeOrg && (
-        <p className="text-sm text-text-secondary font-sans mb-8">{activeOrg.name} &middot; <span className="text-accent font-medium">{activeOrg.plan}</span> plan</p>
-      )}
+      <PageHeader
+        title="Team"
+        description={
+          activeOrg
+            ? `${activeOrg.name} on the ${activeOrg.plan} plan. Roles decide who can invite, manage billing, and read the audit log.`
+            : undefined
+        }
+      />
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 mb-6 text-destructive text-sm font-sans">
-          {error}
+        <div className="mb-6 max-w-3xl">
+          <InlineError>{error}</InlineError>
         </div>
       )}
 
       {/* Invite form */}
       {canInvite && (
-        <div className="bg-surface border border-border rounded-lg p-5 mb-8">
-          <h2 className="font-sans font-medium text-sm text-foreground mb-4">Invite member</h2>
-          <form onSubmit={handleInvite} className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">Email</label>
-              <input
+        <Panel className="mb-6 p-5">
+          <PanelHeader title="Invite member" />
+          <form onSubmit={handleInvite} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Field label="Email" htmlFor="invite-email" className="flex-1">
+              <Input
+                id="invite-email"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="teammate@company.com"
-                className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">Role</label>
-              <select
+            </Field>
+            <Field label="Role" htmlFor="invite-role" className="sm:w-40">
+              <Select
+                id="invite-role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="bg-input border border-border rounded-md px-3 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
               >
                 <option value="viewer">Viewer</option>
                 <option value="member">Member</option>
                 {myRole === 'owner' && <option value="admin">Admin</option>}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={inviting}
-              className="bg-accent text-background font-sans text-sm font-medium px-4 py-2.5 rounded-md hover:bg-accent-hover hover:-translate-y-px hover:shadow-glow active:translate-y-0 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {inviting ? 'Sending...' : 'Invite'}
-            </button>
+              </Select>
+            </Field>
+            <Button type="submit" variant="primary" loading={inviting} className="sm:mb-0">
+              Invite
+            </Button>
           </form>
-        </div>
+        </Panel>
       )}
 
       {/* Members table */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden mb-8">
-        <div className="px-5 py-4 border-b border-border-subtle">
-          <h2 className="font-sans font-medium text-sm text-foreground">Members ({members.length})</h2>
-        </div>
-        <table className="w-full">
+      <section className="mb-8">
+        <h2 className="mb-3 text-sm font-medium text-foreground">
+          Members <span className="font-mono text-text-tertiary">{members.length}</span>
+        </h2>
+        <Table>
           <thead>
-            <tr className="border-b border-border-subtle">
-              <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">User</th>
-              <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Role</th>
-              <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Joined</th>
-              {canManage && <th className="text-right text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Actions</th>}
+            <tr>
+              <Th>User</Th>
+              <Th>Role</Th>
+              <Th align="right">Joined</Th>
+              {canManage && (
+                <Th align="right">
+                  <span className="sr-only">Actions</span>
+                </Th>
+              )}
             </tr>
           </thead>
           <tbody>
             {members.map((m) => {
               const initials = (m.name || m.email).slice(0, 2).toUpperCase();
+              const isMe = m.user_id === user?.id;
               return (
-                <tr key={m.id} className="border-b border-border-subtle last:border-0 hover:bg-hover transition-colors duration-150">
-                  <td className="px-5 py-3">
+                <Tr key={m.id}>
+                  <Td label="User">
                     <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center text-[10px] font-sans font-medium text-text-secondary flex-shrink-0">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-elevated text-[10px] font-medium text-text-secondary">
                         {initials}
                       </div>
-                      <div>
-                        <div className="text-sm text-foreground font-sans">{m.email}</div>
-                        {m.name && <div className="text-xs text-text-tertiary font-sans">{m.name}</div>}
+                      <div className="min-w-0 max-w-[22ch]">
+                        <div className="truncate text-sm text-foreground" title={m.email}>
+                          {m.email}
+                        </div>
+                        {m.name && (
+                          <div className="truncate text-xs text-text-tertiary">{m.name}</div>
+                        )}
                       </div>
-                      {m.user_id === user?.id && <span className="text-[10px] font-sans font-medium text-accent bg-accent/10 px-1.5 py-0.5 rounded">you</span>}
+                      {isMe && <Chip tone="accent">you</Chip>}
                     </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    {canManage && m.user_id !== user?.id ? (
-                      <select
+                  </Td>
+                  <Td label="Role">
+                    {canManage && !isMe ? (
+                      <Select
+                        aria-label={`Role for ${m.email}`}
                         value={m.role}
                         onChange={(e) => handleChangeRole(m.id, e.target.value)}
-                        className="bg-input border border-border rounded-md px-2 py-1 text-xs text-foreground font-sans focus:outline-none focus:border-accent/50 transition-colors"
+                        className="h-9 w-28 py-0 text-xs lg:w-32"
                       >
                         <option value="viewer">viewer</option>
                         <option value="member">member</option>
                         {myRole === 'owner' && <option value="admin">admin</option>}
-                      </select>
+                      </Select>
                     ) : (
-                      <span className={`text-xs font-sans font-medium px-2 py-0.5 rounded ${roleBadge[m.role] || roleBadge.viewer}`}>
-                        {m.role}
-                      </span>
+                      <Chip tone={roleTone(m.role)}>{m.role}</Chip>
                     )}
-                  </td>
-                  <td className="px-5 py-3 text-xs text-text-tertiary font-sans">
-                    {m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '-'}
-                  </td>
+                  </Td>
+                  <Td align="right" label="Joined">
+                    <span className="whitespace-nowrap text-xs text-text-tertiary">
+                      {m.joined_at ? new Date(m.joined_at).toLocaleDateString() : 'Not recorded'}
+                    </span>
+                  </Td>
                   {canManage && (
-                    <td className="px-5 py-3 text-right">
-                      {m.user_id !== user?.id && (
-                        <button
+                    <Td align="right">
+                      {!isMe && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleRemove(m.id)}
-                          className="text-xs font-sans font-medium text-destructive/70 hover:text-destructive transition-colors duration-150"
+                          className="text-destructive hover:bg-destructive/10"
                         >
                           Remove
-                        </button>
+                        </Button>
                       )}
-                    </td>
+                    </Td>
                   )}
-                </tr>
+                </Tr>
               );
             })}
           </tbody>
-        </table>
-      </div>
+        </Table>
+      </section>
 
       {/* Pending invites */}
       {invites.length > 0 && (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="px-5 py-4 border-b border-border-subtle">
-            <h2 className="font-sans font-medium text-sm text-foreground">Pending Invites ({invites.length})</h2>
-          </div>
-          <table className="w-full">
+        <section>
+          <h2 className="mb-3 text-sm font-medium text-foreground">
+            Pending invites <span className="font-mono text-text-tertiary">{invites.length}</span>
+          </h2>
+          <Table>
             <thead>
-              <tr className="border-b border-border-subtle">
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Email</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Role</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Expires</th>
-                {canInvite && <th className="text-right text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Actions</th>}
+              <tr>
+                <Th>Email</Th>
+                <Th>Role</Th>
+                <Th align="right">Expires</Th>
+                {canInvite && (
+                  <Th align="right">
+                    <span className="sr-only">Actions</span>
+                  </Th>
+                )}
               </tr>
             </thead>
             <tbody>
               {invites.map((inv) => (
-                <tr key={inv.id} className="border-b border-border-subtle last:border-0 hover:bg-hover transition-colors duration-150">
-                  <td className="px-5 py-3 text-sm text-foreground font-sans">{inv.email}</td>
-                  <td className="px-5 py-3">
-                    <span className={`text-xs font-sans font-medium px-2 py-0.5 rounded ${roleBadge[inv.role] || roleBadge.viewer}`}>
-                      {inv.role}
+                <Tr key={inv.id}>
+                  <Td label="Email">
+                    <span className="text-sm text-foreground">{inv.email}</span>
+                  </Td>
+                  <Td label="Role">
+                    <Chip tone={roleTone(inv.role)}>{inv.role}</Chip>
+                  </Td>
+                  <Td align="right" label="Expires">
+                    <span className="whitespace-nowrap text-xs text-text-tertiary">
+                      {new Date(inv.expires_at).toLocaleDateString()}
                     </span>
-                  </td>
-                  <td className="px-5 py-3 text-xs text-text-tertiary font-sans">
-                    {new Date(inv.expires_at).toLocaleDateString()}
-                  </td>
+                  </Td>
                   {canInvite && (
-                    <td className="px-5 py-3 text-right">
-                      <button
+                    <Td align="right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleRevokeInvite(inv.id)}
-                        className="text-xs font-sans font-medium text-destructive/70 hover:text-destructive transition-colors duration-150"
+                        className="text-destructive hover:bg-destructive/10"
                       >
                         Revoke
-                      </button>
-                    </td>
+                      </Button>
+                    </Td>
                   )}
-                </tr>
+                </Tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </section>
       )}
     </div>
   );

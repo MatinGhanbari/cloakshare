@@ -1,4 +1,4 @@
-# CloakShare - Welcome all search engines and AI crawlers
+# Scrinium - Welcome all search engines and AI crawlers
 User-agent: *
 Allow: /
 Disallow: /app/

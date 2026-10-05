@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 
-const title = 'Self-Hosted Document Sharing with Docker | CloakShare';
-const description = 'Deploy CloakShare on your own infrastructure with Docker. Self-hosted DocSend alternative with watermarks, tracking, and video sharing. Complete data sovereignty.';
+const title = 'Self-Hosted Document Sharing with Docker | Scrinium';
+const description = 'Deploy Scrinium on your own infrastructure with Docker. Self-hosted DocSend alternative with watermarks, tracking, and video sharing. Complete data sovereignty.';
 
 const breadcrumbSchema = {
   "@context": "https://schema.org",
@@ -19,33 +19,33 @@ const faqSchema = {
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "Is CloakShare really free to self-host?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Yes. CloakShare's core is MIT licensed. You can deploy it on your own servers at no licensing cost. You only pay for your own infrastructure (server, storage, database)." },
+      "name": "Is Scrinium really free to self-host?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Scrinium's core is MIT licensed. You can deploy it on your own servers at no licensing cost. You only pay for your own infrastructure (server, storage, database)." },
     },
     {
       "@type": "Question",
-      "name": "What infrastructure do I need to self-host CloakShare?",
-      "acceptedAnswer": { "@type": "Answer", "text": "A Linux server with Docker and Docker Compose. Minimum recommended: 2 vCPU, 4GB RAM, 20GB storage. For video processing, 4 vCPU and 8GB RAM is recommended. CloakShare uses PostgreSQL for the database and S3-compatible storage for files." },
+      "name": "What infrastructure do I need to self-host Scrinium?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A Linux server with Docker and Docker Compose. Minimum recommended: 2 vCPU, 4GB RAM, 20GB storage. For video processing, 4 vCPU and 8GB RAM is recommended. Scrinium uses PostgreSQL for the database and S3-compatible storage for files." },
     },
     {
       "@type": "Question",
-      "name": "Can I self-host CloakShare and still get updates?",
+      "name": "Can I self-host Scrinium and still get updates?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. Pull the latest Docker image to update. The MIT license means you can run any version, modify the source code, and contribute back to the project." },
     },
     {
       "@type": "Question",
-      "name": "How does self-hosted CloakShare compare to DocSend?",
-      "acceptedAnswer": { "@type": "Answer", "text": "DocSend is a closed-source SaaS with no self-hosting option. Self-hosted CloakShare gives you all the same features (email gating, analytics, watermarks, expiry) plus video sharing, API access, and complete data sovereignty on your own infrastructure." },
+      "name": "How does self-hosted Scrinium compare to DocSend?",
+      "acceptedAnswer": { "@type": "Answer", "text": "DocSend is a closed-source SaaS with no self-hosting option. Self-hosted Scrinium gives you all the same features (email gating, analytics, watermarks, expiry) plus video sharing, API access, and complete data sovereignty on your own infrastructure." },
     },
     {
       "@type": "Question",
-      "name": "Does self-hosted CloakShare support video sharing?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Self-hosted CloakShare includes full video support with automatic HLS transcoding, adaptive streaming, dynamic watermarks, and watch-time analytics. You need FFmpeg installed (included in the Docker image)." },
+      "name": "Does self-hosted Scrinium support video sharing?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Self-hosted Scrinium includes full video support with automatic HLS transcoding, adaptive streaming, dynamic watermarks, and watch-time analytics. You need FFmpeg installed (included in the Docker image)." },
     },
     {
       "@type": "Question",
-      "name": "Can I use CloakShare for a virtual data room?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Self-hosted CloakShare is ideal for virtual data rooms during M&A, due diligence, or fundraising. Per-document access controls, audit trails, watermarks, and complete data sovereignty make it suitable for sensitive transactions." },
+      "name": "Can I use Scrinium for a virtual data room?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Self-hosted Scrinium is ideal for virtual data rooms during M&A, due diligence, or fundraising. Per-document access controls, audit trails, watermarks, and complete data sovereignty make it suitable for sensitive transactions." },
     },
   ],
 };
@@ -69,7 +69,7 @@ const faqSchema = {
       <p class="font-mono text-accent text-xs uppercase tracking-widest mb-4">Self-Hosted</p>
       <h1 class="font-mono font-bold text-4xl text-foreground mb-4">Self-Hosted Document and Video Sharing</h1>
       <p class="text-text-secondary font-sans text-lg mb-16 leading-relaxed max-w-2xl">
-        Deploy CloakShare on your own infrastructure with Docker. Get complete data sovereignty, watermarked document and video sharing, per-viewer analytics, and email gating. The only self-hostable DocSend alternative with video support.
+        Deploy Scrinium on your own infrastructure with Docker. Get complete data sovereignty, watermarked document and video sharing, per-viewer analytics, and email gating. The only self-hostable DocSend alternative with video support.
       </p>
 
       <!-- Why Self-Host -->
@@ -108,7 +108,7 @@ const faqSchema = {
             </div>
             <h3 class="font-mono font-medium text-foreground mb-2">No per-seat fees ever</h3>
             <p class="text-sm text-text-secondary font-sans leading-relaxed">
-              Self-hosted CloakShare has no licensing cost. Add unlimited users, create unlimited links, share unlimited documents. You only pay for your own server and storage.
+              Self-hosted Scrinium has no licensing cost. Add unlimited users, create unlimited links, share unlimited documents. You only pay for your own server and storage.
             </p>
           </div>
 
@@ -120,7 +120,7 @@ const faqSchema = {
             </div>
             <h3 class="font-mono font-medium text-foreground mb-2">Video sharing included</h3>
             <p class="text-sm text-text-secondary font-sans leading-relaxed">
-              Self-hosted CloakShare includes full video support. Upload MP4, MOV, or WebM files. Automatic HLS transcoding, adaptive streaming, per-viewer watermarks, and watch-time analytics.
+              Self-hosted Scrinium includes full video support. Upload MP4, MOV, or WebM files. Automatic HLS transcoding, adaptive streaming, per-viewer watermarks, and watch-time analytics.
             </p>
           </div>
         </div>
@@ -186,7 +186,7 @@ cd cloakshare
 # Start all services
 docker compose up -d
 
-# CloakShare is now running at http://localhost:3000
+# Scrinium is now running at http://localhost:3000
 # MinIO console at http://localhost:9001`}</code></pre>
         </div>
       </div>
@@ -271,7 +271,7 @@ docker compose up -d
           <thead>
             <tr class="border-b border-border-subtle">
               <th class="text-left text-xs text-text-tertiary font-mono font-normal uppercase tracking-wider px-5 py-3">Feature</th>
-              <th class="text-center text-xs text-accent font-mono font-normal uppercase tracking-wider px-5 py-3">CloakShare (self-hosted)</th>
+              <th class="text-center text-xs text-accent font-mono font-normal uppercase tracking-wider px-5 py-3">Scrinium (self-hosted)</th>
               <th class="text-center text-xs text-text-tertiary font-mono font-normal uppercase tracking-wider px-5 py-3">DocSend</th>
               <th class="text-center text-xs text-text-tertiary font-mono font-normal uppercase tracking-wider px-5 py-3">Papermark</th>
             </tr>
@@ -300,7 +300,7 @@ docker compose up -d
 
       <!-- Use Cases for Self-Hosting -->
       <div class="mb-16">
-        <h2 class="font-mono font-medium text-xl text-foreground mb-6">Who self-hosts CloakShare</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mb-6">Who self-hosts Scrinium</h2>
         <div class="grid gap-4 md:grid-cols-3">
           <a href="/for/law-firms" class="bg-surface border border-border rounded-lg p-5 hover:border-accent/50 transition-colors">
             <h3 class="font-mono text-sm text-foreground mb-2">Law firms</h3>
@@ -335,31 +335,31 @@ docker compose up -d
         <div class="space-y-4">
           <details class="bg-surface border border-border rounded-lg group">
             <summary class="px-6 py-4 cursor-pointer font-mono text-sm text-foreground font-medium flex items-center justify-between">
-              Is CloakShare really free to self-host?
+              Is Scrinium really free to self-host?
               <svg class="w-4 h-4 text-text-tertiary flex-shrink-0 ml-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
             <div class="px-6 pb-4">
-              <p class="text-sm text-text-secondary font-sans leading-relaxed">Yes. CloakShare's core is MIT licensed. You can deploy it on your own servers at no licensing cost. You only pay for your own infrastructure (server, storage, database).</p>
+              <p class="text-sm text-text-secondary font-sans leading-relaxed">Yes. Scrinium's core is MIT licensed. You can deploy it on your own servers at no licensing cost. You only pay for your own infrastructure (server, storage, database).</p>
             </div>
           </details>
 
           <details class="bg-surface border border-border rounded-lg group">
             <summary class="px-6 py-4 cursor-pointer font-mono text-sm text-foreground font-medium flex items-center justify-between">
-              What infrastructure do I need to self-host CloakShare?
+              What infrastructure do I need to self-host Scrinium?
               <svg class="w-4 h-4 text-text-tertiary flex-shrink-0 ml-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
             <div class="px-6 pb-4">
-              <p class="text-sm text-text-secondary font-sans leading-relaxed">A Linux server with Docker and Docker Compose. Minimum: 2 vCPU, 4GB RAM, 20GB storage for documents only. For video processing, 4 vCPU and 8GB RAM is recommended. CloakShare uses PostgreSQL for the database and any S3-compatible storage for files.</p>
+              <p class="text-sm text-text-secondary font-sans leading-relaxed">A Linux server with Docker and Docker Compose. Minimum: 2 vCPU, 4GB RAM, 20GB storage for documents only. For video processing, 4 vCPU and 8GB RAM is recommended. Scrinium uses PostgreSQL for the database and any S3-compatible storage for files.</p>
             </div>
           </details>
 
           <details class="bg-surface border border-border rounded-lg group">
             <summary class="px-6 py-4 cursor-pointer font-mono text-sm text-foreground font-medium flex items-center justify-between">
-              Can I self-host CloakShare and still get updates?
+              Can I self-host Scrinium and still get updates?
               <svg class="w-4 h-4 text-text-tertiary flex-shrink-0 ml-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -371,37 +371,37 @@ docker compose up -d
 
           <details class="bg-surface border border-border rounded-lg group">
             <summary class="px-6 py-4 cursor-pointer font-mono text-sm text-foreground font-medium flex items-center justify-between">
-              How does self-hosted CloakShare compare to DocSend?
+              How does self-hosted Scrinium compare to DocSend?
               <svg class="w-4 h-4 text-text-tertiary flex-shrink-0 ml-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
             <div class="px-6 pb-4">
-              <p class="text-sm text-text-secondary font-sans leading-relaxed">DocSend is a closed-source SaaS with no self-hosting option at $65/user/month. Self-hosted CloakShare gives you all the same features (email gating, analytics, watermarks, expiry) plus video sharing, API access, office document support, and complete data sovereignty on your own infrastructure at zero licensing cost.</p>
+              <p class="text-sm text-text-secondary font-sans leading-relaxed">DocSend is a closed-source SaaS with no self-hosting option at $65/user/month. Self-hosted Scrinium gives you all the same features (email gating, analytics, watermarks, expiry) plus video sharing, API access, office document support, and complete data sovereignty on your own infrastructure at zero licensing cost.</p>
             </div>
           </details>
 
           <details class="bg-surface border border-border rounded-lg group">
             <summary class="px-6 py-4 cursor-pointer font-mono text-sm text-foreground font-medium flex items-center justify-between">
-              Does self-hosted CloakShare support video sharing?
+              Does self-hosted Scrinium support video sharing?
               <svg class="w-4 h-4 text-text-tertiary flex-shrink-0 ml-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
             <div class="px-6 pb-4">
-              <p class="text-sm text-text-secondary font-sans leading-relaxed">Yes. Self-hosted CloakShare includes full video support with automatic HLS transcoding, adaptive streaming at 720p and 1080p, dynamic watermarks on every frame, and per-viewer watch-time analytics. FFmpeg is included in the Docker image.</p>
+              <p class="text-sm text-text-secondary font-sans leading-relaxed">Yes. Self-hosted Scrinium includes full video support with automatic HLS transcoding, adaptive streaming at 720p and 1080p, dynamic watermarks on every frame, and per-viewer watch-time analytics. FFmpeg is included in the Docker image.</p>
             </div>
           </details>
 
           <details class="bg-surface border border-border rounded-lg group">
             <summary class="px-6 py-4 cursor-pointer font-mono text-sm text-foreground font-medium flex items-center justify-between">
-              Can I use self-hosted CloakShare for a virtual data room?
+              Can I use self-hosted Scrinium for a virtual data room?
               <svg class="w-4 h-4 text-text-tertiary flex-shrink-0 ml-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
             <div class="px-6 pb-4">
-              <p class="text-sm text-text-secondary font-sans leading-relaxed">Yes. Self-hosted CloakShare is ideal for virtual data rooms. Per-document access controls, complete audit trails, dynamic watermarks, link expiry, and 100% data sovereignty make it suitable for M&A, due diligence, and fundraising transactions.</p>
+              <p class="text-sm text-text-secondary font-sans leading-relaxed">Yes. Self-hosted Scrinium is ideal for virtual data rooms. Per-document access controls, complete audit trails, dynamic watermarks, link expiry, and 100% data sovereignty make it suitable for M&A, due diligence, and fundraising transactions.</p>
             </div>
           </details>
         </div>
@@ -431,7 +431,7 @@ docker compose up -d
 
       <!-- CTA -->
       <div class="text-center bg-surface border border-accent/30 rounded-lg p-10">
-        <h2 class="font-mono font-bold text-2xl text-foreground mb-3">Deploy CloakShare today</h2>
+        <h2 class="font-mono font-bold text-2xl text-foreground mb-3">Deploy Scrinium today</h2>
         <p class="text-text-secondary font-sans mb-6 max-w-lg mx-auto">
           Clone the repo, run docker compose up, and start sharing documents and videos securely on your own infrastructure in under 5 minutes.
         </p>

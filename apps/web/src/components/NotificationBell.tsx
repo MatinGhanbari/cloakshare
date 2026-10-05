@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationsApi } from '../lib/api';
+import { BellIcon } from './icons';
 
 interface Notification {
   id: string;
@@ -27,7 +28,7 @@ export default function NotificationBell() {
       setNotifications(data.notifications);
       setUnreadCount(data.unread_count);
     } catch {
-      // Silently fail — bell is non-critical UI
+      // Silently fail - the bell is non-critical UI
     }
   }, []);
 
@@ -92,29 +93,28 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-1.5 text-text-tertiary hover:text-foreground transition-colors duration-150"
+        className="relative flex h-8 w-8 items-center justify-center rounded-control text-text-tertiary transition-colors duration-150 ease-expo hover:bg-hover hover:text-foreground"
         aria-label="Notifications"
+        aria-expanded={open}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-        </svg>
+        <BellIcon size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center bg-accent text-background text-[10px] font-mono font-bold rounded-full px-1">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 font-mono text-[10px] font-bold text-accent-foreground">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute bottom-full mt-2 w-80 bg-surface border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute bottom-full z-50 mb-2 w-80 overflow-hidden rounded-panel border border-border bg-surface shadow-overlay">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle">
-            <span className="text-xs font-sans font-medium text-foreground">Notifications</span>
+          <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
+            <span className="text-xs font-medium text-foreground">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 disabled={loading}
-                className="text-[11px] font-sans text-accent hover:text-accent-hover transition-colors duration-150 disabled:opacity-50"
+                className="text-[11px] text-accent transition-colors duration-150 hover:text-accent-hover disabled:opacity-50"
               >
                 Mark all read
               </button>
@@ -124,7 +124,7 @@ export default function NotificationBell() {
           {/* List */}
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-xs text-text-tertiary font-sans">
+              <div className="px-4 py-8 text-center text-xs text-text-tertiary">
                 No notifications yet
               </div>
             ) : (
@@ -132,19 +132,19 @@ export default function NotificationBell() {
                 <button
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`w-full text-left px-4 py-3 border-b border-border-subtle last:border-b-0 hover:bg-hover transition-colors duration-150 ${
+                  className={`w-full border-b border-border-subtle px-4 py-3 text-left transition-colors duration-150 ease-expo last:border-b-0 hover:bg-hover ${
                     !notif.read ? 'bg-accent/5' : ''
                   }`}
                 >
                   <div className="flex items-start gap-2">
                     {!notif.read && (
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-foreground font-sans leading-relaxed truncate">
+                      <p className="truncate text-xs leading-relaxed text-foreground">
                         {notif.message}
                       </p>
-                      <p className="text-[10px] text-text-tertiary font-sans mt-0.5">
+                      <p className="mt-0.5 text-[10px] text-text-tertiary">
                         {timeAgo(notif.created_at)}
                       </p>
                     </div>

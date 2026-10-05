@@ -7,11 +7,13 @@
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
-const STORAGE_KEY = 'cloak_theme';
+const STORAGE_KEY = 'scrinium_theme';
+/** Pre-rebrand key. Read once so an existing choice is not silently reset. */
+const LEGACY_STORAGE_KEY = 'cloak_theme';
 
 export function getStoredTheme(): ThemePreference {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     if (raw === 'light' || raw === 'dark' || raw === 'system') return raw;
   } catch {
     /* storage unavailable */

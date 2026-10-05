@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for CloakShare
+about: Suggest a feature for Scrinium
 title: "[Feature] "
 labels: enhancement
 assignees: ''

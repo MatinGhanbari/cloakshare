@@ -1,13 +1,13 @@
 import { readFileSync } from 'fs';
 import { basename } from 'path';
-import { CloakShareClient } from '../client.js';
+import { ScriniumClient } from '../client.js';
 import type {
   Link, CreateLinkParams, ListLinksParams, LinkList,
   LinkAnalytics, UploadUrlParams, UploadUrlResponse,
 } from '../types.js';
 
 export class LinksResource {
-  constructor(private client: CloakShareClient) {}
+  constructor(private client: ScriniumClient) {}
 
   /**
    * Create a secure link.

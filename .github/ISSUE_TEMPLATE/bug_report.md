@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in CloakShare
+about: Report a bug in Scrinium
 title: "[Bug] "
 labels: bug
 assignees: ''
@@ -19,7 +19,7 @@ Steps to reproduce the behavior:
 What you expected to happen.
 
 **Environment**
-- CloakShare version:
+- Scrinium version:
 - Deployment: [cloud / self-hosted]
 - OS:
 - Node.js version:

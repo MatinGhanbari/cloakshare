@@ -124,7 +124,7 @@ export interface VideoMetadata {
 // Storage mode
 export type StorageProvider = 'local' | 's3';
 export type DatabaseProvider = 'postgres';
-export type CloakMode = 'self-hosted' | 'cloud';
+export type ScriniumMode = 'self-hosted' | 'cloud';
 
 // Organization types
 export type OrgRole = 'owner' | 'admin' | 'member' | 'viewer';

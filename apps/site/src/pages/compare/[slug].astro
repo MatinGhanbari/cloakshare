@@ -17,8 +17,8 @@ interface Props {
 
 const { competitor } = Astro.props;
 
-const title = `CloakShare vs ${competitor.name} | ${competitor.name} Alternative`;
-const description = `Compare CloakShare and ${competitor.name} for secure document and video sharing. See features, pricing, and why teams switch to CloakShare.`;
+const title = `Scrinium vs ${competitor.name} | ${competitor.name} Alternative`;
+const description = `Compare Scrinium and ${competitor.name} for secure document and video sharing. See features, pricing, and why teams switch to Scrinium.`;
 
 const breadcrumbSchema = {
   "@context": "https://schema.org",
@@ -60,9 +60,9 @@ const otherCompetitors = allCompetitors.filter((c) => c.slug !== competitor.slug
         </ol>
       </nav>
 
-      <h1 class="font-mono font-bold text-4xl text-foreground mb-4">CloakShare vs {competitor.name}</h1>
+      <h1 class="font-mono font-bold text-4xl text-foreground mb-4">Scrinium vs {competitor.name}</h1>
       <p class="text-text-secondary font-sans mb-12 leading-relaxed max-w-2xl">
-        Looking for a {competitor.name} alternative? CloakShare is an open-source, API-first platform for secure document and video sharing with watermarks, tracking, and expiry. Here is how they compare.
+        Looking for a {competitor.name} alternative? Scrinium is an open-source, API-first platform for secure document and video sharing with watermarks, tracking, and expiry. Here is how they compare.
       </p>
 
       <!-- Pricing Comparison -->
@@ -70,7 +70,7 @@ const otherCompetitors = allCompetitors.filter((c) => c.slug !== competitor.slug
         <h2 class="font-mono font-medium text-accent mb-3">Pricing</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <p class="text-xs font-mono text-text-tertiary uppercase tracking-wider mb-1">CloakShare</p>
+            <p class="text-xs font-mono text-text-tertiary uppercase tracking-wider mb-1">Scrinium</p>
             <p class="text-sm text-text-secondary font-sans">$0 free tier (50 links, 500 views). Growth at $99/month. No per-seat fees.</p>
           </div>
           <div>
@@ -86,9 +86,9 @@ const otherCompetitors = allCompetitors.filter((c) => c.slug !== competitor.slug
         <ComparisonTable competitor={competitor.name} rows={competitor.features} />
       </div>
 
-      <!-- CloakShare Advantages -->
+      <!-- Scrinium Advantages -->
       <div class="mb-12">
-        <h2 class="font-mono font-medium text-xl text-foreground mb-6">Why switch to CloakShare</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mb-6">Why switch to Scrinium</h2>
         <div class="space-y-4">
           {competitor.cloakshareAdvantages.map((advantage) => (
             <div class="bg-surface border border-border rounded-lg p-5">
@@ -135,12 +135,12 @@ const otherCompetitors = allCompetitors.filter((c) => c.slug !== competitor.slug
 
       <!-- Video Advantage -->
       <div class="mb-12 bg-surface border border-border rounded-lg p-8">
-        <h2 class="font-mono font-medium text-foreground mb-4">Video sharing: CloakShare's unique advantage</h2>
+        <h2 class="font-mono font-medium text-foreground mb-4">Video sharing: Scrinium's unique advantage</h2>
         <p class="text-sm text-text-secondary font-sans leading-relaxed mb-4">
-          {competitor.name} does not offer secure video sharing. CloakShare lets you upload MP4, MOV, or WebM files and automatically transcodes them to adaptive HLS streaming with 720p and 1080p quality tiers. Every video frame is watermarked with the viewer's email. Watch-time analytics show exactly how much each viewer watched.
+          {competitor.name} does not offer secure video sharing. Scrinium lets you upload MP4, MOV, or WebM files and automatically transcodes them to adaptive HLS streaming with 720p and 1080p quality tiers. Every video frame is watermarked with the viewer's email. Watch-time analytics show exactly how much each viewer watched.
         </p>
         <p class="text-sm text-text-secondary font-sans leading-relaxed">
-          For teams that need to share both documents and video content, CloakShare eliminates the need for separate tools and gives you unified analytics across all content types.
+          For teams that need to share both documents and video content, Scrinium eliminates the need for separate tools and gives you unified analytics across all content types.
         </p>
       </div>
 
@@ -148,9 +148,9 @@ const otherCompetitors = allCompetitors.filter((c) => c.slug !== competitor.slug
       <div class="mb-12 bg-surface border border-border rounded-lg p-8">
         <h2 class="font-mono font-medium text-foreground mb-4">Self-hosted option</h2>
         <p class="text-sm text-text-secondary font-sans leading-relaxed mb-4">
-          CloakShare is open source (MIT license) and self-hostable via Docker. Run it on your own infrastructure for complete data sovereignty. {competitor.name} is a closed-source SaaS with no self-hosting option.
+          Scrinium is open source (MIT license) and self-hostable via Docker. Run it on your own infrastructure for complete data sovereignty. {competitor.name} is a closed-source SaaS with no self-hosting option.
         </p>
-        <a href="/self-hosted" class="text-sm font-mono text-accent hover:underline">Learn about self-hosting CloakShare</a>
+        <a href="/self-hosted" class="text-sm font-mono text-accent hover:underline">Learn about self-hosting Scrinium</a>
       </div>
 
       <!-- FAQs -->
@@ -213,13 +213,13 @@ const otherCompetitors = allCompetitors.filter((c) => c.slug !== competitor.slug
 
       <!-- CTA -->
       <div class="text-center bg-surface border border-accent/30 rounded-lg p-10">
-        <h2 class="font-mono font-bold text-2xl text-foreground mb-3">Switch to CloakShare</h2>
+        <h2 class="font-mono font-bold text-2xl text-foreground mb-3">Switch to Scrinium</h2>
         <p class="text-text-secondary font-sans mb-6 max-w-lg mx-auto">
           Free tier includes 50 links and 500 views per month with email gating, watermarks, and analytics. No credit card required.
         </p>
         <div class="flex items-center justify-center gap-4">
           <a href="https://app.cloakshare.dev/register" class="px-6 py-2.5 bg-accent text-background font-mono font-semibold text-sm rounded-md hover:bg-accent-hover transition-colors">
-            Try CloakShare free
+            Try Scrinium free
           </a>
           <a href="https://github.com/cloakshare/cloakshare" class="px-6 py-2.5 border border-border text-foreground font-mono font-semibold text-sm rounded-md hover:border-accent/50 transition-colors">
             View on GitHub

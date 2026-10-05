@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { billingApi } from '../lib/api';
+import {
+  Button,
+  Chip,
+  InlineError,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  SegmentedControl,
+  cx,
+} from '../components/ui';
+import { CheckIcon } from '../components/icons';
 
 const plans = [
   {
@@ -103,114 +114,116 @@ export default function Billing() {
 
   return (
     <div>
-      <h1 className="font-sans font-semibold text-xl text-foreground mb-2">Plan & Billing</h1>
-      <p className="text-sm text-text-secondary font-sans mb-6">
-        You're on the <span className="text-accent font-medium">{currentPlan}</span> plan.
-      </p>
+      <PageHeader
+        title="Plan and billing"
+        description={`You are on the ${currentPlan} plan.`}
+      />
 
-      {/* Annual / Monthly toggle */}
-      <div className="flex items-center gap-3 mb-8">
-        <span className={`text-sm font-sans ${!annual ? 'text-foreground font-medium' : 'text-text-tertiary'}`}>Monthly</span>
-        <button
-          onClick={() => setAnnual(!annual)}
-          className={`relative w-10 h-5 rounded-full transition-colors duration-150 ${annual ? 'bg-accent' : 'bg-elevated border border-border'}`}
-        >
-          <span className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-150 ${annual ? 'left-5.5 bg-background' : 'left-0.5 bg-text-tertiary'}`} style={{ left: annual ? '22px' : '2px' }} />
-        </button>
-        <span className={`text-sm font-sans ${annual ? 'text-foreground font-medium' : 'text-text-tertiary'}`}>
-          Annual <span className="text-accent text-xs">(save ~17%)</span>
-        </span>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <SegmentedControl
+          label="Billing period"
+          options={[
+            { value: 'monthly', label: 'monthly' },
+            { value: 'annual', label: 'annual' },
+          ]}
+          value={annual ? 'annual' : 'monthly'}
+          onChange={(next) => setAnnual(next === 'annual')}
+        />
+        <span className="text-xs text-text-tertiary">Annual billing saves about 17%.</span>
       </div>
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
-          <p className="text-sm text-destructive font-sans">{error}</p>
+        <div className="mb-6 max-w-3xl">
+          <InlineError>{error}</InlineError>
         </div>
       )}
 
-      {/* Manage subscription button for paid plans */}
       {currentPlan !== 'free' && (
-        <div className="bg-surface border border-border rounded-lg p-5 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-sans font-medium text-sm text-foreground">Manage Subscription</h2>
-              <p className="text-xs text-text-tertiary font-sans mt-1">
-                Update payment method, change plan, or cancel
-              </p>
-            </div>
-            <button
-              onClick={handleManage}
-              disabled={loading === 'manage'}
-              className="px-4 py-2 bg-elevated border border-border rounded-md text-sm font-sans font-medium text-text-secondary hover:text-foreground hover:border-text-tertiary transition-all duration-150 disabled:opacity-40"
-            >
-              {loading === 'manage' ? 'Opening...' : 'Billing Portal'}
-            </button>
-          </div>
-        </div>
+        <Panel className="mb-6 p-5">
+          <PanelHeader
+            title="Manage subscription"
+            description="Update the payment method, change plan, or cancel."
+            actions={
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={loading === 'manage'}
+                onClick={() => void handleManage()}
+              >
+                Billing portal
+              </Button>
+            }
+          />
+        </Panel>
       )}
 
-      {/* Plan cards */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* One cell per plan. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => {
           const isCurrent = currentPlan === plan.id;
           const isUpgrade = !isCurrent && plan.id !== 'free';
 
           return (
-            <div
+            <Panel
               key={plan.id}
-              className={`bg-surface border rounded-lg p-5 card-glow ${
-                isCurrent ? 'border-accent/40' : 'border-border'
-              }`}
+              className={cx(
+                'flex flex-col p-5',
+                isCurrent ? 'border-accent-line' : 'card-glow',
+              )}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-sans font-medium text-foreground">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-2xl font-mono font-semibold text-foreground tabular-nums">
-                      {annual && plan.id !== 'free' ? (annualPrices[plan.id] || plan.price) : plan.price}
-                    </span>
-                    <span className="text-xs text-text-tertiary font-sans">
-                      {plan.id === 'free' ? plan.period : annual ? '/mo (billed yearly)' : plan.period}
-                    </span>
-                  </div>
-                </div>
-                {isCurrent && (
-                  <span className="text-xs font-sans font-medium px-2 py-0.5 rounded bg-accent/15 text-accent">
-                    Current
-                  </span>
-                )}
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-medium text-foreground">{plan.name}</h3>
+                {isCurrent && <Chip tone="accent">Current</Chip>}
               </div>
 
-              <ul className="space-y-2 mb-5">
+              <div className="mt-3 flex items-baseline gap-1">
+                <span className="font-mono text-2xl font-semibold tabular-nums text-foreground">
+                  {annual && plan.id !== 'free' ? annualPrices[plan.id] || plan.price : plan.price}
+                </span>
+                <span className="text-xs text-text-tertiary">
+                  {plan.id === 'free' ? plan.period : annual ? '/mo, billed yearly' : plan.period}
+                </span>
+              </div>
+
+              <ul className="mt-4 flex-1 space-y-2">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-xs font-sans text-text-secondary">
-                    <svg className="w-3.5 h-3.5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <li key={feature} className="flex items-start gap-2 text-xs text-text-secondary">
+                    <span className="mt-0.5 shrink-0 text-accent">
+                      <CheckIcon size={13} />
+                    </span>
                     {feature}
                   </li>
                 ))}
               </ul>
 
-              {isUpgrade && (
-                <button
-                  onClick={() => handleUpgrade(plan.id as 'starter' | 'growth' | 'scale')}
-                  disabled={loading === plan.id}
-                  className="w-full px-4 py-2 bg-accent text-background font-sans font-medium text-sm rounded-md hover:bg-accent-hover hover:-translate-y-px hover:shadow-glow active:translate-y-0 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {loading === plan.id ? 'Redirecting...' : 'Upgrade'}
-                </button>
-              )}
-              {isCurrent && plan.id !== 'free' && (
-                <button
-                  onClick={handleManage}
-                  disabled={loading === 'manage'}
-                  className="w-full px-4 py-2 bg-elevated border border-border rounded-md text-sm font-sans font-medium text-text-secondary hover:text-foreground hover:bg-hover transition-all duration-150 disabled:opacity-40"
-                >
-                  Manage
-                </button>
-              )}
-            </div>
+              <div className="mt-5">
+                {isUpgrade && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    loading={loading === plan.id}
+                    onClick={() => void handleUpgrade(plan.id as 'starter' | 'growth' | 'scale')}
+                  >
+                    Upgrade
+                  </Button>
+                )}
+                {isCurrent && plan.id !== 'free' && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    loading={loading === 'manage'}
+                    onClick={() => void handleManage()}
+                  >
+                    Manage
+                  </Button>
+                )}
+                {isCurrent && plan.id === 'free' && (
+                  <p className="text-center text-xs text-text-tertiary">Your current plan</p>
+                )}
+              </div>
+            </Panel>
           );
         })}
       </div>

@@ -2,17 +2,17 @@
  * @cloakshare/react — React wrapper for <cloak-viewer> Web Component.
  *
  * Usage:
- *   import { CloakViewer } from '@cloakshare/react';
- *   <CloakViewer src="/deck.pdf" watermark="Confidential" emailGate />
+ *   import { ScriniumViewer } from '@cloakshare/react';
+ *   <ScriniumViewer src="/deck.pdf" watermark="Confidential" emailGate />
  */
 
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import type { CloakViewEvent, CloakReadyEvent, CloakErrorEvent } from '@cloakshare/viewer';
+import type { ScriniumViewEvent, ScriniumReadyEvent, ScriniumErrorEvent } from '@cloakshare/viewer';
 
 // Ensure the custom element is registered
 import '@cloakshare/viewer';
 
-export interface CloakViewerProps {
+export interface ScriniumViewerProps {
   src: string;
   watermark?: string;
   emailGate?: boolean;
@@ -29,9 +29,9 @@ export interface CloakViewerProps {
   height?: string;
 
   // Event callbacks
-  onView?: (event: CloakViewEvent) => void;
-  onReady?: (event: CloakReadyEvent) => void;
-  onError?: (event: CloakErrorEvent) => void;
+  onView?: (event: ScriniumViewEvent) => void;
+  onReady?: (event: ScriniumReadyEvent) => void;
+  onError?: (event: ScriniumErrorEvent) => void;
   onEmailSubmitted?: (event: { email: string }) => void;
 
   // Standard HTML attributes
@@ -40,7 +40,7 @@ export interface CloakViewerProps {
   id?: string;
 }
 
-export interface CloakViewerRef {
+export interface ScriniumViewerRef {
   /** The underlying <cloak-viewer> DOM element */
   element: HTMLElement | null;
 }
@@ -49,8 +49,8 @@ export interface CloakViewerRef {
  * React component wrapper for <cloak-viewer>.
  * Provides typed props and event callbacks.
  */
-export const CloakViewer = forwardRef<CloakViewerRef, CloakViewerProps>(
-  function CloakViewer(props, ref) {
+export const ScriniumViewer = forwardRef<ScriniumViewerRef, ScriniumViewerProps>(
+  function ScriniumViewer(props, ref) {
     const elRef = useRef<HTMLElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -147,7 +147,7 @@ function setBoolAttr(el: HTMLElement, name: string, value: boolean | undefined) 
 }
 
 // Re-export types
-export type { CloakViewEvent, CloakReadyEvent, CloakErrorEvent, CloakErrorCode } from '@cloakshare/viewer';
+export type { ScriniumViewEvent, ScriniumReadyEvent, ScriniumErrorEvent, ScriniumErrorCode } from '@cloakshare/viewer';
 
 // Augment JSX to recognize <cloak-viewer> in TypeScript
 declare global {

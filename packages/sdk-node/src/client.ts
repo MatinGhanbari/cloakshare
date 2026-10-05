@@ -1,6 +1,6 @@
-import { CloakShareError, RateLimitError, AuthenticationError } from './errors.js';
+import { ScriniumError, RateLimitError, AuthenticationError } from './errors.js';
 
-export class CloakShareClient {
+export class ScriniumClient {
   private apiKey: string;
   private baseUrl: string;
   private timeout: number;
@@ -100,7 +100,7 @@ export class CloakShareClient {
         }
 
         if (response.status >= 500 && attempt < this.maxRetries) {
-          lastError = new CloakShareError(
+          lastError = new ScriniumError(
             errorData.message,
             response.status,
             errorData.code,
@@ -110,7 +110,7 @@ export class CloakShareClient {
           continue;
         }
 
-        throw new CloakShareError(
+        throw new ScriniumError(
           errorData.message || `HTTP ${response.status}`,
           response.status,
           errorData.code,
@@ -118,7 +118,7 @@ export class CloakShareClient {
           errorData.doc_url,
         );
       } catch (error) {
-        if (error instanceof CloakShareError) throw error;
+        if (error instanceof ScriniumError) throw error;
         if (error instanceof RateLimitError) throw error;
         if (error instanceof AuthenticationError) throw error;
 
@@ -127,7 +127,7 @@ export class CloakShareClient {
           continue;
         }
 
-        throw new CloakShareError(
+        throw new ScriniumError(
           `Network error: ${(error as Error).message}`,
           0,
           'NETWORK_ERROR',
@@ -135,7 +135,7 @@ export class CloakShareClient {
       }
     }
 
-    throw lastError || new CloakShareError('Request failed after retries', 0, 'MAX_RETRIES');
+    throw lastError || new ScriniumError('Request failed after retries', 0, 'MAX_RETRIES');
   }
 
   get<T>(path: string, params?: Record<string, string | number | boolean | undefined>) {

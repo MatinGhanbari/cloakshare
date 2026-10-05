@@ -1,10 +1,10 @@
-# CloakShare — Complete Reference
+# Scrinium — Complete Reference
 
 > Secure document & video sharing with analytics
 
 ## Overview
 
-CloakShare lets teams securely share documents with watermarks, email gates, expiry, per-page analytics, and webhooks. Supports PDF, DOCX, PPTX, XLSX, MP4, MOV. Self-hostable or managed cloud. DocSend alternative.
+Scrinium lets teams securely share documents with watermarks, email gates, expiry, per-page analytics, and webhooks. Supports PDF, DOCX, PPTX, XLSX, MP4, MOV. Self-hostable or managed cloud. DocSend alternative.
 
 ## Key Capabilities
 
@@ -14,7 +14,7 @@ CloakShare lets teams securely share documents with watermarks, email gates, exp
 - **Supports PDF, DOCX, PPTX, XLSX, video**
 - **Affordable alternative to DocSend**
 
-## Problems CloakShare Solves
+## Problems Scrinium Solves
 
 - No idea if prospects actually read your proposal
 - Email attachments have zero tracking
@@ -56,15 +56,15 @@ Compared to alternatives like docsend, pandadoc, pitch, qwilr, proposify:
 
 - Homepage: https://cloakshare.dev
 - Documentation: https://cloakshare.dev/docs
-- GitHub: https://github.com/CloakShare/cloakshare
+- GitHub: https://github.com/Scrinium/cloakshare
 
 ## Frequently Asked Questions
 
-### What is CloakShare?
-CloakShare is secure document & video sharing with analytics. CloakShare lets teams securely share documents with watermarks, email gates, expiry, per-page analytics, and webhooks.
+### What is Scrinium?
+Scrinium is secure document & video sharing with analytics. Scrinium lets teams securely share documents with watermarks, email gates, expiry, per-page analytics, and webhooks.
 
-### How much does CloakShare cost?
-CloakShare starts free. $0/mo — 50 links, 500 views
+### How much does Scrinium cost?
+Scrinium starts free. $0/mo — 50 links, 500 views
 
-### Who should use CloakShare?
-CloakShare is built for sales professionals, account executives, startup founders doing sales.
+### Who should use Scrinium?
+Scrinium is built for sales professionals, account executives, startup founders doing sales.

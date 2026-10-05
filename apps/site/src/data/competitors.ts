@@ -55,10 +55,10 @@ export const allCompetitors: Competitor[] = [
       'Embeddable viewer via npm package for product integration',
     ],
     faqs: [
-      { question: 'Why switch from DocSend to CloakShare?', answer: 'CloakShare offers video sharing, API-first architecture, self-hosting, and office document support that DocSend lacks. Pricing is per account, not per seat, saving a 10-person team over $7,000 per year.' },
-      { question: 'Can CloakShare do everything DocSend does?', answer: 'Yes, and more. CloakShare matches DocSend on email gating, page-level analytics, password protection, and link expiry. It adds video sharing, API access, self-hosting, office document support, webhooks, custom domains, and an embeddable viewer.' },
-      { question: 'How hard is it to migrate from DocSend?', answer: 'Upload your existing documents to CloakShare and generate new tracked links. The process takes minutes per document. CloakShare supports PDF, DOCX, PPTX, and XLSX, so you can upload source files directly.' },
-      { question: 'Is CloakShare reliable enough to replace DocSend?', answer: 'CloakShare is open source with a growing community. The hosted version runs on production-grade infrastructure. Self-hosting gives you full control over uptime and reliability.' },
+      { question: 'Why switch from DocSend to Scrinium?', answer: 'Scrinium offers video sharing, API-first architecture, self-hosting, and office document support that DocSend lacks. Pricing is per account, not per seat, saving a 10-person team over $7,000 per year.' },
+      { question: 'Can Scrinium do everything DocSend does?', answer: 'Yes, and more. Scrinium matches DocSend on email gating, page-level analytics, password protection, and link expiry. It adds video sharing, API access, self-hosting, office document support, webhooks, custom domains, and an embeddable viewer.' },
+      { question: 'How hard is it to migrate from DocSend?', answer: 'Upload your existing documents to Scrinium and generate new tracked links. The process takes minutes per document. Scrinium supports PDF, DOCX, PPTX, and XLSX, so you can upload source files directly.' },
+      { question: 'Is Scrinium reliable enough to replace DocSend?', answer: 'Scrinium is open source with a growing community. The hosted version runs on production-grade infrastructure. Self-hosting gives you full control over uptime and reliability.' },
     ],
   },
   {
@@ -105,10 +105,10 @@ export const allCompetitors: Competitor[] = [
       'Simple Docker Compose deployment for self-hosting',
     ],
     faqs: [
-      { question: 'How does CloakShare compare to Papermark?', answer: 'Both are open source, but CloakShare adds video sharing with HLS streaming, office document support, an embeddable viewer, and uses the permissive MIT license vs Papermark\'s AGPL. CloakShare also has canvas-based rendering for stronger security.' },
-      { question: 'Which has a better open-source license?', answer: 'CloakShare uses MIT, which allows unrestricted commercial use. Papermark uses AGPLv3, which requires you to open-source any modifications or services built on top of it. For commercial products, MIT is significantly more permissive.' },
-      { question: 'Can Papermark share videos?', answer: 'No. Papermark is document-only. CloakShare handles both documents and video with automatic HLS transcoding, adaptive streaming, per-viewer watermarks, and watch-time analytics.' },
-      { question: 'Which is easier to self-host?', answer: 'CloakShare provides a simple Docker Compose setup. Papermark\'s self-hosting involves more components and configuration. Both are deployable, but CloakShare is designed for simpler infrastructure requirements.' },
+      { question: 'How does Scrinium compare to Papermark?', answer: 'Both are open source, but Scrinium adds video sharing with HLS streaming, office document support, an embeddable viewer, and uses the permissive MIT license vs Papermark\'s AGPL. Scrinium also has canvas-based rendering for stronger security.' },
+      { question: 'Which has a better open-source license?', answer: 'Scrinium uses MIT, which allows unrestricted commercial use. Papermark uses AGPLv3, which requires you to open-source any modifications or services built on top of it. For commercial products, MIT is significantly more permissive.' },
+      { question: 'Can Papermark share videos?', answer: 'No. Papermark is document-only. Scrinium handles both documents and video with automatic HLS transcoding, adaptive streaming, per-viewer watermarks, and watch-time analytics.' },
+      { question: 'Which is easier to self-host?', answer: 'Scrinium provides a simple Docker Compose setup. Papermark\'s self-hosting involves more components and configuration. Both are deployable, but Scrinium is designed for simpler infrastructure requirements.' },
     ],
   },
   {
@@ -154,10 +154,10 @@ export const allCompetitors: Competitor[] = [
       'Open source and auditable',
     ],
     faqs: [
-      { question: 'Should I use CloakShare or PandaDoc?', answer: 'They serve different purposes. PandaDoc is for document creation, e-signatures, and sales workflows. CloakShare is for secure sharing with analytics, watermarks, and video support. Many teams use both: create in PandaDoc, share securely via CloakShare.' },
-      { question: 'Does CloakShare have e-signatures?', answer: 'No. CloakShare focuses on secure sharing, tracking, and analytics. If you need e-signatures, use PandaDoc or DocuSign for signing and CloakShare for all other secure document and video sharing needs.' },
-      { question: 'Which has better document analytics?', answer: 'CloakShare provides deeper sharing analytics: page-level time tracking, per-viewer engagement data, video watch-time, real-time webhooks, and API access to all analytics data. PandaDoc analytics are more basic and focused on signing workflow status.' },
-      { question: 'Can I use both CloakShare and PandaDoc?', answer: 'Yes. Create proposals in PandaDoc, export as PDF, then share via CloakShare for superior tracking, watermarks, and analytics. Use CloakShare for all document and video sharing that does not require e-signatures.' },
+      { question: 'Should I use Scrinium or PandaDoc?', answer: 'They serve different purposes. PandaDoc is for document creation, e-signatures, and sales workflows. Scrinium is for secure sharing with analytics, watermarks, and video support. Many teams use both: create in PandaDoc, share securely via Scrinium.' },
+      { question: 'Does Scrinium have e-signatures?', answer: 'No. Scrinium focuses on secure sharing, tracking, and analytics. If you need e-signatures, use PandaDoc or DocuSign for signing and Scrinium for all other secure document and video sharing needs.' },
+      { question: 'Which has better document analytics?', answer: 'Scrinium provides deeper sharing analytics: page-level time tracking, per-viewer engagement data, video watch-time, real-time webhooks, and API access to all analytics data. PandaDoc analytics are more basic and focused on signing workflow status.' },
+      { question: 'Can I use both Scrinium and PandaDoc?', answer: 'Yes. Create proposals in PandaDoc, export as PDF, then share via Scrinium for superior tracking, watermarks, and analytics. Use Scrinium for all document and video sharing that does not require e-signatures.' },
     ],
   },
   {
@@ -203,10 +203,10 @@ export const allCompetitors: Competitor[] = [
       'Canvas-based rendering provides comparable document protection',
     ],
     faqs: [
-      { question: 'How does CloakShare compare to Digify for document security?', answer: 'Both offer strong document protection with watermarks and access controls. Digify adds remote shredding. CloakShare adds video sharing, API/webhooks, self-hosting, and an embeddable viewer. CloakShare\'s canvas rendering provides comparable security to Digify\'s DRM approach.' },
-      { question: 'Does CloakShare have remote document shredding?', answer: 'CloakShare allows you to disable any link instantly, which immediately revokes access. Since documents are rendered server-side and never downloaded as files, disabling the link effectively "shreds" remote access.' },
-      { question: 'Which is more affordable?', answer: 'CloakShare starts free and the Growth plan is $99/month for unlimited users. Digify starts at $39/month for basic features and scales to $249/month for business features, with per-seat pricing on top.' },
-      { question: 'Can Digify share videos?', answer: 'No. Digify is document-only. CloakShare handles both documents and video with automatic HLS transcoding, adaptive streaming, watermarks, and per-viewer watch-time analytics.' },
+      { question: 'How does Scrinium compare to Digify for document security?', answer: 'Both offer strong document protection with watermarks and access controls. Digify adds remote shredding. Scrinium adds video sharing, API/webhooks, self-hosting, and an embeddable viewer. Scrinium\'s canvas rendering provides comparable security to Digify\'s DRM approach.' },
+      { question: 'Does Scrinium have remote document shredding?', answer: 'Scrinium allows you to disable any link instantly, which immediately revokes access. Since documents are rendered server-side and never downloaded as files, disabling the link effectively "shreds" remote access.' },
+      { question: 'Which is more affordable?', answer: 'Scrinium starts free and the Growth plan is $99/month for unlimited users. Digify starts at $39/month for basic features and scales to $249/month for business features, with per-seat pricing on top.' },
+      { question: 'Can Digify share videos?', answer: 'No. Digify is document-only. Scrinium handles both documents and video with automatic HLS transcoding, adaptive streaming, watermarks, and per-viewer watch-time analytics.' },
     ],
   },
   {
@@ -251,10 +251,10 @@ export const allCompetitors: Competitor[] = [
       'Embeddable viewer for product integration',
     ],
     faqs: [
-      { question: 'How does CloakShare compare to BriefLink?', answer: 'BriefLink is a simple pitch deck sharing tool. CloakShare adds video sharing, API access, self-hosting, office document support, webhooks, and an embeddable viewer. CloakShare also includes watermarks on the free tier, while BriefLink requires the Pro plan.' },
-      { question: 'Is CloakShare more expensive than BriefLink?', answer: 'CloakShare starts free with 50 links and 500 views per month including watermarks. BriefLink starts at $19/month without watermarks. For comparable features (watermarks + analytics), CloakShare free tier matches BriefLink Pro at $49/month.' },
-      { question: 'Can BriefLink share videos?', answer: 'No. BriefLink is document-only. CloakShare is the only alternative that handles both document and video sharing with per-viewer analytics in one platform.' },
-      { question: 'Which is better for startup fundraising?', answer: 'CloakShare offers everything BriefLink does plus video demos, API integration, and self-hosting. If you just need basic deck sharing, both work. If you want video proposals, CRM integration, or data sovereignty, CloakShare is the better choice.' },
+      { question: 'How does Scrinium compare to BriefLink?', answer: 'BriefLink is a simple pitch deck sharing tool. Scrinium adds video sharing, API access, self-hosting, office document support, webhooks, and an embeddable viewer. Scrinium also includes watermarks on the free tier, while BriefLink requires the Pro plan.' },
+      { question: 'Is Scrinium more expensive than BriefLink?', answer: 'Scrinium starts free with 50 links and 500 views per month including watermarks. BriefLink starts at $19/month without watermarks. For comparable features (watermarks + analytics), Scrinium free tier matches BriefLink Pro at $49/month.' },
+      { question: 'Can BriefLink share videos?', answer: 'No. BriefLink is document-only. Scrinium is the only alternative that handles both document and video sharing with per-viewer analytics in one platform.' },
+      { question: 'Which is better for startup fundraising?', answer: 'Scrinium offers everything BriefLink does plus video demos, API integration, and self-hosting. If you just need basic deck sharing, both work. If you want video proposals, CRM integration, or data sovereignty, Scrinium is the better choice.' },
     ],
   },
   {
@@ -300,10 +300,10 @@ export const allCompetitors: Competitor[] = [
       'Canvas-based rendering for stronger document protection',
     ],
     faqs: [
-      { question: 'How does CloakShare compare to HelpRange?', answer: 'HelpRange offers good analytics with lead capture forms. CloakShare adds video sharing, API/webhooks, self-hosting, office document support, and an embeddable viewer. CloakShare is more developer-friendly while HelpRange is more marketing-focused.' },
-      { question: 'Does HelpRange support video?', answer: 'No. HelpRange is PDF-only. CloakShare handles PDFs, Office documents, and video with unified analytics across all content types.' },
-      { question: 'Which has better analytics?', answer: 'Both offer page-level analytics and engagement tracking. CloakShare adds video watch-time analytics, webhooks for real-time notifications, and API access to all analytics data for custom dashboards and CRM integration.' },
-      { question: 'Can I build HelpRange features into my product?', answer: 'HelpRange has no embeddable viewer or API. CloakShare provides an npm viewer package and full API, so you can build secure document sharing directly into your own product.' },
+      { question: 'How does Scrinium compare to HelpRange?', answer: 'HelpRange offers good analytics with lead capture forms. Scrinium adds video sharing, API/webhooks, self-hosting, office document support, and an embeddable viewer. Scrinium is more developer-friendly while HelpRange is more marketing-focused.' },
+      { question: 'Does HelpRange support video?', answer: 'No. HelpRange is PDF-only. Scrinium handles PDFs, Office documents, and video with unified analytics across all content types.' },
+      { question: 'Which has better analytics?', answer: 'Both offer page-level analytics and engagement tracking. Scrinium adds video watch-time analytics, webhooks for real-time notifications, and API access to all analytics data for custom dashboards and CRM integration.' },
+      { question: 'Can I build HelpRange features into my product?', answer: 'HelpRange has no embeddable viewer or API. Scrinium provides an npm viewer package and full API, so you can build secure document sharing directly into your own product.' },
     ],
   },
   {
@@ -350,10 +350,10 @@ export const allCompetitors: Competitor[] = [
       'Custom domains with auto-SSL',
     ],
     faqs: [
-      { question: 'How does CloakShare compare to Sizle?', answer: 'Sizle is a presentation tool with basic sharing. CloakShare is a secure sharing platform with video support, API, self-hosting, and all security features on the free tier. Sizle gates watermarks, email gating, and expiry behind paid plans.' },
-      { question: 'Does Sizle support video sharing?', answer: 'No. Sizle is presentation and PDF only. CloakShare handles documents and video with unified per-viewer analytics, HLS streaming, and frame-level watermarks.' },
-      { question: 'Which free tier is better?', answer: 'CloakShare free tier includes email gating, dynamic watermarks, link expiry, and page-level analytics. Sizle free tier has basic analytics only, with security features reserved for Pro ($15/mo) and Business ($30/mo) plans.' },
-      { question: 'Can I use Sizle for secure document sharing?', answer: 'Sizle provides basic sharing with analytics, but security features like watermarks and email gating require paid plans. CloakShare is purpose-built for secure sharing with all security features available from the start.' },
+      { question: 'How does Scrinium compare to Sizle?', answer: 'Sizle is a presentation tool with basic sharing. Scrinium is a secure sharing platform with video support, API, self-hosting, and all security features on the free tier. Sizle gates watermarks, email gating, and expiry behind paid plans.' },
+      { question: 'Does Sizle support video sharing?', answer: 'No. Sizle is presentation and PDF only. Scrinium handles documents and video with unified per-viewer analytics, HLS streaming, and frame-level watermarks.' },
+      { question: 'Which free tier is better?', answer: 'Scrinium free tier includes email gating, dynamic watermarks, link expiry, and page-level analytics. Sizle free tier has basic analytics only, with security features reserved for Pro ($15/mo) and Business ($30/mo) plans.' },
+      { question: 'Can I use Sizle for secure document sharing?', answer: 'Sizle provides basic sharing with analytics, but security features like watermarks and email gating require paid plans. Scrinium is purpose-built for secure sharing with all security features available from the start.' },
     ],
   },
   {
@@ -399,10 +399,10 @@ export const allCompetitors: Competitor[] = [
       'Native video sharing with HLS streaming',
     ],
     faqs: [
-      { question: 'When should I use CloakShare vs FlippingBook?', answer: 'Use FlippingBook for marketing brochures and catalogs where the flipbook format adds value. Use CloakShare for any confidential document or video sharing where you need security, tracking, watermarks, and access control.' },
-      { question: 'Does FlippingBook have watermarks?', answer: 'No. FlippingBook does not offer dynamic watermarks. CloakShare overlays the viewer\'s email on every page and video frame, making any unauthorized redistribution traceable.' },
-      { question: 'Can FlippingBook expire links?', answer: 'No. FlippingBook does not support link expiry. CloakShare lets you set expiry dates so access is automatically revoked, keeping confidential information time-boxed.' },
-      { question: 'Which is better for investor materials?', answer: 'CloakShare. Investor materials are confidential and need watermarks, email gating, link expiry, and detailed per-viewer analytics. FlippingBook is designed for marketing content where broad distribution is the goal.' },
+      { question: 'When should I use Scrinium vs FlippingBook?', answer: 'Use FlippingBook for marketing brochures and catalogs where the flipbook format adds value. Use Scrinium for any confidential document or video sharing where you need security, tracking, watermarks, and access control.' },
+      { question: 'Does FlippingBook have watermarks?', answer: 'No. FlippingBook does not offer dynamic watermarks. Scrinium overlays the viewer\'s email on every page and video frame, making any unauthorized redistribution traceable.' },
+      { question: 'Can FlippingBook expire links?', answer: 'No. FlippingBook does not support link expiry. Scrinium lets you set expiry dates so access is automatically revoked, keeping confidential information time-boxed.' },
+      { question: 'Which is better for investor materials?', answer: 'Scrinium. Investor materials are confidential and need watermarks, email gating, link expiry, and detailed per-viewer analytics. FlippingBook is designed for marketing content where broad distribution is the goal.' },
     ],
   },
 ];

@@ -1,4 +1,4 @@
-// Package cloak provides the official Go SDK for Cloak — secure document sharing.
+// Package cloak provides the official Go SDK for Scrinium — secure document sharing.
 package cloak
 
 import (
@@ -24,14 +24,14 @@ const (
 	maxRetries     = 3
 )
 
-// Client is the Cloak API client.
+// Client is the Scrinium API client.
 type Client struct {
 	apiKey     string
 	baseURL    string
 	httpClient *http.Client
 }
 
-// NewClient creates a new Cloak API client.
+// NewClient creates a new Scrinium API client.
 func NewClient(apiKey string, opts ...Option) *Client {
 	c := &Client{
 		apiKey:  apiKey,
@@ -63,7 +63,7 @@ func WithTimeout(d time.Duration) Option {
 	}
 }
 
-// APIError represents an error from the Cloak API.
+// APIError represents an error from the Scrinium API.
 type APIError struct {
 	Code       string `json:"code"`
 	Message    string `json:"message"`
@@ -173,7 +173,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 	return nil, fmt.Errorf("cloak: request failed after %d retries", maxRetries)
 }
 
-// Link represents a Cloak secure link.
+// Link represents a Scrinium secure link.
 type Link struct {
 	ID           string                 `json:"id"`
 	SecureURL    string                 `json:"secure_url"`
@@ -231,7 +231,7 @@ func (c *Client) RevokeLink(ctx context.Context, id string) error {
 	return err
 }
 
-// VerifyWebhook verifies a Cloak webhook signature.
+// VerifyWebhook verifies a Scrinium webhook signature.
 func VerifyWebhook(payload, signature, secret string, toleranceSeconds int) bool {
 	parts := make(map[string]string)
 	for _, p := range strings.Split(signature, ",") {

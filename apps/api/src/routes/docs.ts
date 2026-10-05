@@ -22,8 +22,8 @@ docsRouter.get('/docs', (c) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CloakShare API Reference</title>
-  <meta name="description" content="Full API reference for the CloakShare secure document and video sharing API.">
+  <title>Scrinium API Reference</title>
+  <meta name="description" content="Full API reference for the Scrinium secure document and video sharing API.">
   <style>
     :root {
       --scalar-color-1: #FAFAFA;
@@ -43,8 +43,8 @@ docsRouter.get('/docs', (c) => {
   <script id="api-reference" data-url="/v1/openapi.json" data-configuration='${JSON.stringify({
     theme: 'kepler',
     metaData: {
-      title: 'CloakShare API Reference',
-      description: 'Full API reference for the CloakShare secure document and video sharing API.',
+      title: 'Scrinium API Reference',
+      description: 'Full API reference for the Scrinium secure document and video sharing API.',
     },
     hideModels: false,
     hideDownloadButton: false,

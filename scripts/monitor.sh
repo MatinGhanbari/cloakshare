@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# CloakShare — Community Mention Monitor
+# Scrinium — Community Mention Monitor
 #
 # Queries Hacker News (Algolia API) and Reddit (RSS) for mentions of
 # keywords related to document sharing, DocSend, and pitch decks.
@@ -24,7 +24,7 @@ SEPARATOR="───────────────────────
 
 echo ""
 echo "=========================================================="
-echo "  CloakShare Community Monitor — $(date '+%Y-%m-%d %H:%M')"
+echo "  Scrinium Community Monitor — $(date '+%Y-%m-%d %H:%M')"
 echo "=========================================================="
 
 # ─── Hacker News (Algolia API) ────────────────────────────────
@@ -83,7 +83,7 @@ reddit_search() {
   echo "$SEPARATOR"
 
   local response
-  response=$(curl -s --max-time 10 -H "User-Agent: CloakShareMonitor/1.0" "$url" 2>/dev/null) || {
+  response=$(curl -s --max-time 10 -H "User-Agent: ScriniumMonitor/1.0" "$url" 2>/dev/null) || {
     echo "  [ERROR] Failed to fetch Reddit results for r/${subreddit} \"${query}\""
     return
   }

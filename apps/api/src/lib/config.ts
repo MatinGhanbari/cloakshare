@@ -1,4 +1,4 @@
-import type { CloakMode, StorageProvider, DatabaseProvider, Plan } from '@cloak/shared';
+import type { ScriniumMode, StorageProvider, DatabaseProvider, Plan } from '@cloak/shared';
 
 const INSECURE_DEFAULT = 'change-me-in-production';
 
@@ -28,7 +28,7 @@ export const config = {
   },
 
   // Mode
-  mode: (process.env.CLOAK_MODE || 'self-hosted') as CloakMode,
+  mode: (process.env.CLOAK_MODE || 'self-hosted') as ScriniumMode,
 
   // Database — PostgreSQL only.
   // The connection string is read from DATABASE_URL (local Docker or Render/Supabase).

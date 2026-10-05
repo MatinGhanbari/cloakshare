@@ -5,7 +5,7 @@ import {
   createWatermarkCanvas,
   updateWatermark,
 } from './watermark.js';
-import type { CloakErrorCode, CloakViewEvent } from './types.js';
+import type { ScriniumErrorCode, ScriniumViewEvent } from './types.js';
 
 // ── SVG Icons ───────────────────────────────────────────────────────────────
 
@@ -66,7 +66,7 @@ function storeEmail(email: string): void {
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export class CloakViewerElement extends HTMLElement {
+export class ScriniumViewerElement extends HTMLElement {
   static get observedAttributes() {
     return [...OBSERVED];
   }
@@ -230,9 +230,9 @@ export class CloakViewerElement extends HTMLElement {
             <canvas class="viewer-canvas"></canvas>
           </div>
         </div>
-        <a class="branding-badge" href="https://cloakshare.dev" target="_blank" rel="noopener" aria-label="Secured by CloakShare">
+        <a class="branding-badge" href="https://cloakshare.dev" target="_blank" rel="noopener" aria-label="Secured by Scrinium">
           ${ICON_SHIELD}
-          <span>Secured by CloakShare</span>
+          <span>Secured by Scrinium</span>
         </a>
       </div>
     `;
@@ -281,7 +281,7 @@ export class CloakViewerElement extends HTMLElement {
     el.classList.add('active');
   }
 
-  private showError(code: CloakErrorCode, message: string, details?: string) {
+  private showError(code: ScriniumErrorCode, message: string, details?: string) {
     const titleEl = this.$error.querySelector('.error-title')!;
     const msgEl = this.$error.querySelector('.error-message')!;
     titleEl.textContent = message;
@@ -409,7 +409,7 @@ export class CloakViewerElement extends HTMLElement {
       if (!metaRes.ok) {
         const err = await metaRes.json().catch(() => ({}));
         const code = metaRes.status === 401 ? 'API_UNAUTHORIZED' : 'API_ERROR';
-        this.showError(code as CloakErrorCode, err?.error?.message || `API error (${metaRes.status})`);
+        this.showError(code as ScriniumErrorCode, err?.error?.message || `API error (${metaRes.status})`);
         return;
       }
       const meta = (await metaRes.json()).data;
@@ -439,7 +439,7 @@ export class CloakViewerElement extends HTMLElement {
       // Step 3: Verify and get pages
       await this.verifyAndRender(src, apiKey, apiUrl, this.viewerEmail, null);
     } catch (err) {
-      this.showError('API_ERROR', 'Failed to connect to CloakShare API', (err as Error).message);
+      this.showError('API_ERROR', 'Failed to connect to Scrinium API', (err as Error).message);
     }
   }
 
@@ -677,7 +677,7 @@ export class CloakViewerElement extends HTMLElement {
       // Track initial view
       this.emitViewEvent();
     } catch (err) {
-      const error = err as Error & { code?: CloakErrorCode };
+      const error = err as Error & { code?: ScriniumErrorCode };
       const code = error.code || 'LOAD_FAILED';
       this.showError(code, error.message || 'Failed to load document');
     }
@@ -973,7 +973,7 @@ export class CloakViewerElement extends HTMLElement {
   }
 
   private emitViewEvent() {
-    const detail: CloakViewEvent = {
+    const detail: ScriniumViewEvent = {
       page: this.currentPage,
       email: this.viewerEmail,
       timestamp: new Date().toISOString(),

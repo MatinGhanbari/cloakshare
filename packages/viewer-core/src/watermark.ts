@@ -1,6 +1,6 @@
 /**
  * Watermark engine — draws tiled diagonal watermark text on a canvas.
- * Matches CloakShare server-side watermark pattern exactly.
+ * Matches Scrinium server-side watermark pattern exactly.
  */
 
 const FONT = '14px monospace';

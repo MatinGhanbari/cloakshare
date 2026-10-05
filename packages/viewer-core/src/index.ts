@@ -7,18 +7,18 @@
  * @see https://cloakshare.dev/embed
  */
 
-export { CloakViewerElement } from './cloak-viewer.js';
+export { ScriniumViewerElement } from './cloak-viewer.js';
 export type {
-  CloakViewerProps,
-  CloakViewEvent,
-  CloakReadyEvent,
-  CloakErrorEvent,
-  CloakErrorCode,
+  ScriniumViewerProps,
+  ScriniumViewEvent,
+  ScriniumReadyEvent,
+  ScriniumErrorEvent,
+  ScriniumErrorCode,
 } from './types.js';
 
 // Auto-register the custom element
-import { CloakViewerElement } from './cloak-viewer.js';
+import { ScriniumViewerElement } from './cloak-viewer.js';
 
 if (typeof window !== 'undefined' && !customElements.get('cloak-viewer')) {
-  customElements.define('cloak-viewer', CloakViewerElement);
+  customElements.define('cloak-viewer', ScriniumViewerElement);
 }

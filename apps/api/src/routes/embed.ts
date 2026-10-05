@@ -62,7 +62,7 @@ embedRouter.get('/v1/embed/:id/snippet', async (c) => {
 
   const viewerUrl = `${config.viewerUrl}/s/${linkId}?embed=true`;
 
-  const snippet = `<!-- Cloak Embedded Viewer -->
+  const snippet = `<!-- Scrinium Embedded Viewer -->
 <iframe
   src="${viewerUrl}"
   width="${width}"
@@ -72,16 +72,16 @@ embedRouter.get('/v1/embed/:id/snippet', async (c) => {
   style="border: 1px solid #27272A; border-radius: 8px;"
 ></iframe>
 <script>
-  // Cloak PostMessage API
+  // Scrinium PostMessage API
   window.addEventListener('message', function(e) {
     if (e.origin !== '${config.viewerUrl}') return;
     var data = e.data;
     if (data.type === 'cloak:ready') {
-      if (window.CloakEmbed && window.CloakEmbed.onReady) window.CloakEmbed.onReady(data);
+      if (window.ScriniumEmbed && window.ScriniumEmbed.onReady) window.ScriniumEmbed.onReady(data);
     } else if (data.type === 'cloak:view') {
-      if (window.CloakEmbed && window.CloakEmbed.onView) window.CloakEmbed.onView(data);
+      if (window.ScriniumEmbed && window.ScriniumEmbed.onView) window.ScriniumEmbed.onView(data);
     } else if (data.type === 'cloak:complete') {
-      if (window.CloakEmbed && window.CloakEmbed.onComplete) window.CloakEmbed.onComplete(data);
+      if (window.ScriniumEmbed && window.ScriniumEmbed.onComplete) window.ScriniumEmbed.onComplete(data);
     }
   });
 </script>`;

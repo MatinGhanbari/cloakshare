@@ -1,8 +1,8 @@
-import { CloakShareClient } from '../client.js';
+import { ScriniumClient } from '../client.js';
 import type { Webhook } from '../types.js';
 
 export class WebhooksResource {
-  constructor(private client: CloakShareClient) {}
+  constructor(private client: ScriniumClient) {}
 
   /** Create a webhook endpoint */
   async create(url: string, events: string[]): Promise<Webhook> {

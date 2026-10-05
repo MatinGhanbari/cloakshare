@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cloak-python"
 version = "0.1.0"
-description = "Official Python SDK for Cloak — secure document sharing"
+description = "Official Python SDK for Scrinium — secure document sharing"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"

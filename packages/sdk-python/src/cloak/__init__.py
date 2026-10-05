@@ -1,4 +1,4 @@
-"""Cloak Python SDK — secure document sharing."""
+"""Scrinium Python SDK — secure document sharing."""
 
 import hashlib
 import hmac
@@ -14,8 +14,8 @@ from urllib3.util.retry import Retry
 __version__ = "0.1.0"
 
 
-class CloakError(Exception):
-    """Error returned by the Cloak API."""
+class ScriniumError(Exception):
+    """Error returned by the Scrinium API."""
 
     def __init__(self, code: str, message: str, status: int, retry_after: Optional[int] = None):
         super().__init__(message)
@@ -24,11 +24,11 @@ class CloakError(Exception):
         self.retry_after = retry_after
 
 
-class Cloak:
-    """Cloak API client.
+class Scrinium:
+    """Scrinium API client.
 
     Usage:
-        client = Cloak(api_key="ck_live_...")
+        client = Scrinium(api_key="ck_live_...")
         link = client.links.create(filename="doc.pdf", file=open("doc.pdf", "rb").read())
     """
 
@@ -67,7 +67,7 @@ class Cloak:
         if resp.status_code == 429:
             retry_after = int(resp.headers.get("Retry-After", "60"))
             data = resp.json()
-            raise CloakError(
+            raise ScriniumError(
                 data.get("error", {}).get("code", "RATE_LIMITED"),
                 data.get("error", {}).get("message", "Rate limited"),
                 429,
@@ -76,7 +76,7 @@ class Cloak:
 
         if not resp.ok:
             data = resp.json()
-            raise CloakError(
+            raise ScriniumError(
                 data.get("error", {}).get("code", "UNKNOWN"),
                 data.get("error", {}).get("message", f"HTTP {resp.status_code}"),
                 resp.status_code,
@@ -91,7 +91,7 @@ class Cloak:
         secret: str,
         tolerance_seconds: int = 300,
     ) -> bool:
-        """Verify a Cloak webhook signature (HMAC-SHA256)."""
+        """Verify a Scrinium webhook signature (HMAC-SHA256)."""
         parts = dict(p.split("=", 1) for p in signature.split(",") if "=" in p)
         ts = parts.get("t")
         sig = parts.get("v1")
@@ -117,7 +117,7 @@ class Cloak:
 class Links:
     """Links resource."""
 
-    def __init__(self, client: Cloak):
+    def __init__(self, client: Scrinium):
         self._client = client
 
     def create(self, **kwargs) -> Dict[str, Any]:
@@ -139,7 +139,7 @@ class Links:
             )
             if not resp.ok:
                 err = resp.json()
-                raise CloakError(
+                raise ScriniumError(
                     err.get("error", {}).get("code", "UNKNOWN"),
                     err.get("error", {}).get("message", f"HTTP {resp.status_code}"),
                     resp.status_code,
@@ -182,7 +182,7 @@ class Links:
 class Webhooks:
     """Webhooks resource."""
 
-    def __init__(self, client: Cloak):
+    def __init__(self, client: Scrinium):
         self._client = client
 
     def create(self, url: str, events: List[str]) -> Dict[str, Any]:

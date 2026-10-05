@@ -1,4 +1,4 @@
-# CloakShare — Secure Document & Video Sharing API
+# Scrinium — Secure Document & Video Sharing API
 
 Open-source API and embeddable viewer for sharing documents and videos with watermarks, email gates, expiry, and per-page analytics.
 
@@ -6,7 +6,7 @@ Open-source API and embeddable viewer for sharing documents and videos with wate
 
 ---
 
-## What CloakShare Does
+## What Scrinium Does
 
 **Secure document sharing** — Turn any PDF, DOCX, PPTX, or image into a tracked, watermarked link. Know who viewed it, which pages they read, and how long they spent.
 
@@ -69,11 +69,11 @@ npm install @cloakshare/react
 ```
 
 ```jsx
-import { CloakViewer } from '@cloakshare/react';
+import { ScriniumViewer } from '@cloakshare/react';
 
 function App() {
   return (
-    <CloakViewer
+    <ScriniumViewer
       src="/pitch-deck.pdf"
       watermark="Confidential · {{email}}"
       emailGate
@@ -90,9 +90,9 @@ npm install @cloakshare/sdk
 ```
 
 ```typescript
-import CloakShare from '@cloakshare/sdk';
+import Scrinium from '@cloakshare/sdk';
 
-const cloakshare = new CloakShare('ck_live_your_api_key');
+const cloakshare = new Scrinium('ck_live_your_api_key');
 
 const link = await cloakshare.links.create({
   file: './pitch-deck.pdf',
@@ -183,7 +183,7 @@ fmt.Println(link.SecureURL)
 - **Video support** — MP4, MOV, WebM with HLS adaptive streaming, watermark overlay, and engagement heatmaps. Available on Growth plan and above. Requires FFmpeg.
 - **Office document support** — DOCX, PPTX, XLSX rendered securely via server-side conversion. Available on Starter plan and above. Requires LibreOffice.
 - **Embeddable viewer** — Web Component (`<cloak-viewer>`) that works in React, Vue, Svelte, Angular, and vanilla HTML. Free for PDF and images, no API key required.
-- **Self-hostable** — Run CloakShare on your own infrastructure with Docker. MIT license. SQLite database, any S3-compatible storage.
+- **Self-hostable** — Run Scrinium on your own infrastructure with Docker. MIT license. SQLite database, any S3-compatible storage.
 - **REST API** — Full API for creating links, uploading files, checking analytics, managing webhooks, teams, viewer groups, and custom domains.
 - **Node.js SDK** — `@cloakshare/sdk` with TypeScript types, automatic retries, and pagination helpers. Zero external dependencies.
 
@@ -209,7 +209,7 @@ Video:      MP4 · MOV · WebM · MKV · AVI
 Images:     PNG · JPG · WebP · GIF · BMP · SVG
 ```
 
-One API, every format. CloakShare detects the file type and handles rendering and conversion automatically.
+One API, every format. Scrinium detects the file type and handles rendering and conversion automatically.
 
 ---
 
@@ -238,9 +238,9 @@ Share patient documents securely with access controls. Email-verified viewing, l
 
 ---
 
-## CloakShare vs Alternatives
+## Scrinium vs Alternatives
 
-| Feature | CloakShare | DocSend | Papermark | PandaDoc |
+| Feature | Scrinium | DocSend | Papermark | PandaDoc |
 |---------|-----------|---------|-----------|----------|
 | Open source | MIT | No | AGPL | No |
 | Self-hostable | Yes | No | Yes | No |
@@ -293,7 +293,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open `http://localhost:3000` — that's it. CloakShare runs on a single server with 1GB RAM.
+Open `http://localhost:3000` — that's it. Scrinium runs on a single server with 1GB RAM.
 
 The self-hosted version includes PDF rendering, office document conversion, video transcoding, email gates, viewer groups, watermarks, the tiled and encrypted secure viewer, webhooks, analytics, teams, and link disable/enable.
 
@@ -466,7 +466,7 @@ Good first issues are labeled [`good first issue`](https://github.com/cloakshare
 
 ## License
 
-MIT — use CloakShare however you want. Free forever for self-hosting.
+MIT — use Scrinium however you want. Free forever for self-hosting.
 
 ---
 

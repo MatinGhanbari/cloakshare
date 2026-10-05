@@ -1,8 +1,8 @@
-import { CloakShareClient } from '../client.js';
+import { ScriniumClient } from '../client.js';
 import type { Member, AuditEntry } from '../types.js';
 
 export class OrgResource {
-  constructor(private client: CloakShareClient) {}
+  constructor(private client: ScriniumClient) {}
 
   /** List all organization members */
   async listMembers(): Promise<{ members: Member[]; pending_invites: unknown[] }> {

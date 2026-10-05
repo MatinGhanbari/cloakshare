@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { linksApi, groupsApi, ApiError } from '../lib/api';
+import {
+  Banner,
+  Button,
+  Chip,
+  CopyField,
+  DetailRow,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  Select,
+  Skeleton,
+  StatTile,
+  StatusBadge,
+  Table,
+  Td,
+  Th,
+  Tr,
+} from '../components/ui';
+import { ArrowLeftIcon, ClockIcon, EyeIcon, LockIcon } from '../components/icons';
 
 export default function LinkDetail() {
   const { id } = useParams<{ id: string }>();
@@ -9,8 +28,8 @@ export default function LinkDetail() {
   const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof linksApi.analytics>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
 
   // Access control
   const [groups, setGroups] = useState<Array<{ id: string; name: string; member_count: number }>>([]);
@@ -80,10 +99,7 @@ export default function LinkDetail() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([
-      linksApi.get(id),
-      linksApi.analytics(id).catch(() => null),
-    ])
+    Promise.all([linksApi.get(id), linksApi.analytics(id).catch(() => null)])
       .then(([linkData, analyticsData]) => {
         setLink(linkData);
         setAnalytics(analyticsData);
@@ -98,108 +114,113 @@ export default function LinkDetail() {
     setError('');
     try {
       await linksApi.revoke(id);
-      setLink(prev => prev ? { ...prev, status: 'revoked' } : null);
+      setLink((prev) => (prev ? { ...prev, status: 'revoked' } : null));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to revoke link');
     }
     setRevoking(false);
   };
 
-  const copyUrl = () => {
-    if (link) {
-      navigator.clipboard.writeText(link.secure_url).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+  /** Delete the link and everything it owns. Irreversible, so it asks by name first. */
+  const handlePurge = async () => {
+    if (!id || !link) return;
+    const confirmed = confirm(
+      `Delete "${link.name || link.id}" permanently?\n\n` +
+        'The document, its rendered pages, every viewer session and all view history are ' +
+        'destroyed, and any webhook subscribers are notified. This cannot be undone.',
+    );
+    if (!confirmed) return;
+
+    setPurging(true);
+    setError('');
+    try {
+      await linksApi.purge(id);
+      // The link no longer exists, so this page has nothing left to show.
+      navigate('/links');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete link');
+      setPurging(false);
     }
   };
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="skeleton h-6 w-48 rounded" />
-        <div className="grid grid-cols-3 gap-4">
+        <Skeleton className="h-6 w-48" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-surface border border-border rounded-lg p-5">
-              <div className="skeleton h-3 w-20 rounded mb-3" />
-              <div className="skeleton h-7 w-16 rounded" />
-            </div>
+            <Panel key={i} className="p-5">
+              <Skeleton className="mb-3 h-3 w-20" />
+              <Skeleton className="h-7 w-16" />
+            </Panel>
           ))}
         </div>
-        <div className="skeleton h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
 
   if (!link) return null;
 
-  const statusConfig: Record<string, { dot: string; bg: string; text: string }> = {
-    active: { dot: 'bg-accent', bg: 'bg-accent/10', text: 'text-accent' },
-    processing: { dot: 'bg-warning', bg: 'bg-warning/10', text: 'text-warning' },
-    expired: { dot: 'bg-text-tertiary', bg: 'bg-muted', text: 'text-text-tertiary' },
-    revoked: { dot: 'bg-destructive', bg: 'bg-destructive/10', text: 'text-destructive' },
-    failed: { dot: 'bg-destructive', bg: 'bg-destructive/10', text: 'text-destructive' },
-  };
-
-  const status = statusConfig[link.status] || statusConfig.expired;
+  const isVideo = link.file_type === 'video';
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <button onClick={() => navigate('/links')} className="text-xs text-text-tertiary font-sans hover:text-text-secondary transition-colors duration-150 mb-2 block">
-            &larr; Back to links
+    <div className="space-y-6">
+      <PageHeader
+        back={
+          <button
+            onClick={() => navigate('/links')}
+            className="mb-2 inline-flex items-center gap-1.5 text-xs text-text-tertiary transition-colors duration-150 ease-expo hover:text-text-secondary"
+          >
+            <ArrowLeftIcon size={13} />
+            Back to links
           </button>
-          <h1 className="font-sans font-semibold text-xl text-foreground">{link.name || <span className="font-mono">{link.id}</span>}</h1>
-          <div className="flex items-center gap-3 mt-2">
-            <span className={`inline-flex items-center gap-1.5 text-xs font-sans px-2 py-0.5 rounded ${status.bg} ${status.text}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-              {link.status}
+        }
+        title={link.name || <span className="font-mono">{link.id}</span>}
+        meta={
+          <>
+            <StatusBadge status={link.status} />
+            <span
+              className={`font-mono text-xs uppercase ${isVideo ? 'text-accent' : 'text-text-tertiary'}`}
+            >
+              {link.file_type}
             </span>
-            <span className={`text-xs font-mono uppercase ${link.file_type === 'video' ? 'text-accent' : 'text-text-tertiary'}`}>{link.file_type}</span>
-            {link.file_type === 'video' && link.video_metadata ? (
+            {isVideo && link.video_metadata ? (
               <>
-                <span className="text-xs font-mono text-text-tertiary">
-                  {Math.floor(link.video_metadata.duration / 60)}:{String(link.video_metadata.duration % 60).padStart(2, '0')}
+                <span className="font-mono text-xs text-text-tertiary">
+                  {Math.floor(link.video_metadata.duration / 60)}:
+                  {String(link.video_metadata.duration % 60).padStart(2, '0')}
                 </span>
-                <span className="text-xs font-mono text-text-tertiary">
+                <span className="font-mono text-xs text-text-tertiary">
                   {link.video_metadata.qualities.join(', ')}
                 </span>
               </>
             ) : link.page_count ? (
-              <span className="text-xs font-sans text-text-tertiary">{link.page_count} pages</span>
+              <span className="text-xs text-text-tertiary">{link.page_count} pages</span>
             ) : null}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={copyUrl}
-            className="px-3 py-1.5 bg-elevated border border-border rounded-md text-xs font-sans font-medium text-text-secondary hover:text-foreground hover:border-text-tertiary transition-all duration-150"
-          >
-            {copied ? (
-              <span className="inline-flex items-center gap-1 text-accent">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Copied
-              </span>
-            ) : 'Copy URL'}
-          </button>
-          {link.status === 'active' && (
-            <button
-              onClick={handleRevoke}
-              disabled={revoking}
-              className="px-3 py-1.5 border border-destructive/30 rounded-md text-xs font-sans font-medium text-destructive hover:bg-destructive/10 transition-all duration-150 disabled:opacity-40"
-            >
-              {revoking ? 'Revoking...' : 'Revoke'}
-            </button>
-          )}
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {link.status === 'active' && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => void handleRevoke()}
+                loading={revoking}
+              >
+                Revoke
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 mb-6 text-destructive text-sm font-sans">
+        <div
+          role="alert"
+          className="rounded-control border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
           {error}
         </div>
       )}
@@ -230,164 +251,174 @@ export default function LinkDetail() {
         />
       </div>
 
-      {/* Secure URL */}
-      <div className="bg-surface border border-border rounded-lg p-5 mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-sans font-medium text-sm text-foreground">Secure Link</h2>
-          <button
-            onClick={copyUrl}
-            className="text-xs font-sans text-accent hover:text-accent-hover transition-colors duration-150"
-          >
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
-        <div className="bg-input border border-border rounded-md p-3">
-          <code className="text-sm text-text-secondary font-mono break-all select-all">{link.secure_url}</code>
-        </div>
-      </div>
+      <Panel className="p-5">
+        <PanelHeader
+          title="Secure link"
+          description="Anyone with this URL and the required credentials can open the document."
+        />
+        <CopyField value={link.secure_url} className="mt-4" />
+      </Panel>
 
-      {/* Link state */}
-      <div className="bg-surface border border-border rounded-lg p-5 mb-8">
-        <h2 className="font-sans font-medium text-sm text-foreground mb-1">Link state</h2>
-        <p className="text-xs text-text-tertiary font-sans mb-4">
-          Disabling pauses the link temporarily — viewers see an "unavailable" message. The link
-          keeps its expiry and settings, so re-enabling restores exactly what it was. To end access
-          permanently, revoke it instead.
-        </p>
-        <div className="flex items-center gap-3">
-          <button
+      <Panel className="p-5">
+        <PanelHeader
+          title="Link state"
+          description="Disabling pauses the link temporarily: viewers see an unavailable message. Expiry and settings are kept, so re-enabling restores exactly what it was. To remove the link and its data for good, delete it instead."
+        />
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
             type="button"
+            variant={link.disabled ? 'primary' : 'secondary'}
             onClick={() => void toggleDisabled()}
-            disabled={savingState || link.status === 'revoked'}
-            className={`font-sans font-medium text-sm px-4 py-2.5 rounded-md transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-              link.disabled
-                ? 'bg-accent text-background hover:bg-accent-hover'
-                : 'border border-border hover:bg-hover'
-            }`}
+            loading={savingState}
+            disabled={link.status === 'revoked'}
           >
-            {savingState ? 'Saving…' : link.disabled ? 'Enable link' : 'Disable link'}
-          </button>
-          <span className="text-xs font-sans text-text-tertiary">
+            {link.disabled ? 'Enable link' : 'Disable link'}
+          </Button>
+          <span className="text-xs text-text-tertiary">
             {link.status === 'revoked'
               ? 'Revoked links cannot be re-enabled.'
               : link.disabled
-                ? 'Currently disabled — viewers cannot open it.'
+                ? 'Currently disabled. Viewers cannot open it.'
                 : 'Currently enabled.'}
           </span>
         </div>
-      </div>
+      </Panel>
 
-      {/* Rules */}
-      <div className="bg-surface border border-border rounded-lg p-5 mb-8">
-        <h2 className="font-sans font-medium text-sm text-foreground mb-4">Rules</h2>
-        <div className="grid grid-cols-2 gap-y-3 gap-x-8 text-sm">
-          <div className="flex justify-between">
-            <span className="text-text-tertiary font-sans">Expires</span>
-            <span className="text-text-secondary font-sans">{link.rules.expires_at ? new Date(link.rules.expires_at).toLocaleDateString() : 'Never'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary font-sans">Max views</span>
-            <span className="text-text-secondary font-mono tabular-nums">{link.rules.max_views ?? 'Unlimited'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary font-sans">Email required</span>
-            <span className="text-text-secondary font-sans">{link.rules.require_email ? 'Yes' : 'No'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary font-sans">Password</span>
-            <span className="text-text-secondary font-sans">{link.rules.has_password ? 'Yes' : 'No'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary font-sans">Watermark</span>
-            <span className="text-text-secondary font-sans">{link.rules.watermark ? 'Yes' : 'No'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary font-sans">Download blocked</span>
-            <span className="text-text-secondary font-sans">{link.rules.block_download ? 'Yes' : 'No'}</span>
-          </div>
-        </div>
-      </div>
+      <Panel className="p-5">
+        <PanelHeader title="Rules" />
+        <dl className="mt-3 grid grid-cols-1 gap-x-10 sm:grid-cols-2">
+          <DetailRow
+            label="Expires"
+            value={
+              link.rules.expires_at
+                ? new Date(link.rules.expires_at).toLocaleDateString()
+                : 'Never'
+            }
+          />
+          <DetailRow label="Max views" value={link.rules.max_views ?? 'Unlimited'} mono />
+          <DetailRow label="Email required" value={link.rules.require_email ? 'Yes' : 'No'} />
+          <DetailRow label="Password" value={link.rules.has_password ? 'Yes' : 'No'} />
+          <DetailRow label="Watermark" value={link.rules.watermark ? 'Yes' : 'No'} />
+          <DetailRow label="Download blocked" value={link.rules.block_download ? 'Yes' : 'No'} />
+        </dl>
+      </Panel>
 
-      {/* Access */}
-      <div className="bg-surface border border-border rounded-lg p-5">
-        <h2 className="font-sans font-medium text-sm text-foreground mb-1">Access</h2>
-        <p className="text-xs text-text-tertiary font-sans mb-4">
-          Public links are gated by email. Restricted links require the viewer to sign in with a
-          student ID and national ID belonging to the selected group.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <select
+      <Panel className="p-5">
+        <PanelHeader
+          title="Access"
+          description="Public links are gated by email. Restricted links require the viewer to sign in with a student ID and national ID belonging to the selected group."
+        />
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Select
+            aria-label="Access group"
             value={accessGroupId}
             onChange={(e) => setAccessGroupId(e.target.value)}
-            className="flex-1 bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
+            className="flex-1"
           >
-            <option value="">Public — anyone with the link</option>
+            <option value="">Public - anyone with the link</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.name} ({g.member_count} member{g.member_count === 1 ? '' : 's'})
               </option>
             ))}
-          </select>
-          <button
+          </Select>
+          <Button
             type="button"
+            variant="primary"
             onClick={() => void saveAccess()}
-            disabled={savingAccess || accessGroupId === (link.access_group_id ?? '')}
-            className="bg-accent text-background font-sans font-medium text-sm px-4 py-2.5 rounded-md hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            loading={savingAccess}
+            disabled={accessGroupId === (link.access_group_id ?? '')}
           >
-            {savingAccess ? 'Saving…' : accessSaved ? 'Saved' : 'Save'}
-          </button>
+            {accessSaved ? 'Saved' : 'Save'}
+          </Button>
         </div>
         {groups.length === 0 && (
-          <p className="text-xs text-text-tertiary font-sans mt-3">
-            No groups yet — create one under Groups to restrict this link.
+          <p className="mt-3 text-xs text-text-tertiary">
+            No groups yet. Create one under Groups to restrict this link.
           </p>
         )}
-      </div>
+      </Panel>
 
-      {/* Recent views */}
       {link.recent_views.length > 0 && (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="px-5 py-4 border-b border-border-subtle">
-            <h2 className="font-sans font-medium text-sm text-foreground">Recent Views</h2>
-          </div>
-          <table className="w-full">
+        <section>
+          <h2 className="mb-3 text-sm font-medium text-foreground">Recent views</h2>
+          <Table>
             <thead>
-              <tr className="border-b border-border-subtle">
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Viewer</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">{link.file_type === 'video' ? 'Watch Time' : 'Duration'}</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">{link.file_type === 'video' ? 'Progress' : 'Pages'}</th>
-                <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">Device</th>
-                <th className="text-right text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-5 py-2.5">When</th>
+              <tr>
+                <Th>Viewer</Th>
+                <Th align="right">{isVideo ? 'Watch time' : 'Duration'}</Th>
+                <Th>{isVideo ? 'Progress' : 'Pages'}</Th>
+                <Th className="md:hidden lg:table-cell">Device</Th>
+                <Th align="right">When</Th>
               </tr>
             </thead>
             <tbody>
               {link.recent_views.map((view, i) => (
-                <tr key={i} className="border-b border-border-subtle last:border-0 hover:bg-hover transition-colors duration-150">
-                  <td className="px-5 py-2.5 text-sm font-sans text-text-secondary">{view.viewer_email || <span className="text-text-tertiary italic">anonymous</span>}</td>
-                  <td className="px-5 py-2.5 text-sm font-mono text-text-secondary tabular-nums">{link.file_type === 'video' ? `${view.video_watch_time ?? view.duration}s` : `${view.duration}s`}</td>
-                  <td className="px-5 py-2.5">
-                    {link.file_type === 'video' ? (
+                <Tr key={i}>
+                  <Td label="Viewer">
+                    <span className="text-sm text-text-secondary">
+                      {view.viewer_email || <span className="text-text-tertiary italic">anonymous</span>}
+                    </span>
+                  </Td>
+                  <Td align="right" label={isVideo ? 'Watch time' : 'Duration'}>
+                    <span className="font-mono text-sm tabular-nums text-text-secondary">
+                      {isVideo ? `${view.video_watch_time ?? view.duration}s` : `${view.duration}s`}
+                    </span>
+                  </Td>
+                  <Td label={isVideo ? 'Progress' : 'Pages'}>
+                    {isVideo ? (
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden max-w-[80px]">
+                        <div className="h-1.5 w-20 overflow-hidden rounded-full bg-border">
                           <div
-                            className="h-full bg-accent rounded-full transition-all duration-300"
+                            className="h-full rounded-full bg-accent transition-[width] duration-300 ease-expo"
                             style={{ width: `${Math.round((view.completion_rate ?? 0) * 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs font-mono text-text-tertiary tabular-nums">{Math.round((view.completion_rate ?? 0) * 100)}%</span>
+                        <span className="font-mono text-xs tabular-nums text-text-tertiary">
+                          {Math.round((view.completion_rate ?? 0) * 100)}%
+                        </span>
                       </div>
                     ) : (
-                      <span className="text-sm font-mono text-text-secondary tabular-nums">{view.pages_viewed}</span>
+                      <span className="font-mono text-sm tabular-nums text-text-secondary">
+                        {view.pages_viewed}
+                      </span>
                     )}
-                  </td>
-                  <td className="px-5 py-2.5 text-xs font-sans text-text-tertiary">{view.device}</td>
-                  <td className="px-5 py-2.5 text-xs font-sans text-text-tertiary text-right">{new Date(view.viewed_at).toLocaleDateString()}</td>
-                </tr>
+                  </Td>
+                  <Td label="Device" className="md:hidden lg:table-cell">
+                    <Chip>{view.device}</Chip>
+                  </Td>
+                  <Td align="right" label="When">
+                    <span className="whitespace-nowrap text-xs text-text-tertiary">
+                      {new Date(view.viewed_at).toLocaleDateString()}
+                    </span>
+                  </Td>
+                </Tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </section>
       )}
+
+      {/*
+        Last on the page and deliberately separated from the reversible actions above: this is the
+        only control here that destroys data.
+      */}
+      <Panel className="p-5">
+        <PanelHeader
+          title="Delete this link"
+          description="Removes the link, the document and its rendered pages, every viewer session and all view history. The audit log entry is kept."
+        />
+        <Banner tone="danger" className="mt-3">
+          Deleting cannot be undone, and any webhook subscribers are notified with a
+          <span className="font-mono"> link.deleted </span>
+          event. To end access while keeping the link and its analytics, revoke it instead.
+        </Banner>
+        <div className="mt-4">
+          <Button variant="danger" onClick={() => void handlePurge()} loading={purging}>
+            Delete permanently
+          </Button>
+        </div>
+      </Panel>
     </div>
   );
 }

@@ -3,9 +3,9 @@
 React wrapper for [`@cloakshare/viewer`](https://www.npmjs.com/package/@cloakshare/viewer) — drop a secure document viewer into your React app with watermarks, email gates, and view tracking. Free for PDF and images.
 
 ```jsx
-import { CloakViewer } from '@cloakshare/react';
+import { ScriniumViewer } from '@cloakshare/react';
 
-<CloakViewer src="/deck.pdf" watermark="Confidential" emailGate />
+<ScriniumViewer src="/deck.pdf" watermark="Confidential" emailGate />
 ```
 
 ---
@@ -23,11 +23,11 @@ Requires React 18+ as a peer dependency. Automatically includes `@cloakshare/vie
 ## Quick Start
 
 ```jsx
-import { CloakViewer } from '@cloakshare/react';
+import { ScriniumViewer } from '@cloakshare/react';
 
 function App() {
   return (
-    <CloakViewer
+    <ScriniumViewer
       src="/pitch-deck.pdf"
       watermark="{{email}} · {{date}}"
       emailGate
@@ -41,7 +41,7 @@ function App() {
 ### Free Mode (PDF and images, no API key)
 
 ```jsx
-<CloakViewer
+<ScriniumViewer
   src="/quarterly-report.pdf"
   watermark="Confidential · {{email}}"
   emailGate
@@ -53,7 +53,7 @@ function App() {
 ### API-Connected Mode (Office docs, video, server-side analytics)
 
 ```jsx
-<CloakViewer
+<ScriniumViewer
   src="/proposal.docx"
   apiKey="ck_live_your_api_key"
   watermark="{{email}} · {{date}}"
@@ -76,10 +76,10 @@ function App() {
 | `theme` | `"dark" \| "light"` | `"dark"` | Viewer theme |
 | `allowDownload` | `boolean` | `false` | Show download button |
 | `expires` | `string` | `""` | ISO 8601 expiry timestamp |
-| `apiKey` | `string` | `""` | CloakShare API key (enables Office docs, video, analytics) |
+| `apiKey` | `string` | `""` | Scrinium API key (enables Office docs, video, analytics) |
 | `apiUrl` | `string` | `"https://api.cloakshare.dev"` | API endpoint (override for self-hosted) |
 | `renderer` | `"auto" \| "external"` | `"auto"` | Set to `"external"` if your app already loads PDF.js |
-| `branding` | `boolean` | `true` | Show "Secured by CloakShare" badge |
+| `branding` | `boolean` | `true` | Show "Secured by Scrinium" badge |
 | `width` | `string` | `"100%"` | Component width |
 | `height` | `string` | `"600px"` | Component height |
 
@@ -87,9 +87,9 @@ function App() {
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `onView` | `(event: CloakViewEvent) => void` | Fired on each page view. Includes `page`, `email`, `duration`, `scrollDepth`, `device` |
-| `onReady` | `(event: CloakReadyEvent) => void` | Fired when viewer is ready. Includes `pageCount`, `format` |
-| `onError` | `(event: CloakErrorEvent) => void` | Fired on error. Includes `code`, `message`, `details` |
+| `onView` | `(event: ScriniumViewEvent) => void` | Fired on each page view. Includes `page`, `email`, `duration`, `scrollDepth`, `device` |
+| `onReady` | `(event: ScriniumReadyEvent) => void` | Fired when viewer is ready. Includes `pageCount`, `format` |
+| `onError` | `(event: ScriniumErrorEvent) => void` | Fired on error. Includes `code`, `message`, `details` |
 | `onEmailSubmitted` | `(event: { email: string }) => void` | Fired when viewer submits their email |
 
 ### Standard HTML Props
@@ -108,11 +108,11 @@ Access the underlying `<cloak-viewer>` DOM element via ref:
 
 ```jsx
 import { useRef } from 'react';
-import { CloakViewer } from '@cloakshare/react';
-import type { CloakViewerRef } from '@cloakshare/react';
+import { ScriniumViewer } from '@cloakshare/react';
+import type { ScriniumViewerRef } from '@cloakshare/react';
 
 function App() {
-  const viewerRef = useRef<CloakViewerRef>(null);
+  const viewerRef = useRef<ScriniumViewerRef>(null);
 
   const handleClick = () => {
     // Access the underlying <cloak-viewer> DOM element
@@ -121,7 +121,7 @@ function App() {
 
   return (
     <>
-      <CloakViewer ref={viewerRef} src="/deck.pdf" />
+      <ScriniumViewer ref={viewerRef} src="/deck.pdf" />
       <button onClick={handleClick}>Get element</button>
     </>
   );
@@ -136,12 +136,12 @@ All props, events, and ref types are fully typed. Types are re-exported from `@c
 
 ```typescript
 import type {
-  CloakViewerProps,
-  CloakViewerRef,
-  CloakViewEvent,
-  CloakReadyEvent,
-  CloakErrorEvent,
-  CloakErrorCode,
+  ScriniumViewerProps,
+  ScriniumViewerRef,
+  ScriniumViewEvent,
+  ScriniumReadyEvent,
+  ScriniumErrorEvent,
+  ScriniumErrorCode,
 } from '@cloakshare/react';
 ```
 
@@ -157,7 +157,7 @@ import type {
 | `PASSWORD_REQUIRED` | Password needed but not provided |
 | `PASSWORD_INCORRECT` | Wrong password entered |
 | `EMAIL_REQUIRED` | Email gate active, no email submitted |
-| `API_ERROR` | CloakShare API returned an error |
+| `API_ERROR` | Scrinium API returned an error |
 | `API_UNAUTHORIZED` | Invalid or missing API key |
 | `UNSUPPORTED_FORMAT` | File type not supported (e.g., .docx without API key) |
 | `RENDER_ERROR` | Canvas rendering failed |
@@ -179,10 +179,10 @@ The actual rendering, watermarking, email gate UI, and security logic all live i
 
 ## Self-Hosted
 
-Point the viewer at your own CloakShare instance:
+Point the viewer at your own Scrinium instance:
 
 ```jsx
-<CloakViewer
+<ScriniumViewer
   src="/deck.pdf"
   apiKey="ck_live_..."
   apiUrl="https://your-cloak-instance.com"
@@ -193,7 +193,7 @@ Point the viewer at your own CloakShare instance:
 
 ## Links
 
-- [CloakShare Website](https://cloakshare.dev)
+- [Scrinium Website](https://cloakshare.dev)
 - [Documentation](https://docs.cloakshare.dev)
 - [npm: @cloakshare/viewer](https://www.npmjs.com/package/@cloakshare/viewer) — Web Component (vanilla HTML)
 - [npm: @cloakshare/sdk](https://www.npmjs.com/package/@cloakshare/sdk) — Node.js SDK

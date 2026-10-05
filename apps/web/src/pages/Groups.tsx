@@ -1,5 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { groupsApi, ApiError } from '../lib/api';
+import {
+  Button,
+  EmptyState,
+  InlineError,
+  Input,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  Skeleton,
+  Table,
+  Td,
+  Textarea,
+  Th,
+  Tr,
+  cx,
+} from '../components/ui';
+import { GroupsIcon, PlusIcon, TrashIcon } from '../components/icons';
 
 interface Group {
   id: string;
@@ -83,7 +100,12 @@ export default function Groups() {
   };
 
   const removeGroup = async (group: Group) => {
-    if (!confirm(`Delete "${group.name}"? Its member list is removed and any links restricted to it become public.`)) return;
+    if (
+      !confirm(
+        `Delete "${group.name}"? Its member list is removed and any links restricted to it become public.`,
+      )
+    )
+      return;
     try {
       await groupsApi.remove(group.id);
       if (selected?.id === group.id) {
@@ -150,201 +172,228 @@ export default function Groups() {
     }
   };
 
-  const inputClass =
-    'w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary';
-  const labelClass = 'block text-[13px] text-text-secondary mb-2 font-sans font-medium';
-
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-lg font-sans font-semibold text-foreground">Viewer groups</h1>
-        <p className="text-sm text-text-secondary font-sans mt-1">
-          A group is the list of people allowed to open a restricted link. Members sign in with
-          their student ID and national ID, and that identity is burned into the watermark.
-        </p>
-      </div>
+      <PageHeader
+        title="Viewer groups"
+        description="A group is the list of people allowed to open a restricted link. Members sign in with their student ID and national ID, and that identity is burned into the watermark."
+      />
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2 mb-5 max-w-2xl">
-          <p className="text-sm text-destructive font-sans">{error}</p>
+        <div className="mb-5 max-w-3xl">
+          <InlineError>{error}</InlineError>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Groups column */}
         <div className="lg:col-span-1">
-          <form onSubmit={createGroup} className="bg-surface border border-border rounded-lg p-5">
-            <label className={labelClass}>New group</label>
-            <input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="e.g. Distributed Systems — Fall 2026"
-              className={inputClass}
-            />
-            <button
-              type="submit"
-              disabled={creating || !newName.trim()}
-              className="mt-3 w-full bg-accent text-background font-sans font-medium text-sm py-2.5 rounded-md hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {creating ? 'Creating…' : 'Create group'}
-            </button>
-          </form>
-
-          <div className="mt-5 space-y-2">
-            {loading && <p className="text-sm text-text-tertiary font-sans">Loading…</p>}
-            {!loading && groups.length === 0 && (
-              <p className="text-sm text-text-tertiary font-sans">No groups yet.</p>
-            )}
-            {groups.map((group) => (
-              <div
-                key={group.id}
-                className={`bg-surface border rounded-lg p-4 cursor-pointer transition-colors ${
-                  selected?.id === group.id ? 'border-accent' : 'border-border hover:border-text-tertiary'
-                }`}
-                onClick={() => void openGroup(group)}
+          <Panel className="p-5">
+            <PanelHeader title="New group" />
+            <form onSubmit={createGroup} className="mt-3">
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Distributed Systems, Fall 2026"
+                aria-label="Group name"
+              />
+              <Button
+                type="submit"
+                variant="primary"
+                loading={creating}
+                disabled={!newName.trim()}
+                className="mt-3 w-full"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-sans font-medium text-foreground">{group.name}</p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void removeGroup(group);
-                    }}
-                    className="text-xs text-text-tertiary hover:text-destructive transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-                <p className="text-xs text-text-tertiary font-sans mt-1">
-                  {group.member_count} member{group.member_count === 1 ? '' : 's'} · {group.link_count} link
-                  {group.link_count === 1 ? '' : 's'}
-                </p>
-              </div>
-            ))}
+                <PlusIcon size={14} />
+                Create group
+              </Button>
+            </form>
+          </Panel>
+
+          <div className="mt-4 space-y-2">
+            {loading &&
+              [...Array(3)].map((_, i) => (
+                <Panel key={i} className="p-4">
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="mt-2 h-3 w-24" />
+                </Panel>
+              ))}
+
+            {!loading && groups.length === 0 && (
+              <EmptyState
+                icon={<GroupsIcon size={18} />}
+                title="No groups yet"
+                description="Create a group, then paste your class list to give those students access."
+              />
+            )}
+
+            {groups.map((group) => {
+              const active = selected?.id === group.id;
+              return (
+                <Panel
+                  key={group.id}
+                  className={cx(
+                    'p-4 transition-colors duration-150 ease-expo',
+                    active ? 'border-accent-line bg-accent-muted' : 'hover:border-border-strong',
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void openGroup(group)}
+                      aria-pressed={active}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
+                      <p className="mt-1 text-xs text-text-tertiary">
+                        {group.member_count} member{group.member_count === 1 ? '' : 's'}
+                        <span className="mx-1.5 text-border-strong">/</span>
+                        {group.link_count} link{group.link_count === 1 ? '' : 's'}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void removeGroup(group)}
+                      aria-label={`Delete group ${group.name}`}
+                      className="shrink-0 rounded-chip p-1 text-text-tertiary transition-colors duration-150 ease-expo hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <TrashIcon size={14} />
+                    </button>
+                  </div>
+                </Panel>
+              );
+            })}
           </div>
         </div>
 
         {/* Members column */}
         <div className="lg:col-span-2">
           {!selected ? (
-            <div className="bg-surface border border-border rounded-lg p-8 text-center">
-              <p className="text-sm text-text-tertiary font-sans">
-                Select a group to manage its members.
-              </p>
-            </div>
+            <EmptyState
+              icon={<GroupsIcon size={18} />}
+              title="Select a group"
+              description="Choose a group on the left to manage its members."
+            />
           ) : (
             <div className="space-y-5">
-              <div className="bg-surface border border-border rounded-lg p-5">
-                <p className="text-sm font-sans font-semibold text-foreground">{selected.name}</p>
-                <p className="text-xs text-text-tertiary font-sans mt-1">
-                  Paste a class list, one student per line:
-                  <code className="ml-1 font-mono">studentId,nationalId[,name]</code>
-                </p>
-                <form onSubmit={importBulk} className="mt-3">
-                  <textarea
+              <Panel className="p-5">
+                <PanelHeader
+                  title={selected.name}
+                  description="Paste a class list, one student per line, as studentId,nationalId[,name]."
+                />
+                <form onSubmit={importBulk} className="mt-4">
+                  <Textarea
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
                     rows={5}
+                    aria-label="Class list"
                     placeholder={'40123456,0012345678,Ali Rezaei\n40123457,0012345679,Sara Ahmadi'}
-                    className={`${inputClass} font-mono text-xs`}
+                    className="font-mono text-xs"
                   />
-                  <div className="flex items-center gap-3 mt-3">
-                    <button
+                  <div className="mt-3 flex items-center gap-3">
+                    <Button
                       type="submit"
-                      disabled={importing || !bulkText.trim()}
-                      className="bg-accent text-background font-sans font-medium text-sm px-4 py-2 rounded-md hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      variant="primary"
+                      loading={importing}
+                      disabled={!bulkText.trim()}
                     >
-                      {importing ? 'Importing…' : 'Import list'}
-                    </button>
+                      Import list
+                    </Button>
                     {importResult && (
-                      <span className="text-xs text-text-secondary font-sans">{importResult}</span>
+                      <span className="text-xs text-text-secondary">{importResult}</span>
                     )}
                   </div>
                 </form>
-              </div>
+              </Panel>
 
-              <div className="bg-surface border border-border rounded-lg p-5">
-                <p className="text-sm font-sans font-medium text-foreground">Add one student</p>
-                <form onSubmit={addOne} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                  <input
+              <Panel className="p-5">
+                <PanelHeader title="Add one student" />
+                <form onSubmit={addOne} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Input
                     value={oneStudent}
                     onChange={(e) => setOneStudent(e.target.value)}
                     placeholder="Student ID"
-                    className={inputClass}
+                    aria-label="Student ID"
                   />
-                  <input
+                  <Input
                     value={oneNational}
                     onChange={(e) => setOneNational(e.target.value)}
                     placeholder="National ID"
-                    className={inputClass}
+                    aria-label="National ID"
                   />
-                  <input
+                  <Input
                     value={oneName}
                     onChange={(e) => setOneName(e.target.value)}
                     placeholder="Name (optional)"
-                    className={inputClass}
+                    aria-label="Name"
                   />
                   <div className="sm:col-span-3">
-                    <button
+                    <Button
                       type="submit"
+                      variant="secondary"
                       disabled={!oneStudent.trim() || !oneNational.trim()}
-                      className="text-sm font-sans font-medium px-4 py-2 rounded-md border border-border hover:bg-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Add student
-                    </button>
+                    </Button>
                   </div>
                 </form>
-              </div>
+              </Panel>
 
-              <div className="bg-surface border border-border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-4 py-3">Student ID</th>
-                      <th className="text-left text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-4 py-3">Name</th>
-                      <th className="text-right text-xs text-text-tertiary font-sans font-medium uppercase tracking-wider px-4 py-3">Added</th>
-                      <th className="px-4 py-3" />
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Student ID</Th>
+                    <Th>Name</Th>
+                    <Th align="right">Added</Th>
+                    <Th align="right">
+                      <span className="sr-only">Actions</span>
+                    </Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingMembers && (
+                    <tr>
+                      <Td span className="py-6 text-sm text-text-tertiary">
+                        Loading members
+                      </Td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {loadingMembers && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-6 text-sm text-text-tertiary font-sans">
-                          Loading…
-                        </td>
-                      </tr>
-                    )}
-                    {!loadingMembers && credentials.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-6 text-sm text-text-tertiary font-sans">
-                          No members yet.
-                        </td>
-                      </tr>
-                    )}
-                    {credentials.map((c) => (
-                      <tr key={c.id} className="border-b border-border-subtle last:border-0">
-                        <td className="px-4 py-3 text-sm font-mono text-foreground">{c.student_id}</td>
-                        <td className="px-4 py-3 text-sm font-sans text-text-secondary">{c.name || '—'}</td>
-                        <td className="px-4 py-3 text-right text-xs font-sans text-text-tertiary">
-                          {c.created_at}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => void removeCredential(c)}
-                            className="text-xs text-text-tertiary hover:text-destructive transition-colors"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  )}
+                  {!loadingMembers && credentials.length === 0 && (
+                    <tr>
+                      <Td span className="py-6 text-sm text-text-tertiary">
+                        No members yet. Import a list or add one student above.
+                      </Td>
+                    </tr>
+                  )}
+                  {credentials.map((c) => (
+                    <Tr key={c.id}>
+                      <Td label="Student ID">
+                        <span className="font-mono text-sm text-foreground">{c.student_id}</span>
+                      </Td>
+                      <Td label="Name">
+                        <span className="text-sm text-text-secondary">
+                          {c.name || <span className="text-text-tertiary">Not provided</span>}
+                        </span>
+                      </Td>
+                      <Td align="right" label="Added">
+                        <span className="text-xs text-text-tertiary">{c.created_at}</span>
+                      </Td>
+                      <Td align="right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void removeCredential(c)}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          Remove
+                        </Button>
+                      </Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
 
-              <p className="text-xs text-text-tertiary font-sans">
+              <p className="text-xs text-text-tertiary">
                 National IDs are stored only as bcrypt hashes and are never returned by the API.
               </p>
             </div>

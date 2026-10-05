@@ -1415,7 +1415,7 @@ async function init() {
 
   metadata = meta;
 
-  // Hide "Secured by CloakShare" badge if paid plan
+  // Hide "Secured by Scrinium" badge if paid plan
   if (meta.show_badge === false) {
     document.querySelectorAll('.secured-badge, .secured-by').forEach(el => {
       (el as HTMLElement).style.display = 'none';

@@ -1,4 +1,4 @@
-# CloakShare.dev — SEO & Growth Recommendations
+# Scrinium.dev — SEO & Growth Recommendations
 
 **Date:** 2026-03-26
 **GSC Period:** Last 3 months (Dec 25 2025 – Mar 24 2026)
@@ -49,10 +49,10 @@
 
 ## Priority 0: AI Visibility (Distribution Engine Alert)
 
-Your Distribution Engine shows **AI crawlers are BLOCKED** and **no llms.txt exists**. This means ChatGPT, Claude, Perplexity, and other AI search engines cannot cite or recommend CloakShare.
+Your Distribution Engine shows **AI crawlers are BLOCKED** and **no llms.txt exists**. This means ChatGPT, Claude, Perplexity, and other AI search engines cannot cite or recommend Scrinium.
 
 ### 0a. Create llms.txt
-Create `/apps/site/public/llms.txt` with a structured description of CloakShare — what it does, pricing, features, competitive advantages. This file is read by AI crawlers to understand your product for citations.
+Create `/apps/site/public/llms.txt` with a structured description of Scrinium — what it does, pricing, features, competitive advantages. This file is read by AI crawlers to understand your product for citations.
 
 ### 0b. Verify AI Crawler Access in robots.txt
 Your robots.txt currently says it allows AI crawlers, but the Distribution Engine reports them as blocked. Verify:
@@ -61,7 +61,7 @@ Your robots.txt currently says it allows AI crawlers, but the Distribution Engin
 - Test by fetching your site with these user agent strings
 
 ### 0c. Consider MCP Server
-SiteCrawlIQ, AuditKit, and OTDCheck all have MCP (Model Context Protocol) integrations. CloakShare has `@cloakshare/sdk` but no MCP server. Adding one would improve AI tool integration visibility.
+SiteCrawlIQ, AuditKit, and OTDCheck all have MCP (Model Context Protocol) integrations. Scrinium has `@cloakshare/sdk` but no MCP server. Adding one would improve AI tool integration visibility.
 
 ---
 
@@ -111,7 +111,7 @@ Currently only SoftwareApplication schema at site level. Add:
 ```json
 {
   "@type": "Organization",
-  "name": "CloakShare",
+  "name": "Scrinium",
   "url": "https://cloakshare.dev",
   "logo": "https://cloakshare.dev/logo.png",
   "sameAs": ["https://twitter.com/cloakshare", "https://github.com/cloakshare/cloakshare"]
@@ -177,7 +177,7 @@ Currently only using noindex selectively. Explicitly declaring `index, follow` o
 6. "Self-Hosted vs Cloud Document Sharing: Pros & Cons"
 7. "How to Add a Watermark to a PDF Before Sharing"
 8. "Investor Data Room Setup Guide"
-9. "PandaDoc vs DocSend vs CloakShare: Full Comparison"
+9. "PandaDoc vs DocSend vs Scrinium: Full Comparison"
 10. "Open Source Document Sharing Tools Compared"
 
 ### Comparison Page Expansion
@@ -201,7 +201,7 @@ Add: Notion, Dropbox, Box, SharePoint, Brieflink, Pitch.com
 
 ## Summary
 
-CloakShare has excellent content (16 blog posts, 6 comparison pages, 5 use-case pages) and a great tech stack (Astro SSG on Vercel = fast, crawlable static HTML). But **Google doesn't know most of this content exists** because the sitemap only lists 13 of 33+ pages.
+Scrinium has excellent content (16 blog posts, 6 comparison pages, 5 use-case pages) and a great tech stack (Astro SSG on Vercel = fast, crawlable static HTML). But **Google doesn't know most of this content exists** because the sitemap only lists 13 of 33+ pages.
 
 The fix is straightforward:
 1. Update the sitemap to include ALL pages

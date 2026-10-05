@@ -1,6 +1,6 @@
-# Self-Hosting CloakShare
+# Self-Hosting Scrinium
 
-CloakShare is fully self-hostable. This guide covers running CloakShare on your own infrastructure using Docker.
+Scrinium is fully self-hostable. This guide covers running Scrinium on your own infrastructure using Docker.
 
 ## Requirements
 
@@ -26,7 +26,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-CloakShare is now running at `http://localhost:3000`.
+Scrinium is now running at `http://localhost:3000`.
 
 ## Configuration
 
@@ -74,7 +74,7 @@ Open `http://localhost:3000` — that is the only URL you need in development.
 
 ### Database
 
-CloakShare uses **PostgreSQL**. For local development, start a database with
+Scrinium uses **PostgreSQL**. For local development, start a database with
 `docker compose -f docker-compose.db.yml up -d` (the password is read from
 `POSTGRES_PASSWORD` in your environment).
 
@@ -94,7 +94,7 @@ session mode, port `5432`, for migrations). Note the pooler username is `postgre
 
 ### Storage
 
-CloakShare stores rendered page images and video segments. Choose a storage provider:
+Scrinium stores rendered page images and video segments. Choose a storage provider:
 
 **Local filesystem (default):**
 

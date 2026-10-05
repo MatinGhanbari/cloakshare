@@ -6,7 +6,7 @@ import Demo from '../components/Demo.astro';
 import Tutorial from '../components/Tutorial.astro';
 ---
 
-<Base title="CloakShare — Open-Source Secure Document & Video Sharing API" description="Secure documents and video with one API call. Tokenized links, dynamic watermarks, page-level analytics, HLS video streaming. Open-source DocSend alternative. Self-hostable." canonical="/">
+<Base title="Scrinium — Open-Source Secure Document & Video Sharing API" description="Secure documents and video with one API call. Tokenized links, dynamic watermarks, page-level analytics, HLS video streaming. Open-source DocSend alternative. Self-hostable." canonical="/">
 
   <!-- Embed banner -->
   <div class="fixed top-16 left-0 w-full z-40 bg-accent-muted border-b border-accent/20">
@@ -78,7 +78,7 @@ import Tutorial from '../components/Tutorial.astro';
             Secure video sharing<br />with <span class="text-accent">HLS streaming</span>
           </h2>
           <p class="text-text-secondary font-sans leading-relaxed mb-6">
-            Upload MP4, MOV, or WebM files. Cloak transcodes to adaptive HLS with 720p and 1080p quality tiers.
+            Upload MP4, MOV, or WebM files. Scrinium transcodes to adaptive HLS with 720p and 1080p quality tiers.
             Canvas-based watermark overlay tracks every viewer. Anti-download protections prevent screen recording and content ripping.
           </p>
           <ul class="space-y-3 mb-8">
@@ -280,7 +280,7 @@ import Tutorial from '../components/Tutorial.astro';
     <div class="max-w-3xl mx-auto text-center">
       <h2 class="font-mono font-semibold text-2xl text-foreground mb-4">Open source &amp; self-hostable</h2>
       <p class="text-text-secondary font-sans mb-8 leading-relaxed">
-        Cloak is open source and MIT licensed. Self-host on your own infrastructure with Docker,
+        Scrinium is open source and MIT licensed. Self-host on your own infrastructure with Docker,
         inspect the code, or contribute. Enable video support with <code class="text-accent font-mono text-sm">ENABLE_VIDEO=true</code>.
         The cloud version adds CDN delivery, analytics, webhooks, custom domains, and managed infrastructure.
       </p>
@@ -317,16 +317,16 @@ import Tutorial from '../components/Tutorial.astro';
   <section class="py-20 px-6 border-t border-border-subtle">
     <div class="max-w-3xl mx-auto">
       <h2 class="text-center font-mono font-semibold text-2xl text-foreground mb-4">Frequently asked questions</h2>
-      <p class="text-center text-text-secondary font-sans mb-12 max-w-xl mx-auto">Common questions about CloakShare, security, and pricing.</p>
+      <p class="text-center text-text-secondary font-sans mb-12 max-w-xl mx-auto">Common questions about Scrinium, security, and pricing.</p>
 
       <div class="space-y-6">
         <details class="group bg-surface border border-border rounded-lg overflow-hidden">
           <summary class="flex items-center justify-between cursor-pointer px-6 py-4 font-mono font-medium text-foreground text-sm hover:bg-elevated/50 transition-colors">
-            What is CloakShare?
+            What is Scrinium?
             <span class="text-text-tertiary group-open:rotate-45 transition-transform text-lg">+</span>
           </summary>
           <div class="px-6 pb-4 text-sm text-text-secondary font-sans leading-relaxed">
-            CloakShare is an open-source API for secure document and video sharing. It gives you tokenized links with dynamic watermarks, page-level analytics, email gating, expiry controls, and HLS video streaming. You can self-host it with Docker or use the managed cloud version.
+            Scrinium is an open-source API for secure document and video sharing. It gives you tokenized links with dynamic watermarks, page-level analytics, email gating, expiry controls, and HLS video streaming. You can self-host it with Docker or use the managed cloud version.
           </div>
         </details>
 
@@ -336,13 +336,13 @@ import Tutorial from '../components/Tutorial.astro';
             <span class="text-text-tertiary group-open:rotate-45 transition-transform text-lg">+</span>
           </summary>
           <div class="px-6 pb-4 text-sm text-text-secondary font-sans leading-relaxed">
-            CloakShare renders documents and video frames onto an HTML canvas element instead of using native PDF viewers or standard video players. Because the content is drawn as pixels on a canvas, there is no selectable text or downloadable source file exposed to the browser. The watermark is composited directly into the rendered output, so it cannot be removed without destroying the content.
+            Scrinium renders documents and video frames onto an HTML canvas element instead of using native PDF viewers or standard video players. Because the content is drawn as pixels on a canvas, there is no selectable text or downloadable source file exposed to the browser. The watermark is composited directly into the rendered output, so it cannot be removed without destroying the content.
           </div>
         </details>
 
         <details class="group bg-surface border border-border rounded-lg overflow-hidden">
           <summary class="flex items-center justify-between cursor-pointer px-6 py-4 font-mono font-medium text-foreground text-sm hover:bg-elevated/50 transition-colors">
-            Is CloakShare really free?
+            Is Scrinium really free?
             <span class="text-text-tertiary group-open:rotate-45 transition-transform text-lg">+</span>
           </summary>
           <div class="px-6 pb-4 text-sm text-text-secondary font-sans leading-relaxed">
@@ -356,27 +356,27 @@ import Tutorial from '../components/Tutorial.astro';
             <span class="text-text-tertiary group-open:rotate-45 transition-transform text-lg">+</span>
           </summary>
           <div class="px-6 pb-4 text-sm text-text-secondary font-sans leading-relaxed">
-            Yes. CloakShare provides an embeddable viewer component that you can add to any web app with an iframe. It includes a PostMessage API for two-way communication between your app and the viewer, so you can control navigation, receive analytics events, and customize the experience. PDF and image embedding is free on all plans.
+            Yes. Scrinium provides an embeddable viewer component that you can add to any web app with an iframe. It includes a PostMessage API for two-way communication between your app and the viewer, so you can control navigation, receive analytics events, and customize the experience. PDF and image embedding is free on all plans.
           </div>
         </details>
 
         <details class="group bg-surface border border-border rounded-lg overflow-hidden">
           <summary class="flex items-center justify-between cursor-pointer px-6 py-4 font-mono font-medium text-foreground text-sm hover:bg-elevated/50 transition-colors">
-            How is CloakShare different from DocSend?
+            How is Scrinium different from DocSend?
             <span class="text-text-tertiary group-open:rotate-45 transition-transform text-lg">+</span>
           </summary>
           <div class="px-6 pb-4 text-sm text-text-secondary font-sans leading-relaxed">
-            CloakShare is open-source, API-first, and self-hostable. DocSend is a closed SaaS product with a web UI. CloakShare supports video with HLS streaming, offers canvas-based rendering for stronger copy protection, and has no per-seat pricing. You can integrate it into your own product via the REST API and SDKs, or self-host it on your own infrastructure.
+            Scrinium is open-source, API-first, and self-hostable. DocSend is a closed SaaS product with a web UI. Scrinium supports video with HLS streaming, offers canvas-based rendering for stronger copy protection, and has no per-seat pricing. You can integrate it into your own product via the REST API and SDKs, or self-host it on your own infrastructure.
           </div>
         </details>
 
         <details class="group bg-surface border border-border rounded-lg overflow-hidden">
           <summary class="flex items-center justify-between cursor-pointer px-6 py-4 font-mono font-medium text-foreground text-sm hover:bg-elevated/50 transition-colors">
-            What file types does CloakShare support?
+            What file types does Scrinium support?
             <span class="text-text-tertiary group-open:rotate-45 transition-transform text-lg">+</span>
           </summary>
           <div class="px-6 pb-4 text-sm text-text-secondary font-sans leading-relaxed">
-            CloakShare supports PDF, DOCX, PPTX, XLSX, PNG, and JPG for documents and images. For video, it supports MP4, MOV, and WebM uploads, which are transcoded to adaptive HLS with 720p and 1080p quality tiers. Office documents are converted server-side using LibreOffice and receive the same security features as PDFs.
+            Scrinium supports PDF, DOCX, PPTX, XLSX, PNG, and JPG for documents and images. For video, it supports MP4, MOV, and WebM uploads, which are transcoded to adaptive HLS with 720p and 1080p quality tiers. Office documents are converted server-side using LibreOffice and receive the same security features as PDFs.
           </div>
         </details>
       </div>
@@ -387,7 +387,7 @@ import Tutorial from '../components/Tutorial.astro';
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "HowTo",
-    "name": "How to secure and share documents with CloakShare",
+    "name": "How to secure and share documents with Scrinium",
     "description": "Three API calls. That's all it takes to secure, share, and track any document or video.",
     "step": [
       {
@@ -421,10 +421,10 @@ import Tutorial from '../components/Tutorial.astro';
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What is CloakShare?",
+        "name": "What is Scrinium?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "CloakShare is an open-source API for secure document and video sharing. It gives you tokenized links with dynamic watermarks, page-level analytics, email gating, expiry controls, and HLS video streaming. You can self-host it with Docker or use the managed cloud version."
+          "text": "Scrinium is an open-source API for secure document and video sharing. It gives you tokenized links with dynamic watermarks, page-level analytics, email gating, expiry controls, and HLS video streaming. You can self-host it with Docker or use the managed cloud version."
         }
       },
       {
@@ -432,12 +432,12 @@ import Tutorial from '../components/Tutorial.astro';
         "name": "How does canvas rendering prevent copying?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "CloakShare renders documents and video frames onto an HTML canvas element instead of using native PDF viewers or standard video players. Because the content is drawn as pixels on a canvas, there is no selectable text or downloadable source file exposed to the browser. The watermark is composited directly into the rendered output, so it cannot be removed without destroying the content."
+          "text": "Scrinium renders documents and video frames onto an HTML canvas element instead of using native PDF viewers or standard video players. Because the content is drawn as pixels on a canvas, there is no selectable text or downloadable source file exposed to the browser. The watermark is composited directly into the rendered output, so it cannot be removed without destroying the content."
         }
       },
       {
         "@type": "Question",
-        "name": "Is CloakShare really free?",
+        "name": "Is Scrinium really free?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Yes. The core project is MIT-licensed and free to self-host with no limits. The managed cloud plan includes a free tier with 25 links per month, watermarks, and analytics. Paid plans add higher limits, custom domains, video support, webhooks, and team features."
@@ -448,23 +448,23 @@ import Tutorial from '../components/Tutorial.astro';
         "name": "Can I embed the viewer in my own app?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. CloakShare provides an embeddable viewer component that you can add to any web app with an iframe. It includes a PostMessage API for two-way communication between your app and the viewer, so you can control navigation, receive analytics events, and customize the experience. PDF and image embedding is free on all plans."
+          "text": "Yes. Scrinium provides an embeddable viewer component that you can add to any web app with an iframe. It includes a PostMessage API for two-way communication between your app and the viewer, so you can control navigation, receive analytics events, and customize the experience. PDF and image embedding is free on all plans."
         }
       },
       {
         "@type": "Question",
-        "name": "How is CloakShare different from DocSend?",
+        "name": "How is Scrinium different from DocSend?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "CloakShare is open-source, API-first, and self-hostable. DocSend is a closed SaaS product with a web UI. CloakShare supports video with HLS streaming, offers canvas-based rendering for stronger copy protection, and has no per-seat pricing. You can integrate it into your own product via the REST API and SDKs, or self-host it on your own infrastructure."
+          "text": "Scrinium is open-source, API-first, and self-hostable. DocSend is a closed SaaS product with a web UI. Scrinium supports video with HLS streaming, offers canvas-based rendering for stronger copy protection, and has no per-seat pricing. You can integrate it into your own product via the REST API and SDKs, or self-host it on your own infrastructure."
         }
       },
       {
         "@type": "Question",
-        "name": "What file types does CloakShare support?",
+        "name": "What file types does Scrinium support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "CloakShare supports PDF, DOCX, PPTX, XLSX, PNG, and JPG for documents and images. For video, it supports MP4, MOV, and WebM uploads, which are transcoded to adaptive HLS with 720p and 1080p quality tiers. Office documents are converted server-side using LibreOffice and receive the same security features as PDFs."
+          "text": "Scrinium supports PDF, DOCX, PPTX, XLSX, PNG, and JPG for documents and images. For video, it supports MP4, MOV, and WebM uploads, which are transcoded to adaptive HLS with 720p and 1080p quality tiers. Office documents are converted server-side using LibreOffice and receive the same security features as PDFs."
         }
       }
     ]

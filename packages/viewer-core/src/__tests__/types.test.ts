@@ -1,51 +1,51 @@
 import { describe, it, expectTypeOf } from 'vitest';
 import type {
-  CloakViewerProps,
-  CloakViewEvent,
-  CloakReadyEvent,
-  CloakErrorEvent,
-  CloakErrorCode,
+  ScriniumViewerProps,
+  ScriniumViewEvent,
+  ScriniumReadyEvent,
+  ScriniumErrorEvent,
+  ScriniumErrorCode,
 } from '../types.js';
 
 describe('type exports', () => {
-  it('CloakViewerProps has required src field', () => {
-    expectTypeOf<CloakViewerProps>().toHaveProperty('src');
-    expectTypeOf<CloakViewerProps['src']>().toBeString();
+  it('ScriniumViewerProps has required src field', () => {
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('src');
+    expectTypeOf<ScriniumViewerProps['src']>().toBeString();
   });
 
-  it('CloakViewerProps has optional fields', () => {
-    expectTypeOf<CloakViewerProps>().toHaveProperty('watermark');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('emailGate');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('password');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('theme');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('allowDownload');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('expires');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('apiKey');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('renderer');
-    expectTypeOf<CloakViewerProps>().toHaveProperty('branding');
+  it('ScriniumViewerProps has optional fields', () => {
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('watermark');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('emailGate');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('password');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('theme');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('allowDownload');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('expires');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('apiKey');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('renderer');
+    expectTypeOf<ScriniumViewerProps>().toHaveProperty('branding');
   });
 
-  it('CloakViewEvent has expected shape', () => {
-    expectTypeOf<CloakViewEvent>().toHaveProperty('page');
-    expectTypeOf<CloakViewEvent>().toHaveProperty('email');
-    expectTypeOf<CloakViewEvent>().toHaveProperty('timestamp');
-    expectTypeOf<CloakViewEvent>().toHaveProperty('sessionId');
-    expectTypeOf<CloakViewEvent>().toHaveProperty('duration');
-    expectTypeOf<CloakViewEvent>().toHaveProperty('device');
+  it('ScriniumViewEvent has expected shape', () => {
+    expectTypeOf<ScriniumViewEvent>().toHaveProperty('page');
+    expectTypeOf<ScriniumViewEvent>().toHaveProperty('email');
+    expectTypeOf<ScriniumViewEvent>().toHaveProperty('timestamp');
+    expectTypeOf<ScriniumViewEvent>().toHaveProperty('sessionId');
+    expectTypeOf<ScriniumViewEvent>().toHaveProperty('duration');
+    expectTypeOf<ScriniumViewEvent>().toHaveProperty('device');
   });
 
-  it('CloakReadyEvent has expected shape', () => {
-    expectTypeOf<CloakReadyEvent>().toHaveProperty('pageCount');
-    expectTypeOf<CloakReadyEvent>().toHaveProperty('format');
+  it('ScriniumReadyEvent has expected shape', () => {
+    expectTypeOf<ScriniumReadyEvent>().toHaveProperty('pageCount');
+    expectTypeOf<ScriniumReadyEvent>().toHaveProperty('format');
   });
 
-  it('CloakErrorEvent has expected shape', () => {
-    expectTypeOf<CloakErrorEvent>().toHaveProperty('code');
-    expectTypeOf<CloakErrorEvent>().toHaveProperty('message');
+  it('ScriniumErrorEvent has expected shape', () => {
+    expectTypeOf<ScriniumErrorEvent>().toHaveProperty('code');
+    expectTypeOf<ScriniumErrorEvent>().toHaveProperty('message');
   });
 
-  it('CloakErrorCode covers all error codes', () => {
-    const codes: CloakErrorCode[] = [
+  it('ScriniumErrorCode covers all error codes', () => {
+    const codes: ScriniumErrorCode[] = [
       'LOAD_FAILED',
       'PARSE_FAILED',
       'EXPIRED',
@@ -57,6 +57,6 @@ describe('type exports', () => {
       'UNSUPPORTED_FORMAT',
       'RENDER_ERROR',
     ];
-    expectTypeOf(codes).toEqualTypeOf<CloakErrorCode[]>();
+    expectTypeOf(codes).toEqualTypeOf<ScriniumErrorCode[]>();
   });
 });

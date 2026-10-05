@@ -1,11 +1,11 @@
-# @cloakshare/sdk — Node.js SDK for CloakShare
+# @cloakshare/sdk — Node.js SDK for Scrinium
 
-Official Node.js SDK for the [CloakShare](https://cloakshare.dev) secure document and video sharing API. Create watermarked, tracked, expiring links with one function call. TypeScript types included. Zero external dependencies.
+Official Node.js SDK for the [Scrinium](https://cloakshare.dev) secure document and video sharing API. Create watermarked, tracked, expiring links with one function call. TypeScript types included. Zero external dependencies.
 
 ```typescript
-import CloakShare from '@cloakshare/sdk';
+import Scrinium from '@cloakshare/sdk';
 
-const cloakshare = new CloakShare('ck_live_your_api_key');
+const cloakshare = new Scrinium('ck_live_your_api_key');
 
 const link = await cloakshare.links.create({
   file: './pitch-deck.pdf',
@@ -33,9 +33,9 @@ Requires Node.js 18+. Zero external dependencies.
 ## Quick Start
 
 ```typescript
-import CloakShare from '@cloakshare/sdk';
+import Scrinium from '@cloakshare/sdk';
 
-const cloakshare = new CloakShare('ck_live_your_api_key');
+const cloakshare = new Scrinium('ck_live_your_api_key');
 
 // Create a secure link from a file
 const link = await cloakshare.links.create({
@@ -213,10 +213,10 @@ await cloakshare.webhooks.delete('whk_abc123');
 ### Verify Webhook Signatures
 
 ```typescript
-import { CloakShare } from '@cloakshare/sdk';
+import { Scrinium } from '@cloakshare/sdk';
 
 // Verify HMAC-SHA256 signature (works without client instantiation)
-const isValid = CloakShare.webhooks.verify(
+const isValid = Scrinium.webhooks.verify(
   rawBody,        // string or Buffer — the raw request body
   signature,      // from the x-cloakshare-signature header
   webhookSecret,  // from webhook creation response
@@ -264,8 +264,8 @@ const { entries } = await cloakshare.org.auditLog({ limit: 50 });
 ## Error Handling
 
 ```typescript
-import CloakShare, {
-  CloakShareError,
+import Scrinium, {
+  ScriniumError,
   RateLimitError,
   AuthenticationError,
 } from '@cloakshare/sdk';
@@ -277,7 +277,7 @@ try {
     console.log(`Rate limited. Retry after ${error.retryAfter}s`);
   } else if (error instanceof AuthenticationError) {
     console.log('Invalid API key');
-  } else if (error instanceof CloakShareError) {
+  } else if (error instanceof ScriniumError) {
     console.log(`${error.code}: ${error.message}`);
     console.log(`Docs: ${error.docUrl}`);
   }
@@ -291,7 +291,7 @@ The SDK automatically retries on transient errors (5xx, network timeouts) with e
 ## Configuration
 
 ```typescript
-const cloakshare = new CloakShare('ck_live_your_api_key', {
+const cloakshare = new Scrinium('ck_live_your_api_key', {
   baseUrl: 'https://api.cloakshare.dev',  // Override for self-hosted
   timeout: 30000,                          // Request timeout in ms (default: 30s)
   maxRetries: 2,                           // Retry attempts (default: 2)
@@ -301,7 +301,7 @@ const cloakshare = new CloakShare('ck_live_your_api_key', {
 ### Self-Hosted
 
 ```typescript
-const cloakshare = new CloakShare('ck_live_your_api_key', {
+const cloakshare = new Scrinium('ck_live_your_api_key', {
   baseUrl: 'https://your-cloak-instance.com',
 });
 ```
@@ -313,12 +313,12 @@ const cloakshare = new CloakShare('ck_live_your_api_key', {
 Full TypeScript types are included. Every method parameter and return type is fully typed.
 
 ```typescript
-import CloakShare from '@cloakshare/sdk';
+import Scrinium from '@cloakshare/sdk';
 import type {
   CreateLinkParams,
   Link,
   LinkAnalytics,
-  CloakShareError,
+  ScriniumError,
   RateLimitError,
   AuthenticationError,
 } from '@cloakshare/sdk';
@@ -328,7 +328,7 @@ import type {
 
 ## Links
 
-- [CloakShare Website](https://cloakshare.dev)
+- [Scrinium Website](https://cloakshare.dev)
 - [API Documentation](https://docs.cloakshare.dev)
 - [API Reference](https://docs.cloakshare.dev/api)
 - [GitHub](https://github.com/cloakshare/cloakshare)

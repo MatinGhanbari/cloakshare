@@ -1,4 +1,5 @@
-/* JetBrains Mono is vendored in src/assets/fonts/jetbrains-mono — no external font request. */
+/* Self-hosted webfonts - no request to Google at runtime. */
+@import './assets/fonts/geist/geist.css';
 @import './assets/fonts/jetbrains-mono/jetbrains-mono.css';
 
 @tailwind base;
@@ -10,78 +11,114 @@
    * Colour tokens are stored as space-separated RGB channels so Tailwind can still apply
    * opacity modifiers (`bg-accent/10` -> `rgb(var(--accent) / 0.1)`).
    * Dark is the default; `[data-theme='light']` on <html> overrides every token.
+   *
+   * Shape rule for the whole dashboard (do not mix):
+   *   panels / cards  -> 12px   (rounded-panel)
+   *   controls        ->  8px   (rounded-control)  buttons, inputs, selects, nav items
+   *   chips / badges  ->  6px   (rounded-chip)
+   *   avatars / pills -> full   (rounded-full)
    */
   :root {
-    --bg-background: 9 9 11;
-    --fg-foreground: 250 250 250;
-    --bg-surface: 17 17 19;
-    --bg-elevated: 26 26 29;
-    --bg-hover: 34 34 37;
-    --bg-input: 15 15 17;
-    --bg-muted: 26 26 29;
-    --fg-muted: 161 161 170;
-    --border-default: 39 39 42;
-    --border-subtle: 30 30 33;
-    --fg-text-primary: 250 250 250;
-    --fg-text-secondary: 161 161 170;
-    --fg-text-tertiary: 113 113 122;
-    --accent: 0 255 136;
-    --accent-hover: 0 221 119;
-    --accent-foreground: 9 9 11;
-    --accent-muted: rgba(0, 255, 136, 0.15);
-    --success: 0 204 102;
-    --destructive: 255 68 68;
-    --warning: 255 170 0;
-    --info: 0 187 255;
-    --ring: 0 255 136;
-    --selection-bg: rgba(0, 255, 136, 0.25);
-    --selection-fg: #fafafa;
-    --body-gradient: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+    /*
+     * Scrinium palette: an ink-blue neutral ramp with a single verdigris (jade) accent.
+     * Replaces the previous zinc + neon #00FF88 scheme, which read as "terminal" rather than
+     * "custody". The accent is desaturated to sit inside the neutrals instead of glowing.
+     */
+    --bg-background: 10 12 16;
+    --fg-foreground: 245 247 250;
+    --bg-surface: 16 19 25;
+    --bg-elevated: 23 27 34;
+    --bg-hover: 31 36 45;
+    --bg-input: 13 16 21;
+    --bg-muted: 23 27 34;
+    --fg-muted: 148 157 171;
+    --border-default: 38 44 54;
+    --border-subtle: 28 33 41;
+    --border-strong: 61 70 84;
+    --fg-text-primary: 245 247 250;
+    --fg-text-secondary: 168 177 190;
+    --fg-text-tertiary: 122 131 145;
+    /* Placeholders must clear WCAG AA on --bg-input in BOTH themes, so they get their own
+       token rather than borrowing the tertiary text colour. */
+    --fg-placeholder: 138 147 161;
+    --accent: 52 211 153;
+    --accent-hover: 43 192 138;
+    --accent-foreground: 6 26 20;
+    --accent-muted: rgba(52, 211, 153, 0.14);
+    --accent-line: rgba(52, 211, 153, 0.3);
+    --success: 45 190 130;
+    --destructive: 248 113 113;
+    --warning: 251 191 36;
+    --info: 96 165 250;
+    --ring: 52 211 153;
+    --selection-bg: rgba(52, 211, 153, 0.24);
+    --selection-fg: #f5f7fa;
+    --body-gradient: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.022) 0%, transparent 62%);
+    /* Tinted elevation. Shadows are hued toward the surface, never pure black. */
+    --shadow-raised: 0 1px 2px rgba(3, 6, 10, 0.5), 0 1px 1px rgba(3, 6, 10, 0.3);
+    --shadow-overlay: 0 16px 40px -12px rgba(3, 6, 10, 0.75);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    /* Dashboard navigation rail. Single source of truth for the aside width AND the
+       content offset, so the two can never disagree. */
+    --rail-width: 236px;
     color-scheme: dark;
   }
 
   [data-theme='light'] {
-    --bg-background: 250 250 250;
-    --fg-foreground: 9 9 11;
+    --bg-background: 247 249 250;
+    --fg-foreground: 12 18 26;
     --bg-surface: 255 255 255;
-    --bg-elevated: 244 244 245;
-    --bg-hover: 232 232 235;
+    --bg-elevated: 240 243 246;
+    --bg-hover: 229 234 239;
     --bg-input: 255 255 255;
-    --bg-muted: 244 244 245;
-    --fg-muted: 82 82 91;
-    --border-default: 228 228 231;
-    --border-subtle: 239 239 241;
-    --fg-text-primary: 9 9 11;
-    --fg-text-secondary: 82 82 91;
-    --fg-text-tertiary: 113 113 122;
-    /* A darker green: the neon accent has too little contrast on white.
-       #00803F scores 5.05:1 against white — WCAG AA as text and as a button background. */
-    --accent: 0 128 63;
-    --accent-hover: 0 107 52;
+    --bg-muted: 240 243 246;
+    --fg-muted: 74 85 99;
+    --border-default: 219 226 232;
+    --border-subtle: 233 238 242;
+    --border-strong: 154 165 176;
+    --fg-text-primary: 12 18 26;
+    --fg-text-secondary: 74 85 99;
+    --fg-text-tertiary: 110 121 135;
+    --fg-placeholder: 110 121 135;
+    /* #0E7A58 scores 5.3:1 against white - WCAG AA as text and as a button background. */
+    --accent: 14 122 88;
+    --accent-hover: 11 102 73;
     --accent-foreground: 255 255 255;
-    --accent-muted: rgba(0, 128, 63, 0.12);
-    --success: 0 145 90;
-    --destructive: 220 38 38;
-    --warning: 180 83 9;
-    --info: 3 105 161;
-    --ring: 0 128 63;
-    --selection-bg: rgba(0, 128, 63, 0.18);
-    --selection-fg: #09090b;
-    --body-gradient: radial-gradient(ellipse at 50% 0%, rgba(0, 0, 0, 0.02) 0%, transparent 60%);
+    --accent-muted: rgba(14, 122, 88, 0.1);
+    --accent-line: rgba(14, 122, 88, 0.32);
+    --success: 6 118 84;
+    --destructive: 190 40 40;
+    --warning: 154 71 9;
+    --info: 3 96 152;
+    --ring: 14 122 88;
+    --selection-bg: rgba(14, 122, 88, 0.16);
+    --selection-fg: #0c121a;
+    --body-gradient: radial-gradient(ellipse at 50% 0%, rgba(12, 18, 26, 0.022) 0%, transparent 62%);
+    --shadow-raised: 0 1px 2px rgba(15, 23, 32, 0.06), 0 1px 1px rgba(15, 23, 32, 0.04);
+    --shadow-overlay: 0 16px 40px -12px rgba(15, 23, 32, 0.2);
     color-scheme: light;
   }
 
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     background-color: rgb(var(--bg-background));
     background-image: var(--body-gradient);
+    background-attachment: fixed;
     color: rgb(var(--fg-foreground));
     font-family: 'Geist', 'General Sans', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv11', 'ss01';    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Numbers line up in tables and stat tiles. */
+  .font-mono,
+  code,
+  kbd {
+    font-variant-numeric: tabular-nums;
   }
 
   ::selection {
@@ -90,8 +127,9 @@
   }
 
   :focus-visible {
-    outline: 2px solid rgb(var(--accent));
+    outline: 2px solid rgb(var(--ring));
     outline-offset: 2px;
+    border-radius: 4px;
   }
 
   input:focus-visible,
@@ -102,30 +140,105 @@
 }
 
 @layer components {
+  /*
+   * Hover affordance for interactive panels. This used to be an outer neon glow
+   * (`0 0 20px rgba(0,255,136,0.08)`); replaced with a hairline border shift plus the
+   * tinted elevation token, which reads as "raised" rather than "radioactive".
+   */
   .card-glow {
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    transition:
+      box-shadow 200ms var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+      border-color 200ms var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+      transform 200ms var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
   }
   .card-glow:hover {
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.08);
-    border-color: rgba(0, 255, 136, 0.2);
+    box-shadow: var(--shadow-raised);
+    border-color: rgb(var(--border-strong));
   }
 
   .page-enter {
-    animation: page-enter 300ms ease forwards;
+    animation: page-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
+  /* Theme-aware: the old hard-coded dark gradient was invisible on the light theme. */
   .skeleton {
-    background: linear-gradient(90deg, #1A1A1D 25%, #222225 50%, #1A1A1D 75%);
+    background: linear-gradient(
+      90deg,
+      rgb(var(--bg-elevated)) 25%,
+      rgb(var(--bg-hover)) 50%,
+      rgb(var(--bg-elevated)) 75%
+    );
     background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+    animation: shimmer 1.5s ease-in-out infinite;
     border-radius: 6px;
+  }
+}
+
+/*
+ * Responsive data tables.
+ *
+ * Below `md` a table stops being a grid of columns and becomes one card per record:
+ * the header row is dropped and each cell prints its own column name from `data-label`.
+ * That is why every <Td> on a responsive table must pass `label` - without it the value
+ * shows with no context on a phone. Horizontal scrolling is the fallback for anything
+ * still too wide at md and up, not the primary strategy.
+ */
+@media (max-width: 767px) {
+  .responsive-table thead {
+    display: none;
+  }
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+  .responsive-table tr {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgb(var(--border-subtle));
+  }
+  .responsive-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .responsive-table td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: 0.1875rem 0;
+    text-align: right;
+  }
+  /* Flex items default to min-width:auto, which refuses to shrink below min-content and
+     pushes the row past the card. min-width:0 lets a long email truncate instead. */
+  .responsive-table td > * {
+    min-width: 0;
+  }
+  .responsive-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    margin-right: auto;
+    padding-right: 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: rgb(var(--fg-text-tertiary));
+    white-space: nowrap;
+  }
+  /* Cells that carry their own heading, or an action, need no printed label. */
+  .responsive-table td:not([data-label])::before {
+    content: none;
+  }
+  .responsive-table td[data-span] {
+    display: block;
+    text-align: left;
   }
 }
 
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -134,22 +247,47 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling, token-driven so the light theme is not stuck with dark scrollbars. */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272A;
-  border-radius: 3px;
+  background: rgb(var(--border-default));
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: rgb(var(--border-strong));
+}
+
+/*
+ * Reduced motion: every animation on the dashboard collapses to its resting state.
+ * MOTION_INTENSITY for this surface is 4, so this block is mandatory, not optional.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-glow:hover {
+    transform: none;
+  }
 }

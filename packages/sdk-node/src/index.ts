@@ -1,21 +1,21 @@
-import { CloakShareClient } from './client.js';
+import { ScriniumClient } from './client.js';
 import { LinksResource } from './resources/links.js';
 import { WebhooksResource } from './resources/webhooks.js';
 import { ViewersResource } from './resources/viewers.js';
 import { OrgResource } from './resources/org.js';
 import { verifyWebhookSignature } from './webhookVerify.js';
-import type { CloakShareOptions } from './types.js';
+import type { ScriniumOptions } from './types.js';
 
 const VERSION = '0.1.0';
 
 /**
- * CloakShare Node.js SDK — secure document and video sharing API.
+ * Scrinium Node.js SDK — secure document and video sharing API.
  *
  * @example
  * ```ts
- * import CloakShare from '@cloakshare/sdk';
+ * import Scrinium from '@cloakshare/sdk';
  *
- * const cloakshare = new CloakShare('ck_live_xxx');
+ * const cloakshare = new Scrinium('ck_live_xxx');
  *
  * const link = await cloakshare.links.create({
  *   file: './pitch-deck.pdf',
@@ -27,21 +27,21 @@ const VERSION = '0.1.0';
  * console.log(link.secure_url);
  * ```
  */
-export class CloakShare {
-  private client: CloakShareClient;
+export class Scrinium {
+  private client: ScriniumClient;
 
   links: LinksResource;
   webhooks: WebhooksResource;
   viewers: ViewersResource;
   org: OrgResource;
 
-  constructor(apiKey: string, options?: CloakShareOptions) {
+  constructor(apiKey: string, options?: ScriniumOptions) {
     if (!apiKey) throw new Error('API key is required. Get one at https://app.cloakshare.dev');
     if (!apiKey.startsWith('ck_')) {
       throw new Error('Invalid API key format. Keys start with ck_live_ or ck_test_');
     }
 
-    this.client = new CloakShareClient({
+    this.client = new ScriniumClient({
       apiKey,
       baseUrl: (options?.baseUrl ?? 'https://api.cloakshare.dev').replace(/\/$/, ''),
       timeout: options?.timeout ?? 30_000,
@@ -55,10 +55,10 @@ export class CloakShare {
   }
 
   /**
-   * Verify a webhook signature. Can be used without instantiating CloakShare.
+   * Verify a webhook signature. Can be used without instantiating Scrinium.
    *
    * @example
-   * const isValid = CloakShare.webhooks.verify(rawBody, signature, secret);
+   * const isValid = Scrinium.webhooks.verify(rawBody, signature, secret);
    */
   static webhooks = {
     verify: verifyWebhookSignature,
@@ -68,9 +68,9 @@ export class CloakShare {
   static version = VERSION;
 }
 
-export default CloakShare;
+export default Scrinium;
 
 // Re-export types and errors
 export * from './types.js';
-export { CloakShareError, RateLimitError, AuthenticationError } from './errors.js';
+export { ScriniumError, RateLimitError, AuthenticationError } from './errors.js';
 export { verifyWebhookSignature } from './webhookVerify.js';

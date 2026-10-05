@@ -81,14 +81,14 @@ import Base from '../../layouts/Base.astro';
           from a link — this isn't sufficient.
         </p>
 
-        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Method 4: API-First Auto-Revoke (CloakShare and Similar)</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Method 4: API-First Auto-Revoke (Scrinium and Similar)</h2>
         <p>
           The reliable approach for documents that need to actually expire: use a tool that renders
           the PDF in a browser-based viewer (instead of letting recipients download the file), tracks
           access at the link level, and revokes the link on a schedule.
         </p>
         <p>
-          <strong>How CloakShare does it:</strong> upload the PDF; the viewer renders pages as canvas
+          <strong>How Scrinium does it:</strong> upload the PDF; the viewer renders pages as canvas
           images on demand (recipients never receive the underlying PDF file); set link expiration to
           a date or a view count; on expiration, the link's viewer endpoint returns 410 Gone.
           Recipients see "This document is no longer available." There is no PDF file on their
@@ -111,7 +111,7 @@ import Base from '../../layouts/Base.astro';
           consumer recipients more accustomed to email attachments, expect a small fraction of pushback.
         </p>
         <p>
-          <strong>Pricing:</strong> CloakShare's free tier covers 50 links/month with expiration
+          <strong>Pricing:</strong> Scrinium's free tier covers 50 links/month with expiration
           support. Paid plans start at $29/month and remove the link cap. Other tools in this category
           (DocSend, Papermark, Brieflink) offer similar capabilities at varying price points; the
           $45-$65/user/month tier is common for the GUI-first tools.
@@ -157,9 +157,9 @@ import Base from '../../layouts/Base.astro';
           <li><strong>Forgetting to revoke when a deal closes</strong> — most expirations are date-based, but the right time to revoke is "as soon as the recipient no longer needs access," which is often before the original expiration date.</li>
         </ul>
 
-        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Try CloakShare's Free Tier</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Try Scrinium's Free Tier</h2>
         <p>
-          If you want to see what API-first auto-revoke looks like in practice, CloakShare's free
+          If you want to see what API-first auto-revoke looks like in practice, Scrinium's free
           tier covers 50 expiring links per month with full per-page tracking, watermarking, and
           instant revocation. Upload a PDF, set the expiration, send the link. When the date hits
           (or you click revoke), the link returns 410 Gone and the recipient sees a clear "no longer
@@ -167,7 +167,7 @@ import Base from '../../layouts/Base.astro';
         </p>
         <p class="mt-6">
           <a href="https://app.cloakshare.dev/register" class="px-6 py-2.5 bg-accent text-background font-mono font-semibold text-sm rounded-md hover:bg-accent-hover transition-colors">
-            Try CloakShare Free
+            Try Scrinium Free
           </a>
         </p>
       </div>

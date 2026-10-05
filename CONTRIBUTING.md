@@ -1,6 +1,6 @@
-# Contributing to CloakShare
+# Contributing to Scrinium
 
-Welcome to CloakShare! We appreciate your interest in contributing to the project. Whether it's a bug fix, new feature, or documentation improvement, every contribution makes a difference.
+Welcome to Scrinium! We appreciate your interest in contributing to the project. Whether it's a bug fix, new feature, or documentation improvement, every contribution makes a difference.
 
 ## Getting Started
 

@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 ---
 
-<Base title="Secure Video Sharing for Sales Teams: Watermarks, Tracking, and Access Controls" description="Learn how Cloak's video sharing API adds HLS streaming, canvas watermark overlays, watch time analytics, and access controls to your sales workflow." type="article" publishedAt="2026-02-28" canonical="/blog/secure-video-sharing-api">
+<Base title="Secure Video Sharing for Sales Teams: Watermarks, Tracking, and Access Controls" description="Learn how Scrinium's video sharing API adds HLS streaming, canvas watermark overlays, watch time analytics, and access controls to your sales workflow." type="article" publishedAt="2026-02-28" canonical="/blog/secure-video-sharing-api">
   <article class="pt-32 pb-20 px-6">
     <div class="max-w-3xl mx-auto">
       <p class="text-xs text-text-tertiary font-mono mb-4">February 28, 2026</p>
@@ -15,18 +15,18 @@ import Base from '../../layouts/Base.astro';
           Sales teams share demo recordings, <a href="/use-cases/training-content" class="text-accent hover:underline">training videos</a>, and product walkthroughs every day.
           Most of the time, those files end up as Loom links or raw MP4 attachments — no tracking,
           no access control, no way to know if your prospect watched past the first 30 seconds.
-          Cloak changes that with a secure video sharing API built for exactly this workflow — ideal for <a href="/use-cases/video-proposals" class="text-accent hover:underline">video proposals</a>.
+          Scrinium changes that with a secure video sharing API built for exactly this workflow — ideal for <a href="/use-cases/video-proposals" class="text-accent hover:underline">video proposals</a>.
         </p>
 
-        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">How Cloak handles video</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">How Scrinium handles video</h2>
         <p>
-          When you upload a video to Cloak, the server transcodes it into HLS (HTTP Live Streaming)
+          When you upload a video to Scrinium, the server transcodes it into HLS (HTTP Live Streaming)
           segments. The viewer receives an adaptive-bitrate stream — not a downloadable file. This
           means playback works on every device including Safari and iOS, where HLS is the native
           format, while keeping the source file off the recipient's disk.
         </p>
         <p>
-          On top of the video player, Cloak renders a real-time canvas watermark overlay. The
+          On top of the video player, Scrinium renders a real-time canvas watermark overlay. The
           watermark displays the viewer's email address (captured via email gate) across the video
           frame. Because it's rendered on a canvas layer, it cannot be removed by inspecting the DOM
           or screenshotting cleanly — the viewer's identity is baked into every frame they see.
@@ -35,7 +35,7 @@ import Base from '../../layouts/Base.astro';
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Why this matters for sales</h2>
         <p>
           Sending a raw video file to a prospect is a black hole. You don't know if they watched it,
-          how far they got, or whether they forwarded it to someone outside the deal. With Cloak,
+          how far they got, or whether they forwarded it to someone outside the deal. With Scrinium,
           every video share gives you:
         </p>
         <ul class="list-none space-y-2 my-4">
@@ -50,7 +50,7 @@ import Base from '../../layouts/Base.astro';
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Upload a video via API</h2>
         <p>
           Sharing a secure video is a single API call. Upload the file, set your security rules,
-          and Cloak returns a tokenized link ready to send.
+          and Scrinium returns a tokenized link ready to send.
         </p>
         <div class="bg-surface border border-border rounded-lg p-5 my-8">
           <pre class="text-sm font-mono text-text-secondary overflow-x-auto"><span class="text-text-tertiary">$</span> curl -X POST https://api.cloakshare.dev/v1/links \
@@ -80,7 +80,7 @@ import Base from '../../layouts/Base.astro';
           Attaching an MP4 to an email means no analytics, no access control, and a file that can
           be forwarded to anyone forever. Cloud storage links (Google Drive, Dropbox) give you basic
           view counts at best. Loom offers tracking but no watermarking, no expiry, and no API for
-          programmatic integration. Cloak gives you the full stack: streaming, security, analytics,
+          programmatic integration. Scrinium gives you the full stack: streaming, security, analytics,
           and developer-friendly APIs — self-hostable or cloud-managed.
         </p>
 

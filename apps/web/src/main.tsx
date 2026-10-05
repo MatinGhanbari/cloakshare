@@ -53,7 +53,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<Links />} />
+            {/* The index route redirects so the navigation rail always has an active item.
+                Before this, landing on `/` rendered Links while no nav entry was highlighted. */}
+            <Route index element={<Navigate to="/links" replace />} />
             <Route path="links" element={<Links />} />
             <Route path="upload" element={<Upload />} />
             <Route path="groups" element={<Groups />} />

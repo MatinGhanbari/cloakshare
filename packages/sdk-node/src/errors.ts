@@ -1,4 +1,4 @@
-export class CloakShareError extends Error {
+export class ScriniumError extends Error {
   status: number;
   code: string;
   requestId?: string;
@@ -12,7 +12,7 @@ export class CloakShareError extends Error {
     docUrl?: string,
   ) {
     super(message);
-    this.name = 'CloakShareError';
+    this.name = 'ScriniumError';
     this.status = status;
     this.code = code || 'UNKNOWN';
     this.requestId = requestId;
@@ -20,7 +20,7 @@ export class CloakShareError extends Error {
   }
 }
 
-export class RateLimitError extends CloakShareError {
+export class RateLimitError extends ScriniumError {
   retryAfter: number;
 
   constructor(message: string, retryAfter: number, requestId?: string) {
@@ -30,7 +30,7 @@ export class RateLimitError extends CloakShareError {
   }
 }
 
-export class AuthenticationError extends CloakShareError {
+export class AuthenticationError extends ScriniumError {
   constructor(message: string, status: number, requestId?: string) {
     super(message, status, 'AUTHENTICATION_FAILED', requestId, 'https://docs.cloakshare.dev/errors/authentication');
     this.name = 'AuthenticationError';

@@ -100,14 +100,14 @@ import Base from '../../layouts/Base.astro';
           teams.
         </p>
 
-        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Method 4: API-First Page-Level Tracking (CloakShare)</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Method 4: API-First Page-Level Tracking (Scrinium)</h2>
         <p>
           The architecture that gives you the most signal: a viewer that renders the PDF in the browser
           page-by-page, never delivers the underlying file, watermarks each page with the recipient's
           identity at render time, and exposes page-and-second-level engagement data.
         </p>
         <p>
-          <strong>What CloakShare tracks per proposal share:</strong>
+          <strong>What Scrinium tracks per proposal share:</strong>
         </p>
         <ul class="list-disc list-inside space-y-2 ml-4">
           <li>Email of the recipient (and any forwarded recipients — each gets a unique signed link)</li>
@@ -118,7 +118,7 @@ import Base from '../../layouts/Base.astro';
           <li>Webhook events to your CRM in real time</li>
         </ul>
         <p>
-          <strong>What CloakShare can't track:</strong> if the recipient takes a screenshot, our session-level
+          <strong>What Scrinium can't track:</strong> if the recipient takes a screenshot, our session-level
           watermark is baked into the page bitmap, but we can't detect the screenshot event itself.
           Screenshots are still traceable (the watermark is the recipient's email + session ID), just not
           detectable in real time.
@@ -134,7 +134,7 @@ import Base from '../../layouts/Base.astro';
           The fastest-closing reps use this pattern:
         </p>
         <ol class="list-decimal list-inside space-y-2 ml-4">
-          <li><strong>Real-time alert when the proposal is opened.</strong> Webhook from CloakShare (or DocSend) → Slack notification → rep is on the phone within 30 minutes if the prospect is still viewing.</li>
+          <li><strong>Real-time alert when the proposal is opened.</strong> Webhook from Scrinium (or DocSend) → Slack notification → rep is on the phone within 30 minutes if the prospect is still viewing.</li>
           <li><strong>Follow-up message tuned to time spent.</strong> If the prospect spent &lt;2 minutes, the follow-up addresses interest. If 8-15 minutes, the follow-up answers expected objections. If 25+ minutes with returns, the rep asks for the meeting.</li>
           <li><strong>Page-specific follow-up.</strong> If the prospect spent 4 minutes on the pricing page, the follow-up addresses pricing first. If they spent 6 minutes on the team/credentials page, the follow-up addresses trust.</li>
           <li><strong>Forwarding detection → multi-stakeholder strategy.</strong> If the link is forwarded to procurement, the rep proactively addresses procurement's concerns in the next email (security, terms, references) without waiting for them to ask.</li>
@@ -156,11 +156,11 @@ import Base from '../../layouts/Base.astro';
             </tr>
             <tr class="border-b border-border/50">
               <td class="py-2 px-3">Small sales team (2-5 reps), 10-50 proposals/month</td>
-              <td class="py-2 px-3">CloakShare ($29/mo flat) or Papermark (self-host)</td>
+              <td class="py-2 px-3">Scrinium ($29/mo flat) or Papermark (self-host)</td>
             </tr>
             <tr class="border-b border-border/50">
               <td class="py-2 px-3">Growing sales team (5-15 reps), 50-200 proposals/month</td>
-              <td class="py-2 px-3">CloakShare paid tier or DocSend (if budget allows the per-seat pricing)</td>
+              <td class="py-2 px-3">Scrinium paid tier or DocSend (if budget allows the per-seat pricing)</td>
             </tr>
             <tr class="border-b border-border/50">
               <td class="py-2 px-3">Enterprise sales team (15+ reps), 200+ proposals/month, Salesforce integration required</td>
@@ -168,7 +168,7 @@ import Base from '../../layouts/Base.astro';
             </tr>
             <tr class="border-b border-border/50">
               <td class="py-2 px-3">Sensitive proposals (M&A, financials) where the document must expire</td>
-              <td class="py-2 px-3">CloakShare (410 Gone semantics) or enterprise DRM</td>
+              <td class="py-2 px-3">Scrinium (410 Gone semantics) or enterprise DRM</td>
             </tr>
           </tbody>
         </table>
@@ -182,16 +182,16 @@ import Base from '../../layouts/Base.astro';
           <li><strong>Setting expiration on every proposal.</strong> Expirations are right for high-sensitivity documents (M&A, term sheets, pricing for large deals). For everyday SaaS proposals, expiration adds friction without value.</li>
         </ul>
 
-        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Try CloakShare's Free Tier</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Try Scrinium's Free Tier</h2>
         <p>
           If you want to see what page-level proposal tracking looks like in practice without committing
-          to DocSend's per-seat pricing, CloakShare's free tier covers 50 links/month with full
+          to DocSend's per-seat pricing, Scrinium's free tier covers 50 links/month with full
           page-and-second engagement tracking, watermarking, webhook events to your CRM, and instant
           revocation. Upload a proposal, send the link, and watch real-time engagement.
         </p>
         <p class="mt-6">
           <a href="https://app.cloakshare.dev/register" class="px-6 py-2.5 bg-accent text-background font-mono font-semibold text-sm rounded-md hover:bg-accent-hover transition-colors">
-            Try CloakShare Free
+            Try Scrinium Free
           </a>
         </p>
       </div>

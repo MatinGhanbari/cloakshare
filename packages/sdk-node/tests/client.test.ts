@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import CloakShare from '../src/index.js';
-import { CloakShareError, RateLimitError, AuthenticationError } from '../src/errors.js';
+import Scrinium from '../src/index.js';
+import { ScriniumError, RateLimitError, AuthenticationError } from '../src/errors.js';
 import { verifyWebhookSignature } from '../src/webhookVerify.js';
 import { createHmac } from 'crypto';
 
@@ -8,17 +8,17 @@ import { createHmac } from 'crypto';
 // CONSTRUCTOR
 // ============================================
 
-describe('CloakShare constructor', () => {
+describe('Scrinium constructor', () => {
   it('throws if API key is empty', () => {
-    expect(() => new CloakShare('')).toThrow('API key is required');
+    expect(() => new Scrinium('')).toThrow('API key is required');
   });
 
   it('throws if API key has wrong prefix', () => {
-    expect(() => new CloakShare('sk_wrong_prefix')).toThrow('Invalid API key format');
+    expect(() => new Scrinium('sk_wrong_prefix')).toThrow('Invalid API key format');
   });
 
   it('accepts ck_live_ prefix', () => {
-    const sdk = new CloakShare('ck_live_abc123');
+    const sdk = new Scrinium('ck_live_abc123');
     expect(sdk).toBeDefined();
     expect(sdk.links).toBeDefined();
     expect(sdk.webhooks).toBeDefined();
@@ -27,17 +27,17 @@ describe('CloakShare constructor', () => {
   });
 
   it('accepts ck_test_ prefix', () => {
-    const sdk = new CloakShare('ck_test_abc123');
+    const sdk = new Scrinium('ck_test_abc123');
     expect(sdk).toBeDefined();
   });
 
   it('accepts custom baseUrl and trims trailing slash', () => {
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000/' });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000/' });
     expect(sdk).toBeDefined();
   });
 
   it('has static version', () => {
-    expect(CloakShare.version).toBe('0.1.0');
+    expect(Scrinium.version).toBe('0.1.0');
   });
 });
 
@@ -46,32 +46,32 @@ describe('CloakShare constructor', () => {
 // ============================================
 
 describe('Error classes', () => {
-  it('CloakShareError has correct properties', () => {
-    const err = new CloakShareError('bad request', 400, 'VALIDATION', 'req_123', 'https://docs.cloakshare.dev');
+  it('ScriniumError has correct properties', () => {
+    const err = new ScriniumError('bad request', 400, 'VALIDATION', 'req_123', 'https://docs.cloakshare.dev');
     expect(err.message).toBe('bad request');
     expect(err.status).toBe(400);
     expect(err.code).toBe('VALIDATION');
     expect(err.requestId).toBe('req_123');
     expect(err.docUrl).toBe('https://docs.cloakshare.dev');
-    expect(err.name).toBe('CloakShareError');
+    expect(err.name).toBe('ScriniumError');
     expect(err).toBeInstanceOf(Error);
   });
 
-  it('RateLimitError extends CloakShareError', () => {
+  it('RateLimitError extends ScriniumError', () => {
     const err = new RateLimitError('slow down', 30, 'req_456');
     expect(err.status).toBe(429);
     expect(err.code).toBe('RATE_LIMIT_EXCEEDED');
     expect(err.retryAfter).toBe(30);
     expect(err.name).toBe('RateLimitError');
-    expect(err).toBeInstanceOf(CloakShareError);
+    expect(err).toBeInstanceOf(ScriniumError);
   });
 
-  it('AuthenticationError extends CloakShareError', () => {
+  it('AuthenticationError extends ScriniumError', () => {
     const err = new AuthenticationError('invalid key', 401, 'req_789');
     expect(err.status).toBe(401);
     expect(err.code).toBe('AUTHENTICATION_FAILED');
     expect(err.name).toBe('AuthenticationError');
-    expect(err).toBeInstanceOf(CloakShareError);
+    expect(err).toBeInstanceOf(ScriniumError);
   });
 });
 
@@ -111,8 +111,8 @@ describe('verifyWebhookSignature', () => {
     expect(verifyWebhookSignature(payload, signature, secret)).toBe(true);
   });
 
-  it('is accessible via CloakShare.webhooks.verify', () => {
-    expect(CloakShare.webhooks.verify).toBe(verifyWebhookSignature);
+  it('is accessible via Scrinium.webhooks.verify', () => {
+    expect(Scrinium.webhooks.verify).toBe(verifyWebhookSignature);
   });
 });
 
@@ -144,7 +144,7 @@ describe('HTTP client', () => {
 
   it('sends Authorization header', async () => {
     mockFetch(200, { data: { links: [] } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     await sdk.links.list();
 
     const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
@@ -153,26 +153,26 @@ describe('HTTP client', () => {
 
   it('unwraps response.data', async () => {
     mockFetch(200, { data: { id: 'lnk_abc', secure_url: 'https://view.cloakshare.dev/s/lnk_abc' } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     const link = await sdk.links.get('lnk_abc');
     expect(link.id).toBe('lnk_abc');
   });
 
   it('throws AuthenticationError on 401', async () => {
     mockFetch(401, { error: { code: 'UNAUTHORIZED', message: 'Invalid API key' } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     await expect(sdk.links.list()).rejects.toThrow(AuthenticationError);
   });
 
-  it('throws CloakShareError on 400', async () => {
+  it('throws ScriniumError on 400', async () => {
     mockFetch(400, { error: { code: 'VALIDATION', message: 'Bad request' } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
-    await expect(sdk.links.list()).rejects.toThrow(CloakShareError);
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    await expect(sdk.links.list()).rejects.toThrow(ScriniumError);
   });
 
   it('creates link with uploadKey (JSON body)', async () => {
     mockFetch(202, { data: { id: 'lnk_new', secure_url: 'https://view.cloakshare.dev/s/lnk_new', status: 'processing' } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     const link = await sdk.links.create({ uploadKey: 'temp/abc/file.pdf', filename: 'file.pdf' });
     expect(link.id).toBe('lnk_new');
     expect(link.status).toBe('processing');
@@ -180,20 +180,20 @@ describe('HTTP client', () => {
 
   it('creates link from Buffer (FormData)', async () => {
     mockFetch(202, { data: { id: 'lnk_buf', status: 'processing' } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     const buf = Buffer.from('%PDF-1.4 test content');
     const link = await sdk.links.create({ file: buf, filename: 'test.pdf' });
     expect(link.id).toBe('lnk_buf');
   });
 
   it('throws when create is called without file or uploadKey', async () => {
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     await expect(sdk.links.create({})).rejects.toThrow('Must provide file');
   });
 
   it('revoke calls DELETE', async () => {
     mockFetch(200, { data: { id: 'lnk_del', status: 'revoked' } });
-    const sdk = new CloakShare('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
+    const sdk = new Scrinium('ck_live_abc123', { baseUrl: 'http://localhost:3000', maxRetries: 0 });
     await sdk.links.revoke('lnk_del');
 
     const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];

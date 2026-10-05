@@ -3,7 +3,7 @@
  * PDF.js is lazy-loaded only when a .pdf src is detected.
  */
 
-import type { CloakErrorCode } from './types.js';
+import type { ScriniumErrorCode } from './types.js';
 
 export interface RenderedPage {
   pageNum: number;
@@ -69,7 +69,7 @@ async function renderPdf(
   const pdfjsLib = await loadPdfJs(useExternal);
   if (!pdfjsLib) {
     throw Object.assign(new Error('PDF.js could not be loaded'), {
-      code: 'RENDER_ERROR' as CloakErrorCode,
+      code: 'RENDER_ERROR' as ScriniumErrorCode,
     });
   }
 
@@ -119,7 +119,7 @@ async function loadPdfJs(useExternal: boolean): Promise<any> {
       new Error(
         'renderer="external" requires PDF.js to be loaded globally (window.pdfjsLib)',
       ),
-      { code: 'RENDER_ERROR' as CloakErrorCode },
+      { code: 'RENDER_ERROR' as ScriniumErrorCode },
     );
   }
 
@@ -185,7 +185,7 @@ export async function renderSource(
         new Error(
           `Unsupported format. Use apiKey for Office docs and video.`,
         ),
-        { code: 'UNSUPPORTED_FORMAT' as CloakErrorCode },
+        { code: 'UNSUPPORTED_FORMAT' as ScriniumErrorCode },
       );
   }
 }

@@ -1,4 +1,4 @@
-# CloakShare — GEO/AEO Audit (April 2026)
+# Scrinium — GEO/AEO Audit (April 2026)
 
 ## Score: 4/8
 
@@ -31,5 +31,5 @@
 - "$300+/mo for data rooms during fundraising" — Source: industry benchmarks
 
 ## Fixes Needed
-1. Add question-format H2s: "How does CloakShare prevent document copying?", "What is email-gated document sharing?", "How is CloakShare different from DocSend?"
+1. Add question-format H2s: "How does Scrinium prevent document copying?", "What is email-gated document sharing?", "How is Scrinium different from DocSend?"
 2. Add sourced external stats to homepage (DocSend pricing comparison, tracked vs untracked response rates)

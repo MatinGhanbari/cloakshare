@@ -1,5 +1,5 @@
 /**
- * OpenAPI 3.1 specification for the CloakShare API.
+ * OpenAPI 3.1 specification for the Scrinium API.
  *
  * This is a hand-maintained spec that mirrors the actual route implementations.
  * It powers the Scalar API reference at /docs and the JSON spec at /v1/openapi.json.
@@ -7,11 +7,11 @@
 export const openApiSpec = {
   openapi: '3.1.0',
   info: {
-    title: 'CloakShare API',
+    title: 'Scrinium API',
     version: '1.0.0',
     description: 'Secure document and video sharing API with tokenized links, dynamic watermarks, and real-time analytics.',
     contact: {
-      name: 'CloakShare',
+      name: 'Scrinium',
       url: 'https://cloakshare.dev',
       email: 'support@cloakshare.dev',
     },

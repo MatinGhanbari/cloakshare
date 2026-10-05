@@ -1,7 +1,7 @@
 {
   "name": "@cloakshare/sdk",
   "version": "0.1.0",
-  "description": "Official CloakShare Node.js SDK — secure document and video sharing API",
+  "description": "Official Scrinium Node.js SDK — secure document and video sharing API",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

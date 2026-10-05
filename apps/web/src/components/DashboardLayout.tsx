@@ -1,39 +1,114 @@
-import { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { useAuth } from '../lib/auth';
 import NotificationBell from './NotificationBell';
+import { Button, IconButton, cx } from './ui';
+import {
+  AuditIcon,
+  CloseIcon,
+  GroupsIcon,
+  KeyIcon,
+  LinksIcon,
+  MenuIcon,
+  SettingsIcon,
+  TeamIcon,
+  UploadIcon,
+} from './icons';
 
-const navSections = [
+/**
+ * Rail width lives in `--rail-width` (index.css) so the aside and the content offset
+ * cannot drift apart. The original layout hard-coded 220px in two places.
+ */
+
+/**
+ * Route labels and paths are intentionally unchanged: they are muscle memory and the
+ * analytics/tracking surface. Only the presentation moved.
+ */
+const navGroups: Array<{ items: Array<{ label: string; path: string; icon: ReactNode }> }> = [
   {
     items: [
-      { label: 'Links', path: '/links', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-      { label: 'Upload', path: '/upload', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
-      { label: 'Groups', path: '/groups', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
-      { label: 'API Keys', path: '/api-keys', icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z' },
+      { label: 'Links', path: '/links', icon: <LinksIcon size={16} /> },
+      { label: 'Upload', path: '/upload', icon: <UploadIcon size={16} /> },
+      { label: 'Groups', path: '/groups', icon: <GroupsIcon size={16} /> },
+      { label: 'API Keys', path: '/api-keys', icon: <KeyIcon size={16} /> },
     ],
   },
   {
     items: [
-      { label: 'Team', path: '/team', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z' },
-      { label: 'Audit Log', path: '/audit-log', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-      // { label: 'Billing', path: '/billing', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
-      { label: 'Settings', path: '/settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+      { label: 'Team', path: '/team', icon: <TeamIcon size={16} /> },
+      { label: 'Audit Log', path: '/audit-log', icon: <AuditIcon size={16} /> },
+      { label: 'Settings', path: '/settings', icon: <SettingsIcon size={16} /> },
     ],
   },
 ];
 
-function NavIcon({ d }: { d: string }) {
+function NavItem({
+  label,
+  path,
+  icon,
+  onNavigate,
+}: {
+  label: string;
+  path: string;
+  icon: ReactNode;
+  onNavigate: () => void;
+}) {
   return (
-    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={d} />
-    </svg>
+    <NavLink
+      to={path}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cx(
+          'relative flex items-center gap-2.5 rounded-control px-3 py-2 text-sm font-medium',
+          'transition-colors duration-150 ease-expo',
+          isActive
+            ? 'bg-accent-muted text-foreground'
+            : 'text-text-tertiary hover:bg-hover hover:text-text-secondary',
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span
+              aria-hidden="true"
+              className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent"
+            />
+          )}
+          <span className={isActive ? 'text-accent' : 'text-current'}>{icon}</span>
+          {label}
+        </>
+      )}
+    </NavLink>
   );
 }
 
 export default function DashboardLayout() {
   const { user, logout, activeOrg, switchOrg } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Lock the page behind the mobile drawer so the document does not scroll under it.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
+  // Close the drawer if the viewport grows past the breakpoint while it is open.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const onChange = () => {
+      if (mq.matches) setMobileOpen(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -41,23 +116,31 @@ export default function DashboardLayout() {
   };
 
   const initials = (user?.email || '??').slice(0, 2).toUpperCase();
+  const plan = activeOrg?.plan || user?.plan || 'free';
 
   const sidebar = (
-    <>
-      {/* Logo */}
-      <div className="h-14 flex items-center px-5 border-b border-border-subtle">
-        <span className="font-mono font-bold text-base text-foreground tracking-tight">
-          CloakShare
+    <div className="flex h-full flex-col">
+      {/* Brand. The wordmark itself is unchanged by design. */}
+      <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-border-subtle px-5">
+        <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+        <span className="font-mono text-base font-bold tracking-tight text-foreground">
+          Scrinium
         </span>
       </div>
 
-      {/* Org Switcher */}
       {user?.orgs && user.orgs.length > 1 && (
-        <div className="px-3 pt-3">
+        <div className="shrink-0 px-3 pt-3">
+          <label
+            htmlFor="org-switcher"
+            className="mb-1.5 block px-1 text-[11px] font-medium text-text-tertiary"
+          >
+            Organization
+          </label>
           <select
+            id="org-switcher"
             value={activeOrg?.id || ''}
             onChange={(e) => switchOrg(e.target.value)}
-            className="w-full bg-elevated border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground font-sans focus:outline-none focus:border-accent/50 transition-colors"
+            className="w-full rounded-control border border-border bg-elevated px-2.5 py-1.5 text-xs text-foreground transition-colors duration-150 ease-expo focus:border-accent-line focus:outline-none focus:ring-2 focus:ring-accent/20"
           >
             {user.orgs.map((org) => (
               <option key={org.id} value={org.id}>
@@ -68,89 +151,96 @@ export default function DashboardLayout() {
         </div>
       )}
 
-      {/* Nav */}
-      <nav className="flex-1 py-3 px-3 space-y-6">
-        {navSections.map((section, si) => (
-          <div key={si} className="space-y-0.5">
-            {section.items.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-sans font-medium transition-all duration-150 ${
-                    isActive
-                      ? 'bg-accent-muted text-foreground border-l-2 border-accent -ml-px'
-                      : 'text-text-tertiary hover:text-text-secondary hover:bg-hover'
-                  }`
-                }
-              >
-                <NavIcon d={item.icon} />
-                {item.label}
-              </NavLink>
-            ))}
+      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4">
+        {navGroups.map((group, gi) => (
+          <div key={gi}>
+            {gi > 0 && <div className="my-3 border-t border-border-subtle" />}
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavItem
+                  key={item.path}
+                  label={item.label}
+                  path={item.path}
+                  icon={item.icon}
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              ))}
+            </div>
           </div>
         ))}
       </nav>
 
-      {/* User section */}
-      <div className="p-3 border-t border-border-subtle">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <div className="w-8 h-8 rounded-full bg-elevated flex items-center justify-center text-xs font-sans font-medium text-text-secondary flex-shrink-0">
+      {/* Account */}
+      <div className="shrink-0 border-t border-border-subtle p-3">
+        <div className="flex items-center gap-3 rounded-control px-2 py-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-elevated text-xs font-medium text-text-secondary">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-foreground truncate font-sans">{user?.email}</p>
-            <p className="text-xs text-text-tertiary mt-0.5 font-sans capitalize">
-              {activeOrg?.plan || user?.plan || 'free'}
-            </p>
+            <p className="truncate text-[13px] text-foreground">{user?.email}</p>
+            <p className="mt-0.5 text-[11px] capitalize text-text-tertiary">{plan}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-2 px-2">
+        <div className="mt-1 flex items-center gap-1 px-1">
           <NotificationBell />
-          <button
-            onClick={handleLogout}
-            className="text-xs text-text-tertiary hover:text-text-primary transition-colors font-sans ml-auto"
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void handleLogout()}
+            className="ml-auto"
           >
             Log out
-          </button>
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border-subtle flex items-center justify-between px-4 z-40">
-        <span className="font-mono font-bold text-base text-foreground">CloakShare</span>
-        <button
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border-subtle bg-surface/95 px-4 backdrop-blur md:hidden">
+        <span className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+          <span className="font-mono text-base font-bold tracking-tight text-foreground">
+            Scrinium
+          </span>
+        </span>
+        <IconButton
+          label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 text-text-secondary hover:text-foreground transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileOpen
-              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
-            }
-          </svg>
-        </button>
+          {mobileOpen ? <CloseIcon size={18} /> : <MenuIcon size={18} />}
+        </IconButton>
       </div>
 
-      {/* Mobile overlay */}
+      {/* Mobile scrim */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 bottom-0 w-[220px] bg-surface border-r border-border-subtle flex flex-col z-40 transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      {/* Rail */}
+      <aside
+        style={{ width: 'var(--rail-width)' }}
+        className={cx(
+          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border-subtle bg-surface',
+          'transition-transform duration-200 ease-expo',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+        )}
+      >
         {sidebar}
       </aside>
 
-      {/* Main content */}
-      <main className="md:ml-[220px] min-h-screen pt-14 md:pt-0">
-        <div className="max-w-5xl mx-auto p-6 md:p-8">
-          <div className="page-enter">
+      {/* Content */}
+      <main className="min-h-screen pt-14 md:pl-[var(--rail-width)] md:pt-0">
+        <div className="mx-auto w-full max-w-content px-5 py-6 md:px-8 md:py-8">
+          {/* Keyed by route so the entry transition replays on navigation. */}
+          <div key={location.pathname} className="page-enter">
             <Outlet />
           </div>
         </div>

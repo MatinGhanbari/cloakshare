@@ -1,6 +1,18 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { linksApi, ApiError } from '../lib/api';
+import {
+  Button,
+  CopyField,
+  Field,
+  InlineError,
+  Input,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  StatusBadge,
+} from '../components/ui';
+import { ExternalLinkIcon, FileIcon, ShieldIcon, UploadIcon } from '../components/icons';
 
 const ACCEPTED = '.pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv';
 
@@ -10,6 +22,22 @@ interface CreatedLink {
   status: string;
   file_type: string;
 }
+
+/** Grounded in the renderer's actual behaviour, not marketing copy. */
+const PROTECTIONS = [
+  {
+    title: 'Watermarked per viewer',
+    body: 'The viewer identity is burned into every page before the image is sliced, so a copy can be traced back to a session.',
+  },
+  {
+    title: 'Access gated',
+    body: 'Email, password, or a student group can gate the link. Revoking it cuts access immediately.',
+  },
+  {
+    title: 'Rate limited',
+    body: 'Page, tile and viewport requests are budgeted per session, which bounds how fast a document can be walked.',
+  },
+];
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,7 +50,6 @@ export default function Upload() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [created, setCreated] = useState<CreatedLink | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,155 +90,194 @@ export default function Upload() {
     }
   };
 
-  const copy = async () => {
-    if (!created) return;
-    try {
-      await navigator.clipboard.writeText(created.secure_url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable */
-    }
-  };
-
   return (
-    <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-lg font-sans font-semibold text-foreground">Upload a document</h1>
-        <p className="text-sm text-text-secondary font-sans mt-1">
-          The file is rendered server-side and served through the secure tile viewer. Every page
-          carries the viewer's identity in a burned-in watermark, so a leak can be traced.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Upload a document"
+        description="The file is rendered server-side and served through the secure tile viewer. Every page carries the viewer's identity in a burned-in watermark."
+      />
 
-      <form onSubmit={submit} className="bg-surface border border-border rounded-lg p-6 card-glow">
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            pick(e.dataTransfer.files?.[0] ?? null);
-          }}
-          onClick={() => inputRef.current?.click()}
-          className={`border border-dashed rounded-md px-6 py-10 text-center cursor-pointer transition-colors ${
-            dragging ? 'border-accent bg-accent/5' : 'border-border hover:border-text-tertiary'
-          }`}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept={ACCEPTED}
-            className="hidden"
-            onChange={(e) => pick(e.target.files?.[0] ?? null)}
-          />
-          <p className="text-sm font-sans text-foreground">
-            {file ? file.name : 'Drop a file here, or click to choose'}
-          </p>
-          <p className="text-xs text-text-tertiary font-sans mt-1">
-            {file
-              ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-              : 'PDF, images, Office documents and CSV'}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
-          <div className="sm:col-span-3">
-            <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">
-              Display name
-            </label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Optional label shown in your links list"
-              className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary"
-            />
-          </div>
-          <div>
-            <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">
-              Expires in
-            </label>
-            <input
-              value={expiresIn}
-              onChange={(e) => setExpiresIn(e.target.value)}
-              placeholder="e.g. 7d"
-              className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-[13px] text-text-secondary mb-2 font-sans font-medium">
-              Max views
-            </label>
-            <input
-              value={maxViews}
-              onChange={(e) => setMaxViews(e.target.value.replace(/\D/g, ''))}
-              placeholder="Leave empty for unlimited"
-              className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground font-sans outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors placeholder:text-text-tertiary"
-            />
-          </div>
-        </div>
-
-        {uploading && (
-          <div className="mt-5">
-            <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-accent transition-[width] duration-200"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-xs text-text-tertiary font-sans mt-2">
-              Uploading… {progress}%
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2 mt-5">
-            <p className="text-sm text-destructive font-sans">{error}</p>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={uploading || !file}
-          className="mt-5 w-full bg-accent text-background font-sans font-medium text-sm py-2.5 rounded-md hover:bg-accent-hover hover:-translate-y-px hover:shadow-glow active:translate-y-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          {uploading ? 'Uploading…' : 'Upload and create link'}
-        </button>
-      </form>
-
-      {created && (
-        <div className="bg-surface border border-border rounded-lg p-6 mt-5">
-          <p className="text-sm font-sans font-medium text-foreground">Link created</p>
-          <p className="text-xs text-text-tertiary font-sans mt-1">
-            Status: {created.status}
-            {created.status === 'processing' ? ' — pages are being rendered' : ''}
-          </p>
-          <div className="flex items-center gap-2 mt-3">
-            <input
-              readOnly
-              value={created.secure_url}
-              className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-xs font-mono text-text-secondary outline-none"
-            />
-            <button
-              type="button"
-              onClick={copy}
-              className="text-xs font-sans px-3 py-2 rounded-md border border-border hover:bg-hover transition-colors"
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <form onSubmit={submit} className="flex flex-col gap-5">
+          <Panel className="p-5">
+            {/* Drop zone */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                pick(e.dataTransfer.files?.[0] ?? null);
+              }}
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Choose a file to upload"
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-control border border-dashed px-6 py-10 text-center transition-colors duration-150 ease-expo focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                dragging
+                  ? 'border-accent bg-accent/5'
+                  : 'border-border hover:border-border-strong hover:bg-hover/40'
+              }`}
             >
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-          <Link
-            to={`/dashboard/links/${created.id}`}
-            className="inline-block mt-3 text-sm text-accent font-sans hover:underline"
-          >
-            Open link details →
-          </Link>
-        </div>
-      )}
+              <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPTED}
+                className="hidden"
+                onChange={(e) => pick(e.target.files?.[0] ?? null)}
+              />
+              <span
+                className={`mb-3 flex h-11 w-11 items-center justify-center rounded-control border ${
+                  dragging ? 'border-accent-line bg-accent-muted text-accent' : 'border-border bg-elevated text-text-tertiary'
+                }`}
+              >
+                {file ? <FileIcon size={18} /> : <UploadIcon size={18} />}
+              </span>
+              <p className="text-sm font-medium text-foreground">
+                {file ? file.name : 'Drop a file here, or click to choose'}
+              </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {file
+                  ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
+                  : 'PDF, images, Office documents and CSV'}
+              </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field
+                label="Display name"
+                htmlFor="display-name"
+                hint="Shown in your links list."
+                className="sm:col-span-3"
+              >
+                <Input
+                  id="display-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Optional label"
+                />
+              </Field>
+              <Field label="Expires in" htmlFor="expires-in" hint="For example 7d.">
+                <Input
+                  id="expires-in"
+                  value={expiresIn}
+                  onChange={(e) => setExpiresIn(e.target.value)}
+                  placeholder="7d"
+                />
+              </Field>
+              <Field
+                label="Max views"
+                htmlFor="max-views"
+                hint="Empty means unlimited."
+                className="sm:col-span-2"
+              >
+                <Input
+                  id="max-views"
+                  inputMode="numeric"
+                  value={maxViews}
+                  onChange={(e) => setMaxViews(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Unlimited"
+                />
+              </Field>
+            </div>
+
+            {uploading && (
+              <div className="mt-5">
+                <div
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-border"
+                  role="progressbar"
+                  aria-valuenow={progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="h-full rounded-full bg-accent transition-[width] duration-200 ease-expo"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="mt-2 font-mono text-xs tabular-nums text-text-tertiary">
+                  Uploading {progress}%
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-5">
+                <InlineError>{error}</InlineError>
+              </div>
+            )}
+
+            <div className="mt-5">
+              <Button
+                type="submit"
+                variant="primary"
+                loading={uploading}
+                disabled={!file}
+                className="w-full"
+              >
+                {uploading ? 'Uploading' : 'Upload and create link'}
+              </Button>
+            </div>
+          </Panel>
+
+          {created && (
+            <Panel className="p-5">
+              <PanelHeader
+                title="Link created"
+                description={
+                  created.status === 'processing'
+                    ? 'Pages are still being rendered. The link works as soon as rendering finishes.'
+                    : 'The link is ready to share.'
+                }
+                actions={<StatusBadge status={created.status} />}
+              />
+              <CopyField value={created.secure_url} className="mt-4" />
+              <Link
+                to={`/links/${created.id}`}
+                className="mt-4 inline-flex items-center gap-1.5 text-sm text-accent transition-colors duration-150 ease-expo hover:text-accent-hover"
+              >
+                Open link details
+                <ExternalLinkIcon size={14} />
+              </Link>
+            </Panel>
+          )}
+        </form>
+
+        {/* Reference column. Facts only, no filler. */}
+        <aside className="lg:sticky lg:top-8 lg:self-start">
+          <Panel className="p-5">
+            <PanelHeader
+              title={
+                <span className="flex items-center gap-2">
+                  <ShieldIcon size={14} />
+                  What protects this file
+                </span>
+              }
+            />
+            <ul className="mt-4 space-y-4">
+              {PROTECTIONS.map((item) => (
+                <li key={item.title}>
+                  <p className="text-[13px] font-medium text-foreground">{item.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-text-tertiary">{item.body}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 border-t border-border-subtle pt-4 text-xs leading-relaxed text-text-tertiary">
+              Tile transport is encrypted, but the watermark and the rate limits are what actually
+              deter a leak. Treat any shared document as copyable by the person viewing it.
+            </p>
+          </Panel>
+        </aside>
+      </div>
     </div>
   );
 }

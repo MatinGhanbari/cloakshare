@@ -1,7 +1,7 @@
-import { CloakShareClient } from '../client.js';
+import { ScriniumClient } from '../client.js';
 
 export class ViewersResource {
-  constructor(private client: CloakShareClient) {}
+  constructor(private client: ScriniumClient) {}
 
   /** Delete all viewer data for a specific email (GDPR compliance) */
   async delete(email: string): Promise<{ deleted_views: number; deleted_sessions: number }> {

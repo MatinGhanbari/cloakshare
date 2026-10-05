@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 ---
 
-<Base title="Open Source Document Sharing Platforms Compared (2026)" description="Honest comparison of open-source DocSend alternatives: CloakShare, Papermark, and Nextcloud. Licenses, features, and when to choose each one.">
+<Base title="Open Source Document Sharing Platforms Compared (2026)" description="Honest comparison of open-source DocSend alternatives: Scrinium, Papermark, and Nextcloud. Licenses, features, and when to choose each one.">
   <article class="pt-32 pb-20 px-6">
     <div class="max-w-3xl mx-auto">
       <p class="text-xs text-text-tertiary font-mono mb-4">March 6, 2026</p>
@@ -18,20 +18,20 @@ import Base from '../../layouts/Base.astro';
           license implications that matter if you're building a commercial product.
         </p>
 
-        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">CloakShare</h2>
+        <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Scrinium</h2>
         <p>
           <strong class="text-foreground">License:</strong> MIT<br />
           <strong class="text-foreground">Approach:</strong> API-first<br />
           <strong class="text-foreground">Stack:</strong> TypeScript, Hono, SQLite/Turso, S3-compatible storage
         </p>
         <p>
-          CloakShare is a REST API for secure document and video sharing. Upload a file, get a
+          Scrinium is a REST API for secure document and video sharing. Upload a file, get a
           tokenized link with email gating, dynamic watermarks, expiry, and per-page analytics.
           Documents are rendered as canvas images (no download). Videos stream via HLS with
           watermark overlays and watch-time tracking.
         </p>
         <p>
-          The API-first design means CloakShare is built for integration. There's no drag-and-drop
+          The API-first design means Scrinium is built for integration. There's no drag-and-drop
           upload page — you create links via API calls and embed the viewer in your own product.
           A dashboard provides analytics visualization, but the primary interface is the API.
         </p>
@@ -103,7 +103,7 @@ import Base from '../../layouts/Base.astro';
           This matters more than most people think, especially if you're building a commercial product.
         </p>
         <p>
-          <strong class="text-foreground">MIT (CloakShare)</strong> — Do whatever you want. Use it in proprietary products,
+          <strong class="text-foreground">MIT (Scrinium)</strong> — Do whatever you want. Use it in proprietary products,
           modify it without releasing changes, embed it in your SaaS, sell it. The only requirement
           is including the copyright notice. This is the most permissive open-source license.
         </p>
@@ -127,7 +127,7 @@ import Base from '../../layouts/Base.astro';
             <thead>
               <tr class="bg-surface border-b border-border">
                 <th class="text-left font-mono font-medium text-foreground p-3">Feature</th>
-                <th class="text-left font-mono font-medium text-foreground p-3">CloakShare</th>
+                <th class="text-left font-mono font-medium text-foreground p-3">Scrinium</th>
                 <th class="text-left font-mono font-medium text-foreground p-3">Papermark</th>
                 <th class="text-left font-mono font-medium text-foreground p-3">Nextcloud</th>
               </tr>
@@ -206,7 +206,7 @@ import Base from '../../layouts/Base.astro';
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">When to choose each one</h2>
 
         <p>
-          <strong class="text-foreground">Choose CloakShare if:</strong> You're a developer building document or video sharing
+          <strong class="text-foreground">Choose Scrinium if:</strong> You're a developer building document or video sharing
           into your own product. You need an API, not a GUI. You want MIT licensing for commercial
           flexibility. You prefer lightweight infrastructure (SQLite, single container).
         </p>

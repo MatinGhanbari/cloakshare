@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 ---
 
-<Base title="How to Self-Host a Secure Document Sharing Platform with Docker" description="Step-by-step guide to self-hosting Cloak, the open-source DocSend alternative, with Docker Compose. Secure document and video sharing on your own server." type="article" publishedAt="2026-02-28" canonical="/blog/self-host-document-sharing">
+<Base title="How to Self-Host a Secure Document Sharing Platform with Docker" description="Step-by-step guide to self-hosting Scrinium, the open-source DocSend alternative, with Docker Compose. Secure document and video sharing on your own server." type="article" publishedAt="2026-02-28" canonical="/blog/self-host-document-sharing">
   <article class="pt-32 pb-20 px-6">
     <div class="max-w-3xl mx-auto">
       <p class="text-xs text-text-tertiary font-mono mb-4">February 28, 2026</p>
@@ -13,7 +13,7 @@ import Base from '../../layouts/Base.astro';
       <div class="prose-cloak space-y-6 text-text-secondary font-sans leading-relaxed">
         <p>
           If you need secure document sharing but don't want your files sitting on someone else's
-          servers, self-hosting is the answer. Cloak is an open-source, MIT-licensed platform that
+          servers, self-hosting is the answer. Scrinium is an open-source, MIT-licensed platform that
           gives you tokenized links with watermarks, analytics, and access controls — all running
           on your own infrastructure. This guide walks you through setting it up with Docker Compose
           in under ten minutes.
@@ -22,7 +22,7 @@ import Base from '../../layouts/Base.astro';
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Prerequisites</h2>
         <p>
           You need a machine (local or cloud) with Docker and Docker Compose installed. That's it.
-          Cloak's Docker image bundles everything — the API server, the document viewer, the
+          Scrinium's Docker image bundles everything — the API server, the document viewer, the
           processing pipeline, and ffmpeg for video transcoding. No external dependencies.
         </p>
         <ul class="list-none space-y-2 my-4">
@@ -34,7 +34,7 @@ import Base from '../../layouts/Base.astro';
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Step 1: Clone the repository</h2>
         <p>
-          Pull down the Cloak source code and navigate to the project root.
+          Pull down the Scrinium source code and navigate to the project root.
         </p>
         <div class="bg-surface border border-border rounded-lg p-5 my-8">
           <pre class="text-sm font-mono text-text-secondary overflow-x-auto"><span class="text-text-tertiary">$</span> git clone https://github.com/cloakshare/cloakshare.git
@@ -109,7 +109,7 @@ BASE_URL=https://your-domain.com</pre>
 
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Video support</h2>
         <p>
-          Cloak also supports video files. When you upload an MP4, WebM, or MOV, the server
+          Scrinium also supports video files. When you upload an MP4, WebM, or MOV, the server
           transcodes it to HLS using ffmpeg, which is already included in the Docker image. No
           additional setup is needed. The same security features — watermarks, email gate, expiry,
           and analytics — apply to video links.
@@ -118,7 +118,7 @@ BASE_URL=https://your-domain.com</pre>
         <h2 class="font-mono font-medium text-xl text-foreground mt-10 mb-4">Production considerations</h2>
         <p>
           For production deployments, put a reverse proxy (Nginx, Caddy, or Traefik) in front of
-          Cloak to handle TLS termination. Point your domain's DNS to the server, set the
+          Scrinium to handle TLS termination. Point your domain's DNS to the server, set the
           <code class="text-accent font-mono text-sm">BASE_URL</code> in your
           <code class="text-accent font-mono text-sm">.env</code>, and your secure links will use
           your custom domain automatically.
