@@ -129,9 +129,13 @@
           <span id="doc-name" class="doc-name"></span>
         </div>
         <div class="viewer-header-center">
-          <button id="prev-btn" class="nav-btn" disabled>&larr;</button>
+          <button id="prev-btn" class="nav-btn" disabled aria-label="Previous page" title="Previous page">
+            <span class="nav-btn-icon" aria-hidden="true">&larr;</span>
+          </button>
           <span id="page-indicator" class="page-indicator">1 / 1</span>
-          <button id="next-btn" class="nav-btn">&rarr;</button>
+          <button id="next-btn" class="nav-btn" aria-label="Next page" title="Next page">
+            <span class="nav-btn-icon" aria-hidden="true">&rarr;</span>
+          </button>
           <span class="nav-divider"></span>
           <button id="zoom-out-btn" class="nav-btn" title="Zoom out (&minus;)" aria-label="Zoom out">&minus;</button>
           <span id="zoom-indicator" class="page-indicator">100%</span>

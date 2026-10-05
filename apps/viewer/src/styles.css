@@ -421,6 +421,7 @@ html, body {
 }
 
 .nav-btn {
+  position: relative; /* anchors the page-turn spinner in the loading state below */
   width: 32px;
   height: 32px;
   border: 1px solid var(--border-default);
@@ -438,6 +439,36 @@ html, body {
 .nav-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: var(--text-tertiary);
+}
+
+/*
+ * Page-turn loading state. While a page is in flight both arrows are disabled so clicks cannot
+ * stack up behind one another, and the button that was pressed swaps its arrow for a spinner.
+ * The spinner keeps full opacity: `:disabled` fades a button to 0.25, which would make the only
+ * feedback on screen nearly invisible.
+ */
+#prev-btn.is-loading,
+#next-btn.is-loading {
+  opacity: 1;
+  cursor: progress;
+  border-color: var(--text-tertiary);
+}
+
+#prev-btn.is-loading .nav-btn-icon,
+#next-btn.is-loading .nav-btn-icon {
+  visibility: hidden;
+}
+
+#prev-btn.is-loading::after,
+#next-btn.is-loading::after {
+  content: '';
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: cloak-spin 700ms linear infinite;
 }
 
 /* Zoom controls sit in the same group as the page navigation. */
@@ -494,7 +525,9 @@ html, body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-loading-spinner {
+  .page-loading-spinner,
+  #prev-btn.is-loading::after,
+  #next-btn.is-loading::after {
     animation-duration: 2s;
   }
 }

@@ -152,6 +152,17 @@ const pageGeometryCache = new Map<number, PageGeometry>();
  * it, so a burst of clicks can never queue up several page changes.
  */
 const readyPages = new Set<number>();
+/**
+ * True while the page on screen is still being fetched. Both page buttons are disabled for the
+ * duration, so a burst of clicks cannot queue several page changes behind one another, and the
+ * button that started the change carries a spinner so the lock reads as "working", not "broken".
+ */
+let navigating = false;
+/** Which button started the current page change — that is the one that gets the spinner. */
+let navDirection: 'prev' | 'next' | null = null;
+/** Releases the lock if a page never completes, so a failed fetch cannot trap the viewer. */
+let navWatchdog: ReturnType<typeof setTimeout> | null = null;
+const NAV_WATCHDOG_MS = 12_000;
 let currentScale = 1;
 const tileBitmaps = new Map<string, ImageBitmap>(); // `${page}:${col}-${row}` -> bitmap
 const tileHeaders = new Map<string, TileHeader>(); // `${page}:${col}-${row}` -> placement
@@ -464,9 +475,8 @@ function renderPage(pageNum: number) {
 
   // Update navigation
   $pageIndicator.textContent = `${pageNum} / ${totalPages}`;
-  $prevBtn.disabled = pageNum <= 1;
-  $nextBtn.disabled = pageNum >= totalPages;
-  updatePageLoading();
+  updateNavButtons();
+  updatePageLoading(pageNum);
 }
 
 /** Paint every tile we currently hold for `page` at its scaled position. */
@@ -635,9 +645,55 @@ async function fetchPageOnDemand(pageNum: number) {
 // PAGE NAVIGATION
 // ============================================
 
+function clearNavWatchdog() {
+  if (navWatchdog) {
+    clearTimeout(navWatchdog);
+    navWatchdog = null;
+  }
+}
+
+/**
+ * Reflect the navigation lock in the header: while a page is in flight both arrows are disabled
+ * (so clicks cannot stack up) and the one that was pressed shows a spinner.
+ */
+function updateNavButtons() {
+  $prevBtn.disabled = navigating || currentPage <= 1;
+  $nextBtn.disabled = navigating || currentPage >= totalPages;
+  $prevBtn.classList.toggle('is-loading', navigating && navDirection === 'prev');
+  $nextBtn.classList.toggle('is-loading', navigating && navDirection === 'next');
+}
+
+/**
+ * Hold (or release) the page controls while a page change is in flight. The watchdog is the
+ * safety valve: a page that never completes — rate limited, or tiles that cannot be decoded —
+ * must not leave the viewer permanently unable to turn the page.
+ */
+function setNavigating(on: boolean, direction: 'prev' | 'next' | null = null) {
+  navigating = on;
+  navDirection = on ? direction : null;
+  clearNavWatchdog();
+
+  if (on) {
+    navWatchdog = setTimeout(() => {
+      navWatchdog = null;
+      if (!navigating) return;
+      navigating = false;
+      navDirection = null;
+      updateNavButtons();
+    }, NAV_WATCHDOG_MS);
+  }
+
+  updateNavButtons();
+}
+
 function goToPage(page: number) {
   if (page < 1 || page > totalPages) return;
   if (page === currentPage) return;
+  // A page change is already in flight. Ignoring the click here (as well as disabling the
+  // buttons) keeps the keyboard arrows from queueing several page changes at once.
+  if (navigating) return;
+
+  const direction: 'prev' | 'next' = page > currentPage ? 'next' : 'prev';
 
   // Track time on previous page
   const now = Date.now();
@@ -656,9 +712,16 @@ function goToPage(page: number) {
   // Geometry is kept per page, so a preloaded page paints immediately instead of being
   // re-requested — and a page we have no geometry for is requested from scratch.
   pageGeo = pageGeometryCache.get(page) ?? null;
+  $viewerBody.scrollTop = 0;
+
+  if (readyPages.has(page)) {
+    // Already in memory: nothing to wait for, so flip without flashing a spinner.
+    setNavigating(false);
+  } else {
+    setNavigating(true, direction);
+  }
 
   renderPage(currentPage);
-  $viewerBody.scrollTop = 0;
   // When the target page was already in memory no viewport request went out, so nothing else
   // would warm the page after it. A duplicate preload is harmless: requestPageTiles() de-dupes it.
   preloadAdjacentPages(page);
@@ -1048,8 +1111,11 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
     // the "give up after N" guard never fired and the client hammered the server.
     rateLimitRetries = 0;
     readyPages.add(page);
-    // The whole page is in hand — reveal it in one go.
-    if (page === currentPage) updatePageLoading(page);
+    // The whole page is in hand — reveal it in one go and release the page controls.
+    if (page === currentPage) {
+      setNavigating(false);
+      updatePageLoading(page);
+    }
   };
 
   tileStream.onError = (code, message) => {
@@ -1060,6 +1126,7 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
       tileDecodeFailures += 1;
       if (tileDecodeFailures > 8) {
         console.warn('[tiles] too many undecodable tiles; not requesting further pages');
+        setNavigating(false); // release the controls — this page is not going to arrive
         return;
       }
       lastRequestKey = '';
@@ -1073,11 +1140,17 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
       rateLimitRetries += 1;
       if (rateLimitRetries > 12) {
         console.warn('[tiles] still rate limited; giving up on this page');
+        setNavigating(false);
         return;
       }
       lastRequestKey = ''; // allow the retry through the de-duplication guard
       setTimeout(() => requestPageTiles(currentPage), 10_000);
+      return;
     }
+
+    // Anything else (bad request, crypto failure, dropped socket) is terminal for this page:
+    // unlock the controls so the viewer is not stuck staring at a spinner.
+    setNavigating(false);
   };
 
   // The session key is only established after the handshake completes, so page content is
@@ -1087,6 +1160,10 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   };
 
   tileStream.connect(linkToken, sess.session_token);
+
+  // Nothing is on screen yet, so hold the page controls until the first page lands. Without
+  // this, a click on Next during the initial load would race the page-1 request.
+  setNavigating(true);
 
   setupNavigation();
   setupProtections();
