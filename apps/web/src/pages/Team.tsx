@@ -17,6 +17,7 @@ import {
   Th,
   Tr,
 } from '../components/ui';
+import { MorphGlyph, glyph, useActionStatus } from '../components/morph';
 
 interface Member {
   id: string;
@@ -41,6 +42,37 @@ const roleTone = (role: string): 'accent' | 'warning' | 'neutral' => {
   return 'neutral';
 };
 
+/** Row-scoped so each removal animates on its own. */
+function RowActionButton({
+  icon,
+  label,
+  busyLabel,
+  doneLabel,
+  onRun,
+}: {
+  icon: typeof glyph.trash;
+  label: string;
+  busyLabel: string;
+  doneLabel: string;
+  onRun: () => Promise<boolean>;
+}) {
+  const { status, run } = useActionStatus();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      status={status}
+      icon={icon}
+      busyLabel={busyLabel}
+      doneLabel={doneLabel}
+      className="text-destructive hover:bg-destructive/10"
+      onClick={() => void run(onRun)}
+    >
+      {label}
+    </Button>
+  );
+}
+
 export default function Team() {
   const { user, activeOrg } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
@@ -51,7 +83,9 @@ export default function Team() {
   // Invite form
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
-  const [inviting, setInviting] = useState(false);
+  const inviteAction = useActionStatus();
+  /** Which member's role select is mid-flight, so it can be disabled. */
+  const [roleBusyId, setRoleBusyId] = useState<string | null>(null);
 
   const myRole = activeOrg?.role || 'viewer';
   const canInvite = ['admin', 'owner'].includes(myRole);
@@ -77,45 +111,53 @@ export default function Team() {
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     if (!inviteEmail) return;
-    setInviting(true);
     setError('');
-    try {
-      await teamsApi.invite(inviteEmail, inviteRole);
-      setInviteEmail('');
-      setInviteRole('member');
-      await loadMembers();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Operation failed');
-    } finally {
-      setInviting(false);
-    }
+    await inviteAction.run(async () => {
+      try {
+        await teamsApi.invite(inviteEmail, inviteRole);
+        setInviteEmail('');
+        setInviteRole('member');
+        await loadMembers();
+        return true;
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Operation failed');
+        return false;
+      }
+    });
   }
 
-  async function handleRevokeInvite(id: string) {
+  async function handleRevokeInvite(id: string): Promise<boolean> {
     try {
       await teamsApi.revokeInvite(id);
       await loadMembers();
+      return true;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Operation failed');
+      return false;
     }
   }
 
   async function handleChangeRole(memberId: string, newRole: string) {
+    setRoleBusyId(memberId);
     try {
       await teamsApi.changeRole(memberId, newRole);
       await loadMembers();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Operation failed');
+    } finally {
+      setRoleBusyId(null);
     }
   }
 
-  async function handleRemove(memberId: string) {
-    if (!confirm('Remove this member from the organization?')) return;
+  async function handleRemove(memberId: string): Promise<boolean> {
+    if (!confirm('Remove this member from the organization?')) return false;
     try {
       await teamsApi.removeMember(memberId);
       await loadMembers();
+      return true;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Operation failed');
+      return false;
     }
   }
 
@@ -179,7 +221,15 @@ export default function Team() {
                 {myRole === 'owner' && <option value="admin">Admin</option>}
               </Select>
             </Field>
-            <Button type="submit" variant="primary" loading={inviting} className="sm:mb-0">
+            <Button
+              type="submit"
+              variant="primary"
+              status={inviteAction.status}
+              icon={glyph.send}
+              busyLabel="Inviting"
+              doneLabel="Invited"
+              className="sm:mb-0"
+            >
               Invite
             </Button>
           </form>
@@ -228,16 +278,26 @@ export default function Team() {
                   </Td>
                   <Td label="Role">
                     {canManage && !isMe ? (
-                      <Select
-                        aria-label={`Role for ${m.email}`}
-                        value={m.role}
-                        onChange={(e) => handleChangeRole(m.id, e.target.value)}
-                        className="h-9 w-28 py-0 text-xs lg:w-32"
-                      >
-                        <option value="viewer">viewer</option>
-                        <option value="member">member</option>
-                        {myRole === 'owner' && <option value="admin">admin</option>}
-                      </Select>
+                      <span className="flex items-center gap-2">
+                        <Select
+                          aria-label={`Role for ${m.email}`}
+                          value={m.role}
+                          onChange={(e) => handleChangeRole(m.id, e.target.value)}
+                          disabled={roleBusyId === m.id}
+                          className="h-9 w-28 py-0 text-xs lg:w-32"
+                        >
+                          <option value="viewer">viewer</option>
+                          <option value="member">member</option>
+                          {myRole === 'owner' && <option value="admin">admin</option>}
+                        </Select>
+                        {roleBusyId === m.id && (
+                          <MorphGlyph
+                            icon={glyph.busy}
+                            size={13}
+                            className="animate-spin text-text-tertiary"
+                          />
+                        )}
+                      </span>
                     ) : (
                       <Chip tone={roleTone(m.role)}>{m.role}</Chip>
                     )}
@@ -250,14 +310,13 @@ export default function Team() {
                   {canManage && (
                     <Td align="right">
                       {!isMe && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemove(m.id)}
-                          className="text-destructive hover:bg-destructive/10"
-                        >
-                          Remove
-                        </Button>
+                        <RowActionButton
+                          icon={glyph.trash}
+                          label="Remove"
+                          busyLabel="Removing"
+                          doneLabel="Removed"
+                          onRun={() => handleRemove(m.id)}
+                        />
                       )}
                     </Td>
                   )}
@@ -303,14 +362,13 @@ export default function Team() {
                   </Td>
                   {canInvite && (
                     <Td align="right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRevokeInvite(inv.id)}
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        Revoke
-                      </Button>
+                      <RowActionButton
+                        icon={glyph.block}
+                        label="Revoke"
+                        busyLabel="Revoking"
+                        doneLabel="Revoked"
+                        onRun={() => handleRevokeInvite(inv.id)}
+                      />
                     </Td>
                   )}
                 </Tr>

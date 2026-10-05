@@ -12,6 +12,7 @@ import {
   cx,
 } from '../components/ui';
 import { CheckIcon } from '../components/icons';
+import { glyph } from '../components/morph';
 
 const plans = [
   {
@@ -147,7 +148,9 @@ export default function Billing() {
               <Button
                 variant="secondary"
                 size="sm"
-                loading={loading === 'manage'}
+                icon={glyph.external}
+                status={loading === 'manage' ? 'busy' : 'idle'}
+                busyLabel="Opening"
                 onClick={() => void handleManage()}
               >
                 Billing portal
@@ -202,7 +205,9 @@ export default function Billing() {
                     variant="primary"
                     size="sm"
                     className="w-full"
-                    loading={loading === plan.id}
+                    icon={glyph.upgrade}
+                    status={loading === plan.id ? 'busy' : 'idle'}
+                    busyLabel="Redirecting"
                     onClick={() => void handleUpgrade(plan.id as 'starter' | 'growth' | 'scale')}
                   >
                     Upgrade
@@ -213,7 +218,9 @@ export default function Billing() {
                     variant="secondary"
                     size="sm"
                     className="w-full"
-                    loading={loading === 'manage'}
+                    icon={glyph.external}
+                    status={loading === 'manage' ? 'busy' : 'idle'}
+                    busyLabel="Opening"
                     onClick={() => void handleManage()}
                   >
                     Manage

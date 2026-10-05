@@ -7,7 +7,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
-import { CheckIcon, CopyIcon, Spinner } from './icons';
+import { MorphGlyph, glyph, type ActionStatus, type IconInput } from './morph';
 
 /** Tiny class joiner. Avoids pulling in a dependency for three lines of logic. */
 export function cx(...parts: Array<string | false | null | undefined>): string {
@@ -20,7 +20,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md';
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  // Accent pairs with --accent-foreground: #09090b on #00FF88 (dark) and #fff on #00803F (light).
+  // Accent pairs with --accent-foreground: #061A14 on #34D399 (dark) and #fff on #0E7A58 (light).
   // Both clear WCAG AA as button text.
   primary: 'bg-accent text-accent-foreground hover:bg-accent-hover shadow-raised',
   secondary:
@@ -38,12 +38,25 @@ const BUTTON_SIZES: Record<ButtonSize, string> = {
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** Shorthand for `status="busy"`. Kept because most call sites only need two states. */
   loading?: boolean;
+  /** Explicit lifecycle. Wins over `loading`. Drives the morphing icon and the label. */
+  status?: ActionStatus;
+  /** Idle icon (Lucide data, from `./morph`). Morphs to the busy then the done icon. */
+  icon?: IconInput;
+  busyIcon?: IconInput;
+  doneIcon?: IconInput;
+  /** Label shown while busy / after success. Falls back to `children`. */
+  busyLabel?: ReactNode;
+  doneLabel?: ReactNode;
 }
 
 /**
  * Shared button surface. Exported so an anchor (react-router <Link>) can be styled as a
  * button without nesting an <a> inside a <button>, which is invalid HTML.
+ *
+ * The press feedback fires on pointer-down via `:active` (scale), not on click, so the
+ * control feels attached to the finger rather than dead until release.
  */
 export function buttonStyles(
   variant: ButtonVariant = 'secondary',
@@ -53,30 +66,95 @@ export function buttonStyles(
   return cx(
     'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-control font-medium',
     'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-expo',
-    'active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0',
+    'active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100',
     BUTTON_SIZES[size],
     BUTTON_VARIANTS[variant],
     className,
   );
 }
 
+/** Labels are strings in practice; this keys the reservation grid by their text. */
+function labelKey(label: ReactNode): string {
+  return typeof label === 'string' || typeof label === 'number' ? String(label) : '';
+}
+
 export function Button({
   variant = 'secondary',
   size = 'md',
   loading = false,
+  status,
+  icon,
+  busyIcon = glyph.busy,
+  doneIcon = glyph.done,
+  busyLabel,
+  doneLabel,
   disabled,
   className,
   children,
   ...rest
 }: ButtonProps) {
+  const effective: ActionStatus = status ?? (loading ? 'busy' : 'idle');
+  const busy = effective === 'busy';
+
+  /*
+   * Layout stability. Two things would otherwise resize the button mid-press and yank it
+   * out from under the pointer:
+   *   1. the label changes ("Disable" -> "Saving" -> "Saved")
+   *   2. the icon slot appears only in some states
+   * So: every label the button can show is stacked in one grid cell (widest wins, the
+   * others hidden with `visibility` so they leave the accessibility tree), and the icon
+   * box is reserved whenever the button can enter a process state.
+   */
+  const participates = icon !== undefined || status !== undefined || loading;
+  const shownIcon = busy ? busyIcon : effective === 'done' ? doneIcon : icon;
+  const activeLabel =
+    busy && busyLabel ? busyLabel : effective === 'done' && doneLabel ? doneLabel : children;
+
+  const iconPx = size === 'sm' ? 13 : 14;
+  const iconBox = size === 'sm' ? 'h-[13px] w-[13px]' : 'h-[14px] w-[14px]';
+
+  const seen = new Set<string>();
+  const reservedLabels: ReactNode[] = [];
+  for (const candidate of [children, busyLabel, doneLabel]) {
+    if (candidate === undefined || candidate === null) continue;
+    const key = labelKey(candidate);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    reservedLabels.push(candidate);
+  }
+  const activeKey = labelKey(activeLabel);
+
   return (
     <button
-      disabled={disabled || loading}
+      disabled={disabled || busy}
+      aria-busy={busy || undefined}
       className={buttonStyles(variant, size, className)}
       {...rest}
     >
-      {loading && <Spinner size={14} />}
-      {children}
+      {shownIcon ? (
+        <MorphGlyph
+          icon={shownIcon}
+          size={iconPx}
+          className={cx('shrink-0', busy && 'animate-spin')}
+        />
+      ) : participates ? (
+        <span className={cx('shrink-0', iconBox)} aria-hidden="true" />
+      ) : null}
+
+      {reservedLabels.length > 1 ? (
+        <span className="inline-grid">
+          {reservedLabels.map((label, i) => (
+            <span
+              key={i}
+              className={cx('col-start-1 row-start-1', labelKey(label) !== activeKey && 'invisible')}
+            >
+              {label}
+            </span>
+          ))}
+        </span>
+      ) : (
+        activeLabel
+      )}
     </button>
   );
 }
@@ -163,7 +241,7 @@ export function PageHeader({
   back?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <header className="mb-6 flex flex-row gap-4 sm:items-start justify-between">
       <div className="min-w-0">
         {back}
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -622,18 +700,9 @@ export function CopyField({ value, className }: { value: string; className?: str
         size="sm"
         onClick={() => void copy()}
         aria-live="polite"
+        icon={copied ? glyph.done : glyph.copy}
       >
-        {copied ? (
-          <>
-            <CheckIcon size={14} />
-            Copied
-          </>
-        ) : (
-          <>
-            <CopyIcon size={14} />
-            Copy
-          </>
-        )}
+        {copied ? 'Copied' : 'Copy'}
       </Button>
     </div>
   );

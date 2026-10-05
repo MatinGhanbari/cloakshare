@@ -60,7 +60,7 @@ function NavItem({
       onClick={onNavigate}
       className={({ isActive }) =>
         cx(
-          'relative flex items-center gap-2.5 rounded-control px-3 py-2 text-sm font-medium',
+          'group relative flex items-center gap-2.5 rounded-control px-3 py-2 text-sm font-medium',
           'transition-colors duration-150 ease-expo',
           isActive
             ? 'bg-accent-muted text-foreground'
@@ -76,7 +76,15 @@ function NavItem({
               className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent"
             />
           )}
-          <span className={isActive ? 'text-accent' : 'text-current'}>{icon}</span>
+          {/* A 2px nudge toward the label on hover: acknowledges the pointer without moving the row. */}
+          <span
+            className={cx(
+              'transition-transform duration-200 ease-expo group-hover:translate-x-0.5',
+              isActive ? 'text-accent' : 'text-current',
+            )}
+          >
+            {icon}
+          </span>
           {label}
         </>
       )}
@@ -215,14 +223,16 @@ export default function DashboardLayout() {
         </IconButton>
       </div>
 
-      {/* Mobile scrim */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {/* Mobile scrim. Always mounted so it can fade out along the path it faded in. */}
+      <div
+        className={cx(
+          'fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden',
+          'transition-opacity duration-200 ease-expo',
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
 
       {/* Rail */}
       <aside

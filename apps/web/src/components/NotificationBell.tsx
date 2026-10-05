@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationsApi } from '../lib/api';
 import { BellIcon } from './icons';
+import { Button } from './ui';
+import { glyph, useActionStatus } from './morph';
 
 interface Notification {
   id: string;
@@ -50,15 +52,19 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const handleMarkAllRead = async () => {
-    setLoading(true);
-    try {
-      await notificationsApi.markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch { /* ignore */ }
-    setLoading(false);
-  };
+  const markAllAction = useActionStatus();
+
+  const handleMarkAllRead = async () =>
+    markAllAction.run(async () => {
+      try {
+        await notificationsApi.markAllRead();
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        setUnreadCount(0);
+        return true;
+      } catch {
+        return false;
+      }
+    });
 
   const handleNotificationClick = async (notif: Notification) => {
     // Mark as read
@@ -111,13 +117,18 @@ export default function NotificationBell() {
           <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
             <span className="text-xs font-medium text-foreground">Notifications</span>
             {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                disabled={loading}
-                className="text-[11px] text-accent transition-colors duration-150 hover:text-accent-hover disabled:opacity-50"
+              <Button
+                variant="ghost"
+                size="sm"
+                status={markAllAction.status}
+                icon={glyph.checkAll}
+                busyLabel="Marking"
+                doneLabel="Done"
+                onClick={() => void handleMarkAllRead()}
+                className="h-7 px-2 text-[11px] text-accent hover:text-accent-hover"
               >
                 Mark all read
-              </button>
+              </Button>
             )}
           </div>
 

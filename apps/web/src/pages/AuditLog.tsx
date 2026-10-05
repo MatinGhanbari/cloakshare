@@ -17,6 +17,7 @@ import {
   buttonStyles,
 } from '../components/ui';
 import { AuditIcon, ChevronRightIcon } from '../components/icons';
+import { glyph, useActionStatus } from '../components/morph';
 
 interface AuditEntry {
   id: string;
@@ -43,7 +44,7 @@ export default function AuditLog() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionFilter]);
 
-  async function loadEntries(loadCursor?: string) {
+  async function loadEntries(loadCursor?: string): Promise<boolean> {
     try {
       setLoading(true);
       const data = await auditApi.list({
@@ -58,12 +59,23 @@ export default function AuditLog() {
       }
       setCursor(data.pagination.next_cursor);
       setHasMore(data.pagination.has_more);
+      return true;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load audit log');
+      return false;
     } finally {
       setLoading(false);
     }
   }
+
+  const loadMoreAction = useActionStatus();
+
+  /** `Load more` pages through the cursor and morphs while the next page is in flight. */
+  const runLoadMore = () =>
+    loadMoreAction.run(async () => {
+      if (!cursor) return false;
+      return loadEntries(cursor);
+    });
 
   function formatAction(action: string): string {
     return action.replaceAll('.', ' ').replaceAll('_', ' ');
@@ -231,7 +243,14 @@ export default function AuditLog() {
 
       {hasMore && !loading && (
         <div className="mt-4 text-center">
-          <Button variant="secondary" size="sm" onClick={() => cursor && loadEntries(cursor)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            status={loadMoreAction.status}
+            icon={glyph.more}
+            busyLabel="Loading"
+            onClick={() => void runLoadMore()}
+          >
             Load more
           </Button>
         </div>

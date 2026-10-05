@@ -5,6 +5,7 @@ import { ApiError } from '../lib/api';
 import { trackSignup } from '../lib/analytics';
 import { Button, CopyField, Field, InlineError, Input, Panel, PanelHeader } from '../components/ui';
 import { CheckIcon } from '../components/icons';
+import { glyph } from '../components/morph';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -103,7 +104,14 @@ export default function Register() {
 
             {error && <InlineError>{error}</InlineError>}
 
-            <Button type="submit" variant="primary" loading={loading} className="w-full">
+            <Button
+              type="submit"
+              variant="primary"
+              icon={glyph.signup}
+              status={loading ? 'busy' : 'idle'}
+              busyLabel="Creating"
+              className="w-full"
+            >
               Create account
             </Button>
           </form>

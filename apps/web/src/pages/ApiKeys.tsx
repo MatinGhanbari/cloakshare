@@ -15,7 +15,8 @@ import {
   Th,
   Tr,
 } from '../components/ui';
-import { KeyIcon, PlusIcon } from '../components/icons';
+import { KeyIcon } from '../components/icons';
+import { glyph, useActionStatus } from '../components/morph';
 
 interface ApiKey {
   id: string;
@@ -25,13 +26,32 @@ interface ApiKey {
   created_at: string;
 }
 
+/** Row-scoped so each revocation animates on its own. */
+function RevokeKeyButton({ onRevoke }: { onRevoke: () => Promise<boolean> }) {
+  const { status, run } = useActionStatus();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      status={status}
+      icon={glyph.trash}
+      busyLabel="Revoking"
+      doneLabel="Revoked"
+      className="text-destructive hover:bg-destructive/10"
+      onClick={() => void run(onRevoke)}
+    >
+      Revoke
+    </Button>
+  );
+}
+
 export default function ApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
   const [newKey, setNewKey] = useState('');
-  const [creating, setCreating] = useState(false);
+  const createAction = useActionStatus();
 
   const load = () => {
     setLoading(true);
@@ -50,26 +70,30 @@ export default function ApiKeys() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName.trim()) return;
-    setCreating(true);
     setError('');
-    try {
-      const result = await apiKeysApi.create(newKeyName.trim());
-      setNewKey(result.key);
-      setNewKeyName('');
-      load();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create API key');
-    }
-    setCreating(false);
+    await createAction.run(async () => {
+      try {
+        const result = await apiKeysApi.create(newKeyName.trim());
+        setNewKey(result.key);
+        setNewKeyName('');
+        load();
+        return true;
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to create API key');
+        return false;
+      }
+    });
   };
 
-  const handleRevoke = async (id: string) => {
-    if (!confirm('Revoke this API key? This cannot be undone.')) return;
+  const handleRevoke = async (id: string): Promise<boolean> => {
+    if (!confirm('Revoke this API key? This cannot be undone.')) return false;
     try {
       await apiKeysApi.revoke(id);
       load();
+      return true;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to revoke API key');
+      return false;
     }
   };
 
@@ -100,10 +124,12 @@ export default function ApiKeys() {
           <Button
             type="submit"
             variant="primary"
-            loading={creating}
+            status={createAction.status}
+            icon={glyph.plus}
+            busyLabel="Creating"
+            doneLabel="Created"
             disabled={!newKeyName.trim()}
           >
-            <PlusIcon size={14} />
             Create
           </Button>
         </form>
@@ -167,14 +193,7 @@ export default function ApiKeys() {
                   </span>
                 </Td>
                 <Td align="right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRevoke(key.id)}
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    Revoke
-                  </Button>
+                  <RevokeKeyButton onRevoke={() => handleRevoke(key.id)} />
                 </Td>
               </Tr>
             ))}

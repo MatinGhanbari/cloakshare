@@ -16,6 +16,7 @@ import {
   buttonStyles,
 } from '../components/ui';
 import { ChevronLeftIcon, ChevronRightIcon, FileIcon, LockIcon, UploadIcon } from '../components/icons';
+import { glyph, useActionStatus } from '../components/morph';
 
 interface LinkItem {
   id: string;
@@ -40,28 +41,58 @@ function timeAgo(date: string): string {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
+/**
+ * Owns its own action status so each row animates independently instead of every row
+ * lighting up from one shared flag.
+ */
+function LinkStateButton({
+  link,
+  onApplied,
+  onError,
+}: {
+  link: LinkItem;
+  onApplied: (id: string, disabled: boolean) => void;
+  onError: (message: string) => void;
+}) {
+  const { status, run } = useActionStatus();
+  const next = !link.disabled;
+
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      size="sm"
+      status={status}
+      icon={link.disabled ? glyph.enable : glyph.disable}
+      busyLabel="Saving"
+      doneLabel="Saved"
+      onClick={() =>
+        void run(async () => {
+          try {
+            await linksApi.setState(link.id, next);
+            onApplied(link.id, next);
+            return true;
+          } catch (err) {
+            onError(err instanceof Error ? err.message : 'Could not change the link state');
+            return false;
+          }
+        })
+      }
+    >
+      {link.disabled ? 'Enable' : 'Disable'}
+    </Button>
+  );
+}
+
 export default function Links() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  /** Temporarily pause or resume a link without revoking it. */
-  const toggleDisabled = async (link: LinkItem) => {
-    setBusyId(link.id);
-    setError('');
-    try {
-      const next = !link.disabled;
-      await linksApi.setState(link.id, next);
-      setLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, disabled: next } : l)));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not change the link state');
-    } finally {
-      setBusyId(null);
-    }
-  };
+  /** Apply the server's answer to the row so the status cell updates immediately. */
+  const applyState = (id: string, disabled: boolean) =>
+    setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, disabled } : l)));
 
   const load = (target: number) => {
     setLoading(true);
@@ -171,7 +202,7 @@ export default function Links() {
                   <Td label="Status">
                     <StatusBadge status={link.status} />
                     {link.disabled && (
-                      <Chip tone="warning" className="mt-1.5">
+                      <Chip tone="warning" className="m-1.5">
                         Disabled
                       </Chip>
                     )}
@@ -196,15 +227,7 @@ export default function Links() {
                     </span>
                   </Td>
                   <Td align="right">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => void toggleDisabled(link)}
-                      loading={busyId === link.id}
-                    >
-                      {link.disabled ? 'Enable' : 'Disable'}
-                    </Button>
+                    <LinkStateButton link={link} onApplied={applyState} onError={setError} />
                   </Td>
                 </Tr>
               ))}

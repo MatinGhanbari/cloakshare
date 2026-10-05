@@ -13,44 +13,54 @@
 }
 
 :root {
-  /* Backgrounds — layered depth, never pure black */
-  --bg-root: #09090B;
-  --bg-surface: #111113;
-  --bg-elevated: #1A1A1D;
-  --bg-hover: #222225;
-  --bg-input: #0F0F11;
+  /* Scrinium palette: an ink-blue neutral ramp with one verdigris accent. Matches the
+     dashboard so the viewer no longer looks like a different product. */
+  --bg-root: #0a0c10;
+  --bg-surface: #101319;
+  --bg-elevated: #171b22;
+  --bg-hover: #1f242d;
+  --bg-input: #0d1015;
 
-  --bg-header: #141414c9;
+  --bg-header: #101319c9;
 
   /* Borders */
-  --border-default: #27272A;
-  --border-subtle: #1E1E21;
-  --border-hover: rgba(0, 255, 136, 0.25);
+  --border-default: #262c36;
+  --border-subtle: #1c2129;
+  --border-hover: rgba(52, 211, 153, 0.28);
 
   /* Text */
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-tertiary: #b3b3c0;
-  --text-inverse: #09090B;
+  --text-primary: #f5f7fa;
+  --text-secondary: #a8b1be;
+  --text-tertiary: #7a8391;
+  --text-inverse: #0a0c10;
 
-  /* Accent — electric green, used SPARINGLY */
-  --accent: #00FF88;
-  --accent-hover: #00DD77;
-  --accent-muted: rgba(0, 255, 136, 0.15);
+  /* Accent — verdigris, used SPARINGLY */
+  --accent: #34d399;
+  --accent-hover: #2bc08a;
+  --accent-muted: rgba(52, 211, 153, 0.14);
 
   /* Semantic */
-  --error: #FF4444;
-  --warning: #FFAA00;
+  --error: #f87171;
+  --warning: #fbbf24;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(0, 255, 136, 0.1);
+  /* Shadows are tinted toward the surface, never pure black. */
+  --shadow-sm: 0 1px 2px rgba(3, 6, 10, 0.5);
+  --shadow-md: 0 4px 12px rgba(3, 6, 10, 0.55);
+  --shadow-lg: 0 8px 32px rgba(3, 6, 10, 0.65);
+  /* Tinted elevation for hover. Replaces an outer neon glow, which read as "radioactive"
+     rather than "raised". */
+  --shadow-raised: 0 2px 6px rgba(3, 6, 10, 0.5), 0 1px 1px rgba(3, 6, 10, 0.35);
 
   /* Fonts */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
   --font-sans: 'JetBrains Mono', monospace; /* Viewer uses mono throughout for that terminal feel */
+
+  /*
+   * Header height. Single source of truth: the fixed header, the fixed `.viewer-body`
+   * below it, and the fixed `.page-loading` overlay all read this, so the two-row mobile
+   * header cannot desync them. Previously 48px was hard-coded in all three places.
+   */
+  --header-h: 48px;
 
   color-scheme: dark;
 }
@@ -60,36 +70,36 @@
  * keyed off `data-theme="light"` on <html>.
  */
 [data-theme='light'] {
-  --bg-root: #f4f4f5;
+  --bg-root: #f7f9fa;
   --bg-surface: #ffffff;
-  --bg-elevated: #fafafa;
-  --bg-hover: #eaeaec;
+  --bg-elevated: #f0f3f6;
+  --bg-hover: #e5eaef;
   --bg-input: #ffffff;
 
-  --bg-header: #e7e7e7c9;
+  --bg-header: #f0f3f6c9;
 
-  --border-default: #e4e4e7;
-  --border-subtle: #efeff1;
-  --border-hover: rgba(0, 128, 63, 0.3);
+  --border-default: #dbe2e8;
+  --border-subtle: #e9eef2;
+  --border-hover: rgba(14, 122, 88, 0.32);
 
-  --text-primary: #09090b;
-  --text-secondary: #52525b;
-  --text-tertiary: #71717a;
-  --text-inverse: #fafafa;
+  --text-primary: #0c121a;
+  --text-secondary: #4a5563;
+  --text-tertiary: #6e7987;
+  --text-inverse: #ffffff;
 
-  /* The neon accent is unreadable on white; #00803F scores 5.05:1 against white,
+  /* The verdigris accent is unreadable on white; #0E7A58 scores 5.3:1 against white,
      which passes WCAG AA both as text on the page and as a button background. */
-  --accent: #00803f;
-  --accent-hover: #006b34;
-  --accent-muted: rgba(0, 128, 63, 0.12);
+  --accent: #0e7a58;
+  --accent-hover: #0b6649;
+  --accent-muted: rgba(14, 122, 88, 0.1);
 
-  --error: #dc2626;
-  --warning: #b45309;
+  --error: #be2828;
+  --warning: #9a4709;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 20px rgba(0, 128, 63, 0.12);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 32, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 32, 0.08);
+  --shadow-lg: 0 8px 32px rgba(15, 23, 32, 0.12);
+  --shadow-raised: 0 2px 6px rgba(15, 23, 32, 0.1), 0 1px 1px rgba(15, 23, 32, 0.06);
 
   color-scheme: light;
 }
@@ -344,7 +354,7 @@ button {
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--shadow-raised);
 }
 
 .btn-primary:active {
@@ -389,7 +399,7 @@ button {
   top: 0;
   left: 0;
   right: 0;
-  height: 48px;
+  height: var(--header-h);
   background: var(--bg-header);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -509,7 +519,7 @@ button {
  */
 .page-loading {
   position: fixed;
-  top: 48px; /* below the fixed 48px header, matching .viewer-body */
+  top: var(--header-h); /* below the fixed header, matching .viewer-body */
   left: 0;
   right: 0;
   bottom: 0;
@@ -637,7 +647,7 @@ button {
 
 .viewer-body {
   position: fixed;
-  top: 48px;
+  top: var(--header-h);
   left: 0;
   right: 0;
   bottom: 0;
@@ -831,6 +841,69 @@ button {
    RESPONSIVE
    ============================================ */
 
+/*
+ * Two-row header on phones and small tablets.
+ *
+ * The tool row alone (prev / page field / next / divider / zoom out / zoom % / zoom in / Fit)
+ * is roughly 330px, so a single 48px row cannot also hold the file name and the theme
+ * button — which is why the header looked broken on a phone. Below 640px it becomes a
+ * 2x2 grid:
+ *
+ *   row 1:  file name ........................ theme toggle
+ *   row 2:  prev   1 / 36   next  |  -  100%  +  Fit
+ *
+ * Grid areas place them that way without reordering the DOM. `--header-h` grows with it, so
+ * `.viewer-body` and `.page-loading` follow automatically.
+ */
+@media (max-width: 640px) {
+  :root {
+    --header-h: 90px;
+  }
+
+  #viewer-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name theme'
+      'tools tools';
+    align-content: center;
+    align-items: center;
+    row-gap: 6px;
+    column-gap: 8px;
+    padding: 6px 10px;
+  }
+
+  #viewer-header .viewer-header-left {
+    grid-area: name;
+    flex: initial;
+    min-width: 0; /* lets the file name truncate instead of widening the grid */
+  }
+
+  #viewer-header .viewer-header-right {
+    grid-area: theme;
+    flex: initial;
+    justify-content: flex-end;
+  }
+
+  #viewer-header .viewer-header-center {
+    grid-area: tools;
+    justify-content: center;
+    justify-content: safe center; /* keeps the first control reachable once it overflows */
+    overflow-x: auto;
+    padding: 3px 0; /* room for focus rings, which an overflow container would clip */
+    scrollbar-width: none;
+  }
+
+  #viewer-header .viewer-header-center::-webkit-scrollbar {
+    display: none;
+  }
+
+  .doc-name {
+    max-width: none;
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 480px) {
   .gate-card {
     margin: 16px;
@@ -838,12 +911,11 @@ button {
     border-radius: 12px;
   }
 
-  .viewer-header {
-    padding: 0 8px;
+  #viewer-header {
+    padding: 6px 8px;
   }
 
   .doc-name {
-    max-width: 120px;
     font-size: 11px;
   }
 

@@ -13,6 +13,7 @@ import {
   StatusBadge,
 } from '../components/ui';
 import { ExternalLinkIcon, FileIcon, ShieldIcon, UploadIcon } from '../components/icons';
+import { glyph, useActionStatus } from '../components/morph';
 
 const ACCEPTED = '.pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv';
 
@@ -46,10 +47,13 @@ export default function Upload() {
   const [maxViews, setMaxViews] = useState('');
   const [dragging, setDragging] = useState(false);
 
-  const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [created, setCreated] = useState<CreatedLink | null>(null);
+
+  // The button owns the busy/done lifecycle; `progress` still drives the bar.
+  const { status, run } = useActionStatus();
+  const uploading = status === 'busy';
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,27 +71,28 @@ export default function Upload() {
       return;
     }
 
-    setUploading(true);
     setProgress(0);
     setError('');
     setCreated(null);
 
-    try {
-      const result = await linksApi.create(file, {
-        name: name.trim() || undefined,
-        expiresIn: expiresIn || undefined,
-        maxViews: maxViews ? Number(maxViews) : undefined,
-        onProgress: setProgress,
-      });
-      setCreated(result);
-      setFile(null);
-      setName('');
-      if (inputRef.current) inputRef.current.value = '';
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    await run(async () => {
+      try {
+        const result = await linksApi.create(file, {
+          name: name.trim() || undefined,
+          expiresIn: expiresIn || undefined,
+          maxViews: maxViews ? Number(maxViews) : undefined,
+          onProgress: setProgress,
+        });
+        setCreated(result);
+        setFile(null);
+        setName('');
+        if (inputRef.current) inputRef.current.value = '';
+        return true;
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Upload failed');
+        return false;
+      }
+    });
   };
 
   return (
@@ -220,11 +225,14 @@ export default function Upload() {
               <Button
                 type="submit"
                 variant="primary"
-                loading={uploading}
+                status={status}
+                icon={glyph.upload}
+                busyLabel="Uploading"
+                doneLabel="Link created"
                 disabled={!file}
                 className="w-full"
               >
-                {uploading ? 'Uploading' : 'Upload and create link'}
+                Upload and create link
               </Button>
             </div>
           </Panel>

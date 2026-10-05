@@ -104,6 +104,50 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /*
+   * Letter-spacing has to scale with size: large text looks loose and needs tightening,
+   * small text needs a hair of positive tracking to stay legible. One fixed value is
+   * always wrong somewhere. Body copy sits at 0.
+   */
+  .text-xs,
+  .text-\[11px\],
+  .text-\[10px\] {
+    letter-spacing: 0.01em;
+  }
+  .text-xl,
+  .text-2xl {
+    letter-spacing: -0.02em;
+  }
+
+  /*
+   * Staggered entrance for table rows: 240ms and 4px, so it reads as "the list settled"
+   * rather than a slideshow. Capped at the 8th row so a long page never waits.
+   */
+  .responsive-table tbody tr {
+    animation: rise-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .responsive-table tbody tr:nth-child(2) {
+    animation-delay: 22ms;
+  }
+  .responsive-table tbody tr:nth-child(3) {
+    animation-delay: 44ms;
+  }
+  .responsive-table tbody tr:nth-child(4) {
+    animation-delay: 66ms;
+  }
+  .responsive-table tbody tr:nth-child(5) {
+    animation-delay: 88ms;
+  }
+  .responsive-table tbody tr:nth-child(6) {
+    animation-delay: 110ms;
+  }
+  .responsive-table tbody tr:nth-child(7) {
+    animation-delay: 132ms;
+  }
+  .responsive-table tbody tr:nth-child(n + 8) {
+    animation-delay: 154ms;
+  }
+
   body {
     background-color: rgb(var(--bg-background));
     background-image: var(--body-gradient);
@@ -243,6 +287,18 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Small, short, and settle-to-rest: no overshoot, because nothing here carries momentum. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

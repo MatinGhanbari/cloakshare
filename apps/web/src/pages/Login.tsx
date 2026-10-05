@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth';
 import { ApiError } from '../lib/api';
 import { trackLogin } from '../lib/analytics';
 import { Button, Field, InlineError, Input, Panel } from '../components/ui';
+import { glyph } from '../components/morph';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -70,7 +71,14 @@ export default function Login() {
 
             {error && <InlineError>{error}</InlineError>}
 
-            <Button type="submit" variant="primary" loading={loading} className="w-full">
+            <Button
+              type="submit"
+              variant="primary"
+              icon={glyph.login}
+              status={loading ? 'busy' : 'idle'}
+              busyLabel="Signing in"
+              className="w-full"
+            >
               Sign in
             </Button>
           </form>

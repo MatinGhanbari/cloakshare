@@ -16,7 +16,8 @@ import {
   Tr,
   cx,
 } from '../components/ui';
-import { GroupsIcon, PlusIcon, TrashIcon } from '../components/icons';
+import { GroupsIcon, TrashIcon } from '../components/icons';
+import { glyph, useActionStatus } from '../components/morph';
 
 interface Group {
   id: string;
@@ -33,13 +34,32 @@ interface Credential {
   created_at: string;
 }
 
+/** Each row owns its own status so removals animate independently. */
+function RemoveStudentButton({ onRemove }: { onRemove: () => Promise<boolean> }) {
+  const { status, run } = useActionStatus();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      status={status}
+      icon={glyph.trash}
+      busyLabel="Removing"
+      doneLabel="Removed"
+      className="text-destructive hover:bg-destructive/10"
+      onClick={() => void run(onRemove)}
+    >
+      Remove
+    </Button>
+  );
+}
+
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const [newName, setNewName] = useState('');
-  const [creating, setCreating] = useState(false);
+  const createAction = useActionStatus();
 
   const [selected, setSelected] = useState<Group | null>(null);
   const [credentials, setCredentials] = useState<Credential[]>([]);
@@ -47,12 +67,13 @@ export default function Groups() {
 
   // Import form
   const [bulkText, setBulkText] = useState('');
-  const [importing, setImporting] = useState(false);
+  const importAction = useActionStatus();
   const [importResult, setImportResult] = useState<string>('');
 
   const [oneStudent, setOneStudent] = useState('');
   const [oneNational, setOneNational] = useState('');
   const [oneName, setOneName] = useState('');
+  const addAction = useActionStatus();
 
   const loadGroups = useCallback(async () => {
     try {
@@ -86,17 +107,18 @@ export default function Groups() {
   const createGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    setCreating(true);
     setError('');
-    try {
-      await groupsApi.create(newName.trim());
-      setNewName('');
-      await loadGroups();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not create group');
-    } finally {
-      setCreating(false);
-    }
+    await createAction.run(async () => {
+      try {
+        await groupsApi.create(newName.trim());
+        setNewName('');
+        await loadGroups();
+        return true;
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not create group');
+        return false;
+      }
+    });
   };
 
   const removeGroup = async (group: Group) => {
@@ -121,54 +143,61 @@ export default function Groups() {
   const importBulk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected || !bulkText.trim()) return;
-    setImporting(true);
     setError('');
     setImportResult('');
-    try {
-      const result = await groupsApi.bulkImport(selected.id, bulkText);
-      setImportResult(
-        `${result.added} added${result.skipped.length ? `, ${result.skipped.length} skipped` : ''}`,
-      );
-      setBulkText('');
-      const data = await groupsApi.credentials(selected.id);
-      setCredentials(data.credentials);
-      await loadGroups();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Import failed');
-    } finally {
-      setImporting(false);
-    }
+    await importAction.run(async () => {
+      try {
+        const result = await groupsApi.bulkImport(selected.id, bulkText);
+        setImportResult(
+          `${result.added} added${result.skipped.length ? `, ${result.skipped.length} skipped` : ''}`,
+        );
+        setBulkText('');
+        const data = await groupsApi.credentials(selected.id);
+        setCredentials(data.credentials);
+        await loadGroups();
+        return true;
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Import failed');
+        return false;
+      }
+    });
   };
 
   const addOne = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected || !oneStudent.trim() || !oneNational.trim()) return;
     setError('');
-    try {
-      await groupsApi.addCredential(selected.id, {
-        student_id: oneStudent.trim(),
-        national_id: oneNational.trim(),
-        name: oneName.trim() || undefined,
-      });
-      setOneStudent('');
-      setOneNational('');
-      setOneName('');
-      const data = await groupsApi.credentials(selected.id);
-      setCredentials(data.credentials);
-      await loadGroups();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not add student');
-    }
+    await addAction.run(async () => {
+      try {
+        await groupsApi.addCredential(selected.id, {
+          student_id: oneStudent.trim(),
+          national_id: oneNational.trim(),
+          name: oneName.trim() || undefined,
+        });
+        setOneStudent('');
+        setOneNational('');
+        setOneName('');
+        const data = await groupsApi.credentials(selected.id);
+        setCredentials(data.credentials);
+        await loadGroups();
+        return true;
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not add student');
+        return false;
+      }
+    });
   };
 
-  const removeCredential = async (credential: Credential) => {
-    if (!selected) return;
+  const removeCredential = async (credential: Credential): Promise<boolean> => {
+    if (!selected) return false;
     try {
       await groupsApi.removeCredential(selected.id, credential.id);
       setCredentials((prev) => prev.filter((c) => c.id !== credential.id));
       await loadGroups();
+      return true;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not remove student');
+      return false;
     }
   };
 
@@ -200,11 +229,13 @@ export default function Groups() {
               <Button
                 type="submit"
                 variant="primary"
-                loading={creating}
+                status={createAction.status}
+                icon={glyph.plus}
+                busyLabel="Creating"
+                doneLabel="Created"
                 disabled={!newName.trim()}
                 className="mt-3 w-full"
               >
-                <PlusIcon size={14} />
                 Create group
               </Button>
             </form>
@@ -294,7 +325,10 @@ export default function Groups() {
                     <Button
                       type="submit"
                       variant="primary"
-                      loading={importing}
+                      status={importAction.status}
+                      icon={glyph.upload}
+                      busyLabel="Importing"
+                      doneLabel="Imported"
                       disabled={!bulkText.trim()}
                     >
                       Import list
@@ -331,6 +365,10 @@ export default function Groups() {
                     <Button
                       type="submit"
                       variant="secondary"
+                      status={addAction.status}
+                      icon={glyph.plus}
+                      busyLabel="Adding"
+                      doneLabel="Added"
                       disabled={!oneStudent.trim() || !oneNational.trim()}
                     >
                       Add student
@@ -379,14 +417,7 @@ export default function Groups() {
                         <span className="text-xs text-text-tertiary">{c.created_at}</span>
                       </Td>
                       <Td align="right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => void removeCredential(c)}
-                          className="text-destructive hover:bg-destructive/10"
-                        >
-                          Remove
-                        </Button>
+                        <RemoveStudentButton onRemove={() => removeCredential(c)} />
                       </Td>
                     </Tr>
                   ))}

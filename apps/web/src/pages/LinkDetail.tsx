@@ -20,6 +20,7 @@ import {
   Tr,
 } from '../components/ui';
 import { ArrowLeftIcon, ClockIcon, EyeIcon, LockIcon } from '../components/icons';
+import { glyph, useActionStatus } from '../components/morph';
 
 export default function LinkDetail() {
   const { id } = useParams<{ id: string }>();
@@ -27,15 +28,17 @@ export default function LinkDetail() {
   const [link, setLink] = useState<Awaited<ReturnType<typeof linksApi.get>> | null>(null);
   const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof linksApi.analytics>> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [revoking, setRevoking] = useState(false);
-  const [purging, setPurging] = useState(false);
   const [error, setError] = useState('');
+
+  // One action status per irreversible / stateful control, so each button morphs on its own.
+  const revokeAction = useActionStatus();
+  const purgeAction = useActionStatus();
+  const stateAction = useActionStatus();
+  const accessAction = useActionStatus();
 
   // Access control
   const [groups, setGroups] = useState<Array<{ id: string; name: string; member_count: number }>>([]);
   const [accessGroupId, setAccessGroupId] = useState('');
-  const [savingAccess, setSavingAccess] = useState(false);
-  const [accessSaved, setAccessSaved] = useState(false);
   
   const splitDuration = (totalSeconds = 0) => {
     const secs = Math.max(0, Math.floor(totalSeconds));
@@ -65,36 +68,35 @@ export default function LinkDetail() {
 
   const saveAccess = async () => {
     if (!link) return;
-    setSavingAccess(true);
-    try {
-      await linksApi.updateAccess(link.id, accessGroupId || null);
-      setAccessSaved(true);
-      setTimeout(() => setAccessSaved(false), 2000);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not update access');
-    } finally {
-      setSavingAccess(false);
-    }
+    await accessAction.run(async () => {
+      try {
+        await linksApi.updateAccess(link.id, accessGroupId || null);
+        return true;
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not update access');
+        return false;
+      }
+    });
   };
 
   /** Temporarily pause or resume the link without revoking it. */
-  const [savingState, setSavingState] = useState(false);
   const toggleDisabled = async () => {
     if (!link) return;
-    setSavingState(true);
-    try {
-      const next = !link.disabled;
-      await linksApi.setState(link.id, next);
-      setLink({
-        ...link,
-        disabled: next,
-        disabled_at: next ? new Date().toISOString() : null,
-      });
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not change the link state');
-    } finally {
-      setSavingState(false);
-    }
+    await stateAction.run(async () => {
+      try {
+        const next = !link.disabled;
+        await linksApi.setState(link.id, next);
+        setLink({
+          ...link,
+          disabled: next,
+          disabled_at: next ? new Date().toISOString() : null,
+        });
+        return true;
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not change the link state');
+        return false;
+      }
+    });
   };
 
   useEffect(() => {
@@ -110,15 +112,17 @@ export default function LinkDetail() {
 
   const handleRevoke = async () => {
     if (!id || !confirm('Revoke this link? Viewers will lose access immediately.')) return;
-    setRevoking(true);
     setError('');
-    try {
-      await linksApi.revoke(id);
-      setLink((prev) => (prev ? { ...prev, status: 'revoked' } : null));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to revoke link');
-    }
-    setRevoking(false);
+    await revokeAction.run(async () => {
+      try {
+        await linksApi.revoke(id);
+        setLink((prev) => (prev ? { ...prev, status: 'revoked' } : null));
+        return true;
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to revoke link');
+        return false;
+      }
+    });
   };
 
   /** Delete the link and everything it owns. Irreversible, so it asks by name first. */
@@ -131,16 +135,18 @@ export default function LinkDetail() {
     );
     if (!confirmed) return;
 
-    setPurging(true);
     setError('');
-    try {
-      await linksApi.purge(id);
-      // The link no longer exists, so this page has nothing left to show.
-      navigate('/links');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete link');
-      setPurging(false);
-    }
+    await purgeAction.run(async () => {
+      try {
+        await linksApi.purge(id);
+        // The link no longer exists, so this page has nothing left to show.
+        navigate('/links');
+        return true;
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to delete link');
+        return false;
+      }
+    });
   };
 
   if (loading) {
@@ -207,7 +213,10 @@ export default function LinkDetail() {
                 variant="danger"
                 size="sm"
                 onClick={() => void handleRevoke()}
-                loading={revoking}
+                status={revokeAction.status}
+                icon={glyph.block}
+                busyLabel="Revoking"
+                doneLabel="Revoked"
               >
                 Revoke
               </Button>
@@ -269,7 +278,10 @@ export default function LinkDetail() {
             type="button"
             variant={link.disabled ? 'primary' : 'secondary'}
             onClick={() => void toggleDisabled()}
-            loading={savingState}
+            status={stateAction.status}
+            icon={link.disabled ? glyph.enable : glyph.disable}
+            busyLabel="Saving"
+            doneLabel="Saved"
             disabled={link.status === 'revoked'}
           >
             {link.disabled ? 'Enable link' : 'Disable link'}
@@ -326,10 +338,13 @@ export default function LinkDetail() {
             type="button"
             variant="primary"
             onClick={() => void saveAccess()}
-            loading={savingAccess}
+            status={accessAction.status}
+            icon={glyph.save}
+            busyLabel="Saving"
+            doneLabel="Saved"
             disabled={accessGroupId === (link.access_group_id ?? '')}
           >
-            {accessSaved ? 'Saved' : 'Save'}
+            Save
           </Button>
         </div>
         {groups.length === 0 && (
@@ -414,7 +429,13 @@ export default function LinkDetail() {
           event. To end access while keeping the link and its analytics, revoke it instead.
         </Banner>
         <div className="mt-4">
-          <Button variant="danger" onClick={() => void handlePurge()} loading={purging}>
+          <Button
+            variant="danger"
+            onClick={() => void handlePurge()}
+            status={purgeAction.status}
+            icon={glyph.trash}
+            busyLabel="Deleting"
+          >
             Delete permanently
           </Button>
         </div>
