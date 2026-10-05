@@ -51,12 +51,26 @@ openssl rand -hex 32  # Use output for each secret below
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | HTTP port |
+| `PORT` | `3000` | HTTP port. Also the single origin for the whole app in development. |
 | `NODE_ENV` | `development` | Set to `production` for production deployments |
 | `API_URL` | `http://localhost:3000` | Public API URL (used for signed URLs) |
 | `VIEWER_URL` | `http://localhost:3000` | Public viewer URL |
-| `DASHBOARD_URL` | `http://localhost:5174` | Public dashboard URL |
+| `DASHBOARD_URL` | `http://localhost:3000` | Public dashboard URL |
 | `CLOAK_MODE` | `self-hosted` | Must be `self-hosted` |
+
+### Development topology
+
+These variables only affect `pnpm dev`. They are ignored in production, where the API serves the
+built dashboard and viewer from `apps/api/public`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEV_PROXY` | `true` | Reverse-proxy `/dashboard` and `/v` from `PORT` to the Vite dev servers, so the whole app is reachable at a single origin. Set to `false` to open the Vite ports directly. |
+| `DASHBOARD_DEV_PORT` | `5174` | Internal port of the dashboard (Vite) dev server |
+| `VIEWER_DEV_PORT` | `5173` | Internal port of the viewer (Vite) dev server |
+| `SITE_DEV_PORT` | `4321` | Port of the marketing site (Astro) dev server — a separate deployment |
+
+Open `http://localhost:3000` — that is the only URL you need in development.
 
 ### Database
 

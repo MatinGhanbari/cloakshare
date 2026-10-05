@@ -24,13 +24,23 @@ pnpm install
 cp .env.example .env
 ```
 
+The repo-root `.env` is the single source of truth for local development. The API also loads
+`apps/api/.env` afterwards (if present) as an optional override layer for machine-specific
+values — see `apps/api/.env.example`.
+
 ### Start development
 
 ```bash
 pnpm dev
 ```
 
-This starts the API on `:3000`.
+This starts the API, the dashboard and the viewer. All of them are served from a single origin:
+open **http://localhost:3000**. The API reverse-proxies `/dashboard` and `/v` to the Vite dev
+servers, which run on the internal ports `DASHBOARD_DEV_PORT` (5174) and `VIEWER_DEV_PORT`
+(5173) from your `.env`. You should not need to open those ports directly.
+
+The marketing site (`apps/site`) is a separate deployment and runs on its own port
+(`SITE_DEV_PORT`, default 4321).
 
 ### Run tests
 

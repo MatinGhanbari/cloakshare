@@ -435,9 +435,17 @@ We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 git clone https://github.com/cloakshare/cloakshare.git
 cd cloakshare
 pnpm install
-cp apps/api/.env.example apps/api/.env
+cp .env.example .env
 pnpm dev
 ```
+
+`pnpm dev` starts the API plus the dashboard and viewer dev servers. Everything is reachable
+through a **single origin at `http://localhost:3000`** — the API proxies `/dashboard` and `/v`
+to the Vite dev servers, so there is no need to open `:5173`/`:5174` yourself. The ports are
+configured in the root `.env` (`PORT`, `DASHBOARD_DEV_PORT`, `VIEWER_DEV_PORT`).
+
+The marketing site (`apps/site`) is a separate deployment and runs on its own port
+(`SITE_DEV_PORT`, default `4321`).
 
 Good first issues are labeled [`good first issue`](https://github.com/cloakshare/cloakshare/labels/good%20first%20issue).
 
