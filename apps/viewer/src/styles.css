@@ -3,7 +3,8 @@
    Dark-mode terminal luxury
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* JetBrains Mono is vendored in src/assets/fonts/jetbrains-mono — no external font request. */
+@import './assets/fonts/jetbrains-mono/jetbrains-mono.css';
 
 * {
   margin: 0;
