@@ -46,8 +46,8 @@ const MAX_TILES_PER_REQUEST = 48;
  *  Only *newly* requested pages and *cache-miss* tiles are charged, so re-scrolling or
  *  re-visiting a page a viewer has already seen is free, while scraping a document still
  *  costs a bounded number of new tiles per minute. */
-const NEW_TILES_PER_MINUTE = Number(process.env.TILE_RATE_LIMIT ?? 60);
-const NEW_PAGES_PER_MINUTE = Number(process.env.PAGE_RATE_LIMIT ?? 3);
+const NEW_PAGES_PER_MINUTE = Number(process.env.PAGE_RATE_LIMIT ?? 100);
+const NEW_TILES_PER_MINUTE = Number(process.env.TILE_RATE_LIMIT ?? NEW_PAGES_PER_MINUTE * 8);
 /**
  * Safety valve on TOTAL viewport requests. Re-requesting a page the viewer has already seen
  * is free (so scrolling is cheap), which would otherwise let a client hammer the same page
