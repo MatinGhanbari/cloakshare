@@ -60,6 +60,12 @@ viewsRouter.get('/v1/viewer/:token', async (c) => {
     return errorResponse(c, Errors.notFound('Link'));
   }
 
+  // Temporarily paused by the owner — checked before anything else so a disabled link
+  // reveals nothing about the document.
+  if (link.disabledAt) {
+    return errorResponse(c, Errors.linkDisabled());
+  }
+
   // Check link status
   if (link.status === LINK_STATUS.PROCESSING) {
     return successResponse(c, {
@@ -156,6 +162,11 @@ viewsRouter.post(
 
     if (!link || link.status !== LINK_STATUS.ACTIVE) {
       return errorResponse(c, Errors.notFound('Link'));
+    }
+
+    // Temporarily paused by the owner.
+    if (link.disabledAt) {
+      return errorResponse(c, Errors.linkDisabled());
     }
 
     // Check expiry
@@ -505,6 +516,11 @@ viewsRouter.get('/v1/viewer/:token/page/:pageNumber', async (c) => {
 
   const link = await db.select().from(links).where(eq(links.id, linkId)).get();
   if (!link) return errorResponse(c, Errors.notFound('Link'));
+
+  // Temporarily paused by the owner.
+  if (link.disabledAt) {
+    return errorResponse(c, Errors.linkDisabled());
+  }
 
   const page = parseInt(pageNumberStr, 10);
   if (isNaN(page) || page < 1 || page > (link.pageCount || 0)) {

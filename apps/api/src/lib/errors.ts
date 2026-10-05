@@ -13,6 +13,7 @@ const ERROR_DOCS: Record<string, string> = {
   INVALID_FILE_TYPE: 'https://docs.cloakshare.dev/errors/supported-types',
   LINK_EXPIRED: 'https://docs.cloakshare.dev/errors/link-expired',
   LINK_REVOKED: 'https://docs.cloakshare.dev/errors/link-revoked',
+  LINK_DISABLED: 'https://docs.cloakshare.dev/errors/link-disabled',
   RENDER_FAILED: 'https://docs.cloakshare.dev/errors/render-failed',
   LIMIT_REACHED: 'https://docs.cloakshare.dev/errors/plan-limits',
   DOMAIN_NOT_ALLOWED: 'https://docs.cloakshare.dev/errors/allowed-domains',
@@ -51,6 +52,13 @@ export const Errors = {
     new AppError('LINK_EXPIRED', 'This link has expired', 410),
   linkRevoked: () =>
     new AppError('LINK_REVOKED', 'This link has been revoked', 410),
+  /** Temporarily paused by the owner — distinct from a permanent revoke. */
+  linkDisabled: () =>
+    new AppError(
+      'LINK_DISABLED',
+      'This link is temporarily unavailable. The sender has paused access and can re-enable it.',
+      403,
+    ),
   linkFailed: () =>
     new AppError('RENDER_FAILED', 'This document could not be processed. The sender has been notified.', 500),
   linkProcessing: () =>

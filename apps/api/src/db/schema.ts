@@ -99,6 +99,10 @@ export const links = sqliteTable('links', {
   // When set, the link is restricted to this viewer group (members sign in with
   // student ID + national ID). NULL means the link is publicly accessible.
   accessGroupId: text('access_group_id'),
+  // Temporarily paused by the owner. NULL = enabled. Kept separate from `status` so
+  // re-enabling restores the real state (and expiry still applies) rather than forcing
+  // the link back to active.
+  disabledAt: text('disabled_at'),
   brandLogo: text('brand_logo'), // storage path to logo image
   brandColor: text('brand_color'), // Hex color
   brandName: text('brand_name'), // Displayed in viewer

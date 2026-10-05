@@ -236,6 +236,19 @@ async function handleConnection(ws: WebSocket, sessionToken: string, linkId: str
     return;
   }
 
+  // Temporarily paused by the owner — no tiles may be served.
+  if (link.disabledAt) {
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        code: 'LINK_DISABLED',
+        message: 'This link is temporarily unavailable.',
+      }),
+    );
+    ws.close(4403, 'disabled');
+    return;
+  }
+
   const state: SessionState = {
     seenPages: new Set<number>(),
     newTiles: { count: 0, windowStart: Date.now() },

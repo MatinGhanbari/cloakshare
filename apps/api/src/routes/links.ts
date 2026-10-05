@@ -502,6 +502,8 @@ linksRouter.get('/v1/links', apiKeyAuth, async (c) => {
       status: link.status,
       view_count: link.viewCount,
       access_group_id: link.accessGroupId,
+      disabled: !!link.disabledAt,
+      disabled_at: link.disabledAt,
       created_at: link.createdAt,
     })),
     pagination: {
@@ -550,6 +552,8 @@ linksRouter.get('/v1/links/:id', apiKeyAuth, async (c) => {
     original_filename: link.originalFilename,
     file_size: link.fileSize,
     access_group_id: link.accessGroupId,
+    disabled: !!link.disabledAt,
+    disabled_at: link.disabledAt,
     file_type: link.fileType,
     page_count: link.pageCount,
     video_metadata: link.fileType === 'video' ? {
@@ -793,6 +797,53 @@ linksRouter.patch('/v1/links/:id/access', apiKeyAuth, async (c) => {
   });
 
   return successResponse(c, { id: linkId, access_group_id: groupId });
+});
+
+/**
+ * PATCH /v1/links/:id/state — temporarily pause or resume a link.
+ * Body: { disabled: boolean }
+ *
+ * Disabling is deliberately separate from deleting: the link keeps its real status and
+ * expiry, so re-enabling restores exactly what it was. A disabled link refuses metadata,
+ * verification, page images and the tile stream alike.
+ */
+linksRouter.patch('/v1/links/:id/state', apiKeyAuth, async (c) => {
+  const user = c.get('user') as { id: string };
+  const orgId = c.get('orgId') as string | undefined;
+  const linkId = c.req.param('id');
+
+  const ownerCondition = orgId ? eq(links.orgId, orgId) : eq(links.userId, user.id);
+  const link = await db
+    .select()
+    .from(links)
+    .where(and(eq(links.id, linkId), ownerCondition))
+    .get();
+  if (!link) return errorResponse(c, Errors.notFound('Link'));
+
+  const body = (await c.req.json().catch(() => ({}))) as { disabled?: boolean };
+  if (typeof body.disabled !== 'boolean') {
+    return errorResponse(c, Errors.validation('disabled (boolean) is required'));
+  }
+
+  if (body.disabled && link.status === 'revoked') {
+    return errorResponse(c, Errors.validation('A revoked link cannot be re-enabled'));
+  }
+
+  const disabledAt = body.disabled ? new Date().toISOString() : null;
+  await db
+    .update(links)
+    .set({ disabledAt, updatedAt: new Date().toISOString() })
+    .where(eq(links.id, linkId));
+
+  logAudit({
+    ...auditorFromContext(c),
+    action: body.disabled ? 'link.disabled' : 'link.enabled',
+    resourceType: 'link',
+    resourceId: linkId,
+    resourceLabel: link.name || link.originalFilename || undefined,
+  });
+
+  return successResponse(c, { id: linkId, disabled: body.disabled, disabled_at: disabledAt });
 });
 
 linksRouter.get('/v1/links/:id/progress', async (c) => {
