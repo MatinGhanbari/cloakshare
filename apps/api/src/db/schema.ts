@@ -96,6 +96,9 @@ export const links = sqliteTable('links', {
 
   // Branding (Growth+ tiers)
   customDomainId: text('custom_domain_id'),
+  // When set, the link is restricted to this viewer group (members sign in with
+  // student ID + national ID). NULL means the link is publicly accessible.
+  accessGroupId: text('access_group_id'),
   brandLogo: text('brand_logo'), // storage path to logo image
   brandColor: text('brand_color'), // Hex color
   brandName: text('brand_name'), // Displayed in viewer
@@ -177,6 +180,41 @@ export const viewerSessions = sqliteTable('viewer_sessions', {
 }, (table) => [
   index('idx_viewer_sessions_token').on(table.token),
   index('idx_viewer_sessions_link').on(table.linkId),
+]);
+
+// ============================================
+// VIEWER GROUPS & CREDENTIALS (restricted access)
+// ============================================
+
+/**
+ * A named set of viewers — e.g. "Distributed Systems, Fall 2026".
+ * Links can be restricted to a group; members sign in with their student ID
+ * (username) and national ID (password).
+ */
+export const viewerGroups = sqliteTable('viewer_groups', {
+  id: text('id').primaryKey(),
+  orgId: text('org_id').notNull(),
+  name: text('name').notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index('idx_viewer_groups_org').on(table.orgId),
+]);
+
+/**
+ * One authorized viewer inside a group.
+ * The national ID acts as the password, so only its hash is stored.
+ */
+export const viewerCredentials = sqliteTable('viewer_credentials', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').notNull().references(() => viewerGroups.id),
+  studentId: text('student_id').notNull(),
+  nationalIdHash: text('national_id_hash').notNull(),
+  displayName: text('display_name'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index('idx_viewer_credentials_group').on(table.groupId),
+  index('idx_viewer_credentials_student').on(table.studentId),
+  uniqueIndex('idx_viewer_credentials_group_student').on(table.groupId, table.studentId),
 ]);
 
 // ============================================
