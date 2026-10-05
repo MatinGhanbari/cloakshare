@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    Brand mark. The colours follow the operating system's light/dark preference so the
+    icon does not glow against a light browser chrome (a favicon cannot react to the
+    in-app theme toggle, so the OS setting is the closest signal available).
+  -->
+  <style>
+    .bg { fill: #09090b; }
+    .fg { fill: #00ff88; }
+    @media (prefers-color-scheme: light) {
+      .bg { fill: #ffffff; }
+      .fg { fill: #00803f; }
+    }
+  </style>
+  <rect width="32" height="32" rx="6" class="bg" />
+  <text
+    x="16"
+    y="22"
+    text-anchor="middle"
+    font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+    font-weight="bold"
+    font-size="16"
+    class="fg"
+  >C</text>
+</svg>
