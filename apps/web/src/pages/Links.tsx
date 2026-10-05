@@ -128,7 +128,7 @@ export default function Links() {
                     <tr key={link.id} className="border-b border-border-subtle last:border-0 hover:bg-hover transition-colors duration-150">
                       <td className="px-4 py-3">
                         <Link
-                          to={`/dashboard/links/${link.id}`}
+                          to={`links/${link.id}`}
                           className="text-sm text-foreground font-sans font-medium hover:text-accent transition-colors duration-150"
                         >
                           {link.original_filename || link.name || <span className="font-mono text-text-secondary">{link.id}</span>}
