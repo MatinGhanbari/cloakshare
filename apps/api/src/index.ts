@@ -117,8 +117,9 @@ app.use('*', async (c, next) => {
   }, `${c.req.method} ${c.req.path} ${c.res.status} ${ms}ms`);
 });
 
-// Security headers for viewer routes (the viewer SPA is now served under /v)
-app.use('/v/s/*', async (c, next) => {
+// Security headers for viewer routes. The viewer SPA is served under /v (the app mount) and
+// /s (the public share links the API generates, e.g. /s/<linkId>), so both need the same hardening.
+const viewerSecurityHeaders = async (c: Context, next: () => Promise<void>) => {
   await next();
   c.header('Permissions-Policy', 'display-capture=()');
   c.header('X-Frame-Options', 'DENY');
@@ -133,7 +134,9 @@ app.use('/v/s/*', async (c, next) => {
       ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'"
       : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*; frame-ancestors 'none'",
   );
-});
+};
+app.use('/v/s/*', viewerSecurityHeaders);
+app.use('/s/*', viewerSecurityHeaders);
 
 app.use('/embed/*', async (c, next) => {
   await next();
@@ -292,17 +295,31 @@ app.notFound((c) => {
 // Registered before the static handlers so it takes precedence in development.
 // ============================================
 if (config.devProxy) {
-  const upstreams: Array<{ prefix: string; port: number; packageName: string }> = [
+  const upstreams: Array<{
+    prefix: string;
+    port: number;
+    packageName: string;
+    // Optional path rewrite applied before proxying. The public share links live at /s/<id>,
+    // but the viewer Vite server serves everything under its /v base, so /s/<id> -> /v/s/<id>.
+    rewritePath?: (path: string) => string;
+  }> = [
     { prefix: '/dashboard', port: config.devServers.dashboardPort, packageName: '@cloak/web' },
     { prefix: '/v', port: config.devServers.viewerPort, packageName: '@cloak/viewer' },
+    {
+      prefix: '/s',
+      port: config.devServers.viewerPort,
+      packageName: '@cloak/viewer',
+      rewritePath: (p) => `/v${p}`,
+    },
   ];
 
-  for (const { prefix, port, packageName } of upstreams) {
+  for (const { prefix, port, packageName, rewritePath } of upstreams) {
     const forward = async (c: Context) => {
       const target = new URL(c.req.url);
       target.protocol = 'http:';
       target.hostname = '127.0.0.1';
       target.port = String(port);
+      if (rewritePath) target.pathname = rewritePath(target.pathname);
 
       try {
         return await proxy(target.toString(), { raw: c.req.raw });
@@ -365,7 +382,10 @@ if (dashboardIndex) {
   logger.warn('No dashboard build found in apps/api/public/dashboard — run `pnpm build` or set DEV_PROXY=true.');
 }
 
-// Viewer SPA (Vite base /v/)
+// Viewer SPA (Vite base /v/). Served at /v (the app mount) and at /s (the public share links
+// the API generates — `${viewerUrl}/s/<linkId>`). The SPA reads the id from the trailing
+// /s/<id> segment, so both mounts resolve to the same view. Bundled assets are referenced from
+// /v (the Vite base), which the /v/* handler below serves.
 if (viewerIndex) {
   app.use('/v/*', serveStatic({
     root: staticRoot('viewer'),
@@ -373,6 +393,9 @@ if (viewerIndex) {
   }));
   app.get('/v/*', (c) => c.html(viewerIndex));
   app.get('/v', (c) => c.redirect('/v/', 302));
+
+  // Public share route: /s/<linkId>
+  app.get('/s/*', (c) => c.html(viewerIndex));
 } else if (!config.devProxy) {
   logger.warn('No viewer build found in apps/api/public/viewer — run `pnpm build` or set DEV_PROXY=true.');
 }
