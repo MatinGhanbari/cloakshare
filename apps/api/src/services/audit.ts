@@ -22,26 +22,26 @@ interface AuditEntry {
  * Log an audit event. Fire-and-forget — errors are logged but don't propagate.
  */
 export function logAudit(entry: AuditEntry): void {
-  try {
-    db.insert(auditLog)
-      .values({
-        id: generateId('aud'),
-        orgId: entry.orgId,
-        actorId: entry.actorId,
-        actorType: entry.actorType || 'user',
-        actorLabel: entry.actorLabel,
-        action: entry.action,
-        resourceType: entry.resourceType || null,
-        resourceId: entry.resourceId || null,
-        resourceLabel: entry.resourceLabel || null,
-        metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
-        ipAddress: entry.ipAddress || null,
-        userAgent: entry.userAgent || null,
-      })
-      ;
-  } catch (err) {
-    logger.error({ err, action: entry.action }, 'Failed to write audit log');
-  }
+  // The query must be handed to the driver explicitly. On its own, `db.insert(...).values(...)` is a
+  // lazy Drizzle promise: nothing is sent, so every audit entry was silently discarded and the
+  // audit_log table stayed empty. Attaching a rejection handler executes it and keeps the
+  // fire-and-forget contract (callers do not await this, so the failure has to be handled here).
+  db.insert(auditLog)
+    .values({
+      id: generateId('aud'),
+      orgId: entry.orgId,
+      actorId: entry.actorId,
+      actorType: entry.actorType || 'user',
+      actorLabel: entry.actorLabel,
+      action: entry.action,
+      resourceType: entry.resourceType || null,
+      resourceId: entry.resourceId || null,
+      resourceLabel: entry.resourceLabel || null,
+      metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
+      ipAddress: entry.ipAddress || null,
+      userAgent: entry.userAgent || null,
+    })
+    .catch((err) => logger.error({ err, action: entry.action }, 'Failed to write audit log'));
 }
 
 /**
