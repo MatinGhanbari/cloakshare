@@ -29,6 +29,8 @@ const $nationalIdField = document.getElementById('national-id-field')!;
 const $studentIdInput = document.getElementById('student-id-input') as HTMLInputElement;
 const $nationalIdInput = document.getElementById('national-id-input') as HTMLInputElement;
 const $credentialsError = document.getElementById('credentials-error')!;
+const $credentialsForm = document.getElementById('credentials-form') as HTMLFormElement;
+const $credentialsSubmit = document.getElementById('credentials-submit') as HTMLButtonElement;
 const $gateSubmit = document.getElementById('gate-submit') as HTMLButtonElement;
 const $gateError = document.getElementById('gate-error')!;
 const $gateTitle = document.getElementById('gate-title')!;
@@ -383,15 +385,14 @@ function setupGate(meta: LinkMetadata) {
         ? 'Enter the password to access this document.'
         : 'Click below to view this document.';
 
-  // Group-restricted links replace the email/password fields with group credentials.
+  // Group-restricted links swap the whole form: email/password and group credentials are
+  // different actions, so each has its own <form>.
   if (meta.requires_credentials) {
-    $credentialsField.classList.remove('hidden');
-    $nationalIdField.classList.remove('hidden');
-    $gateSubmit.textContent = 'Sign in';
-    // Drop the cursor straight into the first field.
+    $gateForm.classList.add('hidden');
+    $credentialsForm.classList.remove('hidden');
     setTimeout(() => $studentIdInput.focus(), 0);
   } else {
-    // Show relevant fields
+    $credentialsForm.classList.add('hidden');
     if (meta.require_email) {
       $emailField.classList.remove('hidden');
     }
@@ -1081,44 +1082,7 @@ function setupGateForm() {
     // Reset errors
     $emailError.classList.add('hidden');
     $passwordError.classList.add('hidden');
-    $credentialsError.classList.add('hidden');
     $gateError.classList.add('hidden');
-
-    // Group-restricted links sign in with a student ID and national ID.
-    if (metadata?.requires_credentials) {
-      const studentId = $studentIdInput.value.trim();
-      const nationalId = $nationalIdInput.value.trim();
-      if (!studentId || !nationalId) {
-        $credentialsError.textContent = 'Student ID and national ID are required';
-        $credentialsError.classList.remove('hidden');
-        return;
-      }
-
-      $gateSubmit.disabled = true;
-      $gateSubmit.textContent = 'Verifying...';
-
-      const credentialResult = await verifyAccess(linkToken, undefined, undefined, {
-        student_id: studentId,
-        national_id: nationalId,
-      });
-
-      if (!credentialResult.ok) {
-        $gateSubmit.disabled = false;
-        $gateSubmit.textContent = 'Sign in';
-        // Show the server's own message — it distinguishes a wrong credential from a
-        // paused, expired or revoked link, which a generic message would hide.
-        $credentialsError.textContent = credentialResult.message;
-        $credentialsError.classList.remove('hidden');
-        return;
-      }
-
-      if (metadata.file_type === 'video') {
-        startVideoViewer(metadata, credentialResult.data);
-      } else {
-        startViewer(metadata, credentialResult.data);
-      }
-      return;
-    }
 
     const email = metadata?.require_email ? $emailInput.value.trim() : undefined;
     const password = metadata?.has_password ? $passwordInput.value : undefined;
@@ -1164,6 +1128,46 @@ function setupGateForm() {
       startVideoViewer(metadata!, result.data);
     } else {
       startViewer(metadata!, result.data);
+    }
+  });
+
+  // Group credentials are a different action, so they live in their own form.
+  $credentialsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!metadata) return;
+
+    $credentialsError.classList.add('hidden');
+
+    const studentId = $studentIdInput.value.trim();
+    const nationalId = $nationalIdInput.value.trim();
+    if (!studentId || !nationalId) {
+      $credentialsError.textContent = 'Student ID and national ID are required';
+      $credentialsError.classList.remove('hidden');
+      return;
+    }
+
+    $credentialsSubmit.disabled = true;
+    $credentialsSubmit.textContent = 'Verifying...';
+
+    const result = await verifyAccess(linkToken, undefined, undefined, {
+      student_id: studentId,
+      national_id: nationalId,
+    });
+
+    if (!result.ok) {
+      $credentialsSubmit.disabled = false;
+      $credentialsSubmit.textContent = 'Sign in';
+      // Show the server's own message — it distinguishes a wrong credential from a paused,
+      // expired or revoked link, which a generic message would hide.
+      $credentialsError.textContent = result.message;
+      $credentialsError.classList.remove('hidden');
+      return;
+    }
+
+    if (metadata.file_type === 'video') {
+      startVideoViewer(metadata, result.data);
+    } else {
+      startViewer(metadata, result.data);
     }
   });
 }

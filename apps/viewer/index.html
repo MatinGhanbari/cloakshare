@@ -47,6 +47,11 @@
         </div>
         <h2 id="gate-title">View document</h2>
         <p id="gate-subtitle" class="gate-subtitle"></p>
+        <!--
+          One action per form. The gate shows exactly one of these at a time, and keeping them
+          separate stops the browser's autofill heuristics from reading the card as a single
+          over-loaded form containing two different sign-in pairs.
+        -->
         <form id="gate-form">
           <div id="email-field" class="field hidden">
             <label for="email-input">Email address</label>
@@ -58,18 +63,22 @@
             <input type="password" id="password-input" placeholder="Enter password" autocomplete="current-password" />
             <p id="password-error" class="field-error hidden"></p>
           </div>
-          <!-- Group-restricted links: student ID is the username, national ID the password -->
-          <div id="credentials-field" class="field hidden">
+          <button type="submit" id="gate-submit" class="btn-primary">View Document</button>
+          <p id="gate-error" class="form-error hidden"></p>
+        </form>
+
+        <!-- Group-restricted links: student ID is the username, national ID the password -->
+        <form id="credentials-form" class="hidden">
+          <div id="credentials-field" class="field">
             <label for="student-id-input">Student ID</label>
             <input type="text" id="student-id-input" placeholder="e.g. 40123456" autocomplete="username" inputmode="numeric" />
           </div>
-          <div id="national-id-field" class="field hidden">
+          <div id="national-id-field" class="field">
             <label for="national-id-input">National ID</label>
             <input type="password" id="national-id-input" placeholder="Your national ID" autocomplete="current-password" inputmode="numeric" />
             <p id="credentials-error" class="field-error hidden"></p>
           </div>
-          <button type="submit" id="gate-submit" class="btn-primary">View Document</button>
-          <p id="gate-error" class="form-error hidden"></p>
+          <button type="submit" id="credentials-submit" class="btn-primary">Sign in</button>
         </form>
         <div class="secured-by">
           Secured by <a href="https://cloakshare.dev" target="_blank" rel="noopener">CloakShare</a>
