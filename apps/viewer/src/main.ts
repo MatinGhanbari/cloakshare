@@ -60,7 +60,8 @@ const $errorMessage = document.getElementById('error-message')!;
 const $docName = document.getElementById('doc-name')!;
 const $prevBtn = document.getElementById('prev-btn') as HTMLButtonElement;
 const $nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
-const $pageIndicator = document.getElementById('page-indicator')!;
+const $pageInput = document.getElementById('page-input') as HTMLInputElement;
+const $pageCount = document.getElementById('page-count')!;
 const $pageLoading = document.getElementById('page-loading') as HTMLDivElement;
 const $zoomInBtn = document.getElementById('zoom-in-btn') as HTMLButtonElement;
 const $zoomOutBtn = document.getElementById('zoom-out-btn') as HTMLButtonElement;
@@ -474,7 +475,8 @@ function renderPage(pageNum: number) {
   drawTiles(geo.page);
 
   // Update navigation
-  $pageIndicator.textContent = `${pageNum} / ${totalPages}`;
+  syncPageInput(pageNum);
+  $pageCount.textContent = String(totalPages);
   updateNavButtons();
   updatePageLoading(pageNum);
 }
@@ -653,6 +655,28 @@ function clearNavWatchdog() {
 }
 
 /**
+ * Keep the page field showing `page`. An edit in progress wins: while the field has focus the
+ * viewer's typing is never overwritten by a re-render (a resize or an arriving tile both
+ * re-render, and would otherwise wipe out a half-typed page number).
+ */
+function syncPageInput(page: number, force = false) {
+  if (!force && document.activeElement === $pageInput) return;
+  $pageInput.value = String(page);
+}
+
+/** Jump to the page number the viewer typed, clamped to the document. */
+function commitPageInput() {
+  const typed = Number.parseInt($pageInput.value, 10);
+  if (!Number.isFinite(typed)) {
+    syncPageInput(currentPage, true);
+    return;
+  }
+  const target = Math.min(totalPages, Math.max(1, typed));
+  syncPageInput(target, true);
+  goToPage(target);
+}
+
+/**
  * Reflect the navigation lock in the header: while a page is in flight both arrows are disabled
  * (so clicks cannot stack up) and the one that was pressed shows a spinner.
  */
@@ -661,6 +685,9 @@ function updateNavButtons() {
   $nextBtn.disabled = navigating || currentPage >= totalPages;
   $prevBtn.classList.toggle('is-loading', navigating && navDirection === 'prev');
   $nextBtn.classList.toggle('is-loading', navigating && navDirection === 'next');
+  // The page field is part of the same lock: jumping while a page is still in flight would
+  // queue a second page change behind the first.
+  $pageInput.disabled = navigating;
 }
 
 /**
@@ -731,9 +758,28 @@ function setupNavigation() {
   $prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
   $nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
 
+  // The page number is editable: Enter or leaving the field jumps to the typed page, Escape
+  // abandons the edit. Arrow-stepping the field deliberately does not navigate — `change` fires
+  // on every step, and each step would cost a whole page fetch, while the arrows beside the
+  // field already turn pages one at a time.
+  $pageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitPageInput();
+      $pageInput.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      syncPageInput(currentPage, true);
+      $pageInput.blur();
+    }
+  });
+  $pageInput.addEventListener('blur', commitPageInput);
+
   // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if ($viewer.classList.contains('hidden')) return;
+    // Let the page field handle its own keys — ArrowUp/ArrowDown step its value.
+    if (e.target === $pageInput) return;
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
       goToPage(currentPage - 1);
@@ -1068,6 +1114,11 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   $docName.textContent = meta.name || 'Document';
   showScreen($viewer);
 
+  // Seed the page field with the document length before the first render, so the viewer can
+  // jump to a page without waiting for page 1's tiles.
+  $pageCount.textContent = String(totalPages);
+  syncPageInput(1, true);
+
   // Documents are streamed as tiles over a WebSocket instead of whole-page images.
   tileBitmaps.clear();
   tileHeaders.clear();
@@ -1164,6 +1215,10 @@ function startViewer(meta: LinkMetadata, sess: VerifyResponse) {
   // Nothing is on screen yet, so hold the page controls until the first page lands. Without
   // this, a click on Next during the initial load would race the page-1 request.
   setNavigating(true);
+  // Show the overlay from the first frame. The handshake (RSA key generation plus a WebSocket
+  // round trip) happens before the first tile request, and without this the viewer stares at an
+  // empty canvas for that whole window — and the page looks ready when it is not.
+  updatePageLoading(currentPage);
 
   setupNavigation();
   setupProtections();

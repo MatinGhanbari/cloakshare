@@ -132,7 +132,19 @@
           <button id="prev-btn" class="nav-btn" disabled aria-label="Previous page" title="Previous page">
             <span class="nav-btn-icon" aria-hidden="true">&larr;</span>
           </button>
-          <span id="page-indicator" class="page-indicator">1 / 1</span>
+          <span class="page-indicator page-jump">
+            <input
+              id="page-input"
+              class="page-input"
+              type="number"
+              min="1"
+              step="1"
+              value="1"
+              inputmode="numeric"
+              aria-label="Page number"
+            />
+            <span class="page-total">/ <span id="page-count">1</span></span>
+          </span>
           <button id="next-btn" class="nav-btn" aria-label="Next page" title="Next page">
             <span class="nav-btn-icon" aria-hidden="true">&rarr;</span>
           </button>

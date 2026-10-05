@@ -20,6 +20,8 @@
   --bg-hover: #222225;
   --bg-input: #0F0F11;
 
+  --bg-header: #0000ff;
+
   /* Borders */
   --border-default: #27272A;
   --border-subtle: #1E1E21;
@@ -63,6 +65,8 @@
   --bg-elevated: #fafafa;
   --bg-hover: #eaeaec;
   --bg-input: #ffffff;
+
+  --bg-header: #ff006a;
 
   --border-default: #e4e4e7;
   --border-subtle: #efeff1;
@@ -543,6 +547,52 @@ html, body {
   min-width: 60px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+/* Editable page number — the viewer can type a page and jump straight to it. */
+.page-jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.page-input {
+  width: 40px;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  /* The arrow buttons either side of the field are the stepper, so hide the native spinners. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.page-input::-webkit-outer-spin-button,
+.page-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.page-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-total {
+  color: var(--text-tertiary);
 }
 
 /* Secured badge — fixed bottom-right per design system */
