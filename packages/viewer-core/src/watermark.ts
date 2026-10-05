@@ -4,10 +4,13 @@
  */
 
 const FONT = '14px monospace';
+const FONT_SIZE = 14;
 const COLOR = 'rgba(128, 128, 128, 0.12)';
 const ANGLE = (-30 * Math.PI) / 180; // -30° rotation
-const SPACING_X = 350;
-const SPACING_Y = 120;
+const MIN_SPACING_X = 350;
+const MIN_SPACING_Y = 120;
+const GAP_X = 40;
+const GAP_Y = 30;
 
 /**
  * Resolve template variables in watermark text.
@@ -44,6 +47,14 @@ export function drawWatermark(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
+  // Space the tiles from the measured text width so long watermarks
+  // (email · date · session id) never overlap each other and obscure the page.
+  // Measured in the un-rotated frame; the whole context is rotated below, so
+  // all tiles share the same rotation and a textWidth+gap step keeps them apart.
+  const measuredWidth = ctx.measureText(text).width;
+  const spacingX = Math.max(MIN_SPACING_X, Math.ceil(measuredWidth + GAP_X));
+  const spacingY = Math.max(MIN_SPACING_Y, Math.ceil(FONT_SIZE + GAP_Y));
+
   // Rotate the entire context
   ctx.translate(width / 2, height / 2);
   ctx.rotate(ANGLE);
@@ -53,8 +64,8 @@ export function drawWatermark(
   const extX = height;
   const extY = width;
 
-  for (let y = -extY; y < height + extY; y += SPACING_Y) {
-    for (let x = -extX; x < width + extX; x += SPACING_X) {
+  for (let y = -extY; y < height + extY; y += spacingY) {
+    for (let x = -extX; x < width + extX; x += spacingX) {
       ctx.fillText(text, x, y);
     }
   }
@@ -83,7 +94,7 @@ export function updateWatermark(
   const dpr = window.devicePixelRatio || 1;
   const rect = container.getBoundingClientRect();
 
-  canvas.style.width = `${rect.width}px`;
+  canvas.style.width = `${(rect.width)}px`;
   canvas.style.height = `${rect.height}px`;
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;

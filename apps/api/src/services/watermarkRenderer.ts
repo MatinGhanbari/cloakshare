@@ -146,14 +146,31 @@ function generateWatermarkSvg(
   // Scale font size proportionally to image width (base: 16px at 1000px width)
   const scaledFontSize = Math.round(fontSize * (width / 1000));
 
+  // Derive the tile grid from the ACTUAL text size.
+  // The watermark string length varies (email + date + session id), so a fixed
+  // grid makes long strings overlap and renders the page unreadable. Monospace
+  // advance width is ~0.6em; rotating that box by |angle| gives the axis-aligned
+  // footprint, to which we add a clear gap. Configured spacing acts as a floor.
+  const MONOSPACE_ADVANCE = 0.6;
+  const GAP_X = 48;
+  const GAP_Y = 40;
+
+  const textWidth = text.length * scaledFontSize * MONOSPACE_ADVANCE;
+  const radians = (Math.abs(angle) * Math.PI) / 180;
+  const bboxWidth = textWidth * Math.cos(radians) + scaledFontSize * Math.sin(radians);
+  const bboxHeight = textWidth * Math.sin(radians) + scaledFontSize * Math.cos(radians);
+
+  const spacingX = Math.max(tileSpacingX, Math.round(bboxWidth + GAP_X));
+  const spacingY = Math.max(tileSpacingY, Math.round(bboxHeight + GAP_Y));
+
   let textElements = '';
 
   // Extend beyond image bounds to cover after rotation
   const extendX = width * 0.5;
   const extendY = height * 0.5;
 
-  for (let y = -extendY; y < height + extendY; y += tileSpacingY) {
-    for (let x = -extendX; x < width + extendX; x += tileSpacingX) {
+  for (let y = -extendY; y < height + extendY; y += spacingY) {
+    for (let x = -extendX; x < width + extendX; x += spacingX) {
       textElements += `<text x="${x}" y="${y}" transform="rotate(${angle}, ${x}, ${y})" fill="rgba(${color}, ${opacity})" font-family="monospace" font-size="${scaledFontSize}" text-anchor="middle">${escapeXml(text)}</text>`;
     }
   }
