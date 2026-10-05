@@ -174,13 +174,17 @@ linksRouter.post('/v1/links', apiKeyAuth, rateLimiter('upload'), enforceUsageLim
   const expiresIn = body.expires_in as string | undefined;
   const expiresAtRaw = body.expires_at as string | undefined;
   const maxViews = body.max_views ? parseInt(body.max_views as string, 10) : null;
-  const requireEmail = body.require_email !== 'false' && body.require_email !== false;
+  // Email gate + watermark are MANDATORY on this deployment. The per-viewer watermark
+  // burned into the page pixels is the only protection that survives a screenshot, and
+  // it needs a viewer identity to attribute a leak. The request flags are accepted but
+  // intentionally ignored — see the matching enforcement in routes/views.ts.
+  const requireEmail: boolean = true;
   const allowedDomains = body.allowed_domains
     ? (typeof body.allowed_domains === 'string' ? safeJsonParse(body.allowed_domains, null) : body.allowed_domains)
     : null;
   const password = body.password as string | undefined;
   const blockDownload = body.block_download !== 'false' && body.block_download !== false;
-  const watermark = body.watermark !== 'false' && body.watermark !== false;
+  const watermark: boolean = true; // mandatory — see note above
   const watermarkTemplate = (body.watermark_template as string) || undefined;
   const notifyUrl = (body.notify_url as string) || null;
   const notifyEmail = (body.notify_email as string) || null;
@@ -346,8 +350,8 @@ linksRouter.post('/v1/links/bulk', apiKeyAuth, rateLimiter('upload'), enforceUsa
 
   // Shared options from top-level body
   const sharedOptions = {
-    require_email: body.require_email !== false,
-    watermark: body.watermark !== false,
+    require_email: true, // mandatory — see the direct-upload path
+    watermark: true, // mandatory — see the direct-upload path
     block_download: body.block_download !== false,
     expires_in: body.expires_in as string | undefined,
     max_views: body.max_views ? parseInt(body.max_views, 10) : null,

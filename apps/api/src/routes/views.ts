@@ -175,8 +175,10 @@ viewsRouter.post(
       }
     }
 
-    // Verify email requirement
-    if (link.requireEmail && !email) {
+    // Email is MANDATORY. The per-viewer watermark is burned into the page pixels and is
+    // the only protection that survives a screenshot, so an anonymous viewer would leave
+    // no attribution trail. Enforced regardless of the per-link flag.
+    if (!email) {
       return errorResponse(c, Errors.validation('Email is required'));
     }
 
@@ -358,22 +360,27 @@ viewsRouter.post(
           pages.push({ page: i + 1, url: watermarkedUrls[i] });
         }
       } catch (err) {
-        // Watermark rendering failed (e.g., clean images not yet available).
-        // Fall back to clean signed URLs.
-        logger.warn({ err, linkId }, 'Watermark rendering failed, falling back to clean pages');
-        for (let i = 1; i <= pageCount; i++) {
-          const r2Key = `renders/${linkId}/page-${i}.webp`;
-          const url = await storage.getSignedUrl(r2Key, 300);
-          pages.push({ page: i, url });
-        }
+        // FAIL CLOSED. Falling back to clean pages would silently strip the per-viewer
+        // watermark — i.e. the security control would disable itself exactly when it is
+        // needed. Refuse to serve instead.
+        logger.error({ err, linkId }, 'Watermark rendering failed — refusing to serve unwatermarked pages');
+        return errorResponse(
+          c,
+          Errors.internal('This document could not be prepared securely. Please try again in a moment.'),
+        );
       }
+    } else if (!link.watermarkEnabled) {
+      // Serving the clean pages would mean no attribution at all, so this is refused
+      // rather than silently downgraded.
+      logger.error({ linkId }, 'Refusing to serve a link with watermarking disabled');
+      return errorResponse(
+        c,
+        Errors.forbidden('This document is not configured for secure viewing. Contact the sender.'),
+      );
     } else {
-      // No watermark — serve clean images via signed URLs
-      for (let i = 1; i <= pageCount; i++) {
-        const r2Key = `renders/${linkId}/page-${i}.webp`;
-        const url = await storage.getSignedUrl(r2Key, 300);
-        pages.push({ page: i, url });
-      }
+      // Watermarking is enabled but no pages are rendered yet — the document is still
+      // processing. Tell the client to retry instead of serving anything unwatermarked.
+      return errorResponse(c, Errors.linkProcessing());
     }
 
     return successResponse(c, {
@@ -473,11 +480,12 @@ viewsRouter.get('/v1/viewer/:token/page/:pageNumber', async (c) => {
     : '';
 
   if (!link.watermarkEnabled || !watermarkText) {
-    // No watermark — return clean page URL
-    const storage = createStorage();
-    const cleanKey = `renders/${linkId}/page-${page}.webp`;
-    const url = await storage.getSignedUrl(cleanKey, 300);
-    return successResponse(c, { url, page });
+    // FAIL CLOSED — never hand out a clean page URL; that would remove all attribution.
+    logger.error({ linkId, page }, 'Refusing to serve an unwatermarked page');
+    return errorResponse(
+      c,
+      Errors.forbidden('This document is not configured for secure viewing. Contact the sender.'),
+    );
   }
 
   const signedUrl = await getWatermarkedPageOnDemand(
