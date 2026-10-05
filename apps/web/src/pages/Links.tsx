@@ -6,6 +6,8 @@ interface LinkItem {
   id: string;
   secure_url: string;
   name: string | null;
+  original_filename: string | null;
+  access_group_id: string | null;
   file_type: string;
   page_count: number;
   status: string;
@@ -110,8 +112,19 @@ export default function Links() {
                           to={`/dashboard/links/${link.id}`}
                           className="text-sm text-foreground font-sans font-medium hover:text-accent transition-colors duration-150"
                         >
-                          {link.name || <span className="font-mono text-text-secondary">{link.id}</span>}
+                          {link.original_filename || link.name || <span className="font-mono text-text-secondary">{link.id}</span>}
                         </Link>
+                        {link.name && link.original_filename && (
+                          <span className="block text-xs text-text-tertiary font-sans mt-0.5">{link.name}</span>
+                        )}
+                        {link.access_group_id && (
+                          <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-sans text-accent">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            Restricted
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1.5">
