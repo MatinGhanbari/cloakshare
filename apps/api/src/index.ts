@@ -80,7 +80,7 @@ app.use('*', cors({
     : [config.viewerUrl, config.apiUrl, ...config.corsOrigins],
   credentials: true,
   allowHeaders: ['Content-Type', 'Authorization', 'X-Session-Token', 'X-Org-Id', 'X-Request-Id'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
 // Global security headers
