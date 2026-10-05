@@ -4,6 +4,8 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
+    "build:prod": "pnpm --filter @cloak/shared build && pnpm --filter @cloak/web build && pnpm --filter @cloak/viewer build && pnpm --filter @cloak/api build && pnpm --filter @cloak/api build:migrate && node scripts/assemble-api-public.mjs",
+    "start:prod": "cd apps/api && node dist/db/migrate.js && node dist/index.js",
     "lint": "turbo lint",
     "lint:root": "eslint .",
     "format": "prettier --write .",

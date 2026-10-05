@@ -7,6 +7,8 @@ dist/
 .pnpmfile.cjs
 .claude/
 apps/api/data/
+# Assembled at build time by scripts/assemble-api-public.mjs — never committed.
+apps/api/public/
 
 .env
 .env.*

@@ -38,21 +38,12 @@ COPY packages/shared/ ./packages/shared/
 COPY apps/api/ ./apps/api/
 COPY apps/web/ ./apps/web/
 COPY apps/viewer/ ./apps/viewer/
+COPY scripts/ ./scripts/
 
-# Build shared first, then the two frontends, then the API
-RUN pnpm --filter @cloak/shared build \
- && pnpm --filter @cloak/web build \
- && pnpm --filter @cloak/viewer build \
- && pnpm --filter @cloak/api build
-
-# Assemble the built frontends into the API's public dir so the single API process can
-# serve them from the same origin at /dashboard (dashboard) and /v (viewer).
-RUN mkdir -p apps/api/public/dashboard apps/api/public/viewer \
- && cp -r apps/web/dist/. apps/api/public/dashboard/ \
- && cp -r apps/viewer/dist/. apps/api/public/viewer/
-
-# Build the migration runner separately (tsup only bundles index.ts)
-RUN cd apps/api && npx tsup src/db/migrate.ts --format esm --outDir dist/db
+# Build shared -> web -> viewer -> api, bundle the migration runner, and assemble the built
+# frontends into apps/api/public so the one API process serves /dashboard and /v from the same
+# origin. Expressed as a repo script (not inline) so this build and the Render build cannot drift.
+RUN pnpm build:prod
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
@@ -62,4 +53,4 @@ EXPOSE 3000
 
 # Use tini as init to reap zombie LibreOffice processes
 ENTRYPOINT ["tini", "--"]
-CMD ["sh", "-c", "cd apps/api && node dist/db/migrate.js && cd /app && node apps/api/dist/index.js"]
+CMD ["sh", "-c", "pnpm start:prod"]
