@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq, and, sql, like } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { db } from '../db/client.js';
-import { links, views, viewerSessions, users } from '../db/schema.js';
+import { links, views, viewerSessions, users, viewerGroups, viewerCredentials } from '../db/schema.js';
 import { generateId, generateToken, sha256, getClientIp, parseUserAgent, formatDateForWatermark, renderWatermarkTemplate } from '../lib/utils.js';
 import { Errors, errorResponse, successResponse } from '../lib/errors.js';
 import { rateLimitByIp } from '../middleware/rateLimit.js';
@@ -97,10 +97,23 @@ viewsRouter.get('/v1/viewer/:token', async (c) => {
   const linkOwner = await db.select({ plan: users.plan }).from(users).where(eq(users.id, link.userId)).get();
   const showBadge = !linkOwner || linkOwner.plan === 'free';
 
+  // Restricted links: the viewer signs in with a group credential instead of an email.
+  let accessGroupName: string | null = null;
+  if (link.accessGroupId) {
+    const group = await db
+      .select({ name: viewerGroups.name })
+      .from(viewerGroups)
+      .where(eq(viewerGroups.id, link.accessGroupId))
+      .get();
+    accessGroupName = group?.name ?? null;
+  }
+
   return successResponse(c, {
     status: link.status,
     file_type: link.fileType,
     require_email: link.requireEmail,
+    requires_credentials: !!link.accessGroupId,
+    access_group_name: accessGroupName,
     has_password: !!link.passwordHash,
     allowed_domains: safeJsonParse(link.allowedDomains, null),
     page_count: link.pageCount,
@@ -133,7 +146,7 @@ viewsRouter.post(
   }),
   async (c) => {
     const linkId = c.req.param('token');
-    const { email, password } = await c.req.json();
+    const { email, password, student_id, national_id } = await c.req.json();
 
     const link = await db
       .select()
@@ -175,12 +188,43 @@ viewsRouter.post(
       }
     }
 
-    // Email is MANDATORY. The per-viewer watermark is burned into the page pixels and is
-    // the only protection that survives a screenshot, so an anonymous viewer would leave
-    // no attribution trail. Enforced regardless of the per-link flag.
-    if (!email) {
+    // Restricted link: the viewer signs in with a group credential — student ID as the
+    // username, national ID as the password — instead of an email address.
+    let credentialIdentity: string | null = null;
+    if (link.accessGroupId) {
+      const studentId = String(student_id ?? '').trim();
+      const nationalId = String(national_id ?? '').trim();
+      if (!studentId || !nationalId) {
+        return errorResponse(c, Errors.validation('Student ID and national ID are required'));
+      }
+
+      const credential = await db
+        .select()
+        .from(viewerCredentials)
+        .where(
+          and(
+            eq(viewerCredentials.groupId, link.accessGroupId),
+            eq(viewerCredentials.studentId, studentId),
+          ),
+        )
+        .get();
+
+      // Identical response for "unknown student ID" and "wrong national ID" so the
+      // endpoint cannot be used to enumerate which student IDs are authorized.
+      if (!credential || !(await bcrypt.compare(nationalId, credential.nationalIdHash))) {
+        logger.warn({ linkId, studentId }, 'Rejected viewer credential');
+        return errorResponse(c, Errors.unauthorized('Student ID or national ID is incorrect'));
+      }
+      credentialIdentity = credential.studentId;
+    } else if (!email) {
+      // Email is MANDATORY for public links. The per-viewer watermark is burned into the
+      // page pixels and is the only protection that survives a screenshot, so an
+      // anonymous viewer would leave no attribution trail.
       return errorResponse(c, Errors.validation('Email is required'));
     }
+
+    // The identity that gets burned into the watermark and recorded against the view.
+    const viewerIdentity: string | null = credentialIdentity ?? email ?? null;
 
     // Verify allowed domains
     if (link.allowedDomains && email) {
@@ -213,7 +257,7 @@ viewsRouter.post(
     await db.insert(viewerSessions).values({
       id: generateId('vs'),
       linkId,
-      viewerEmail: email || 'anonymous',
+      viewerEmail: viewerIdentity || 'anonymous',
       token: sessionTokenHash,
       expiresAt,
       ipAddress: getClientIp(c.req.raw.headers),
@@ -227,7 +271,7 @@ viewsRouter.post(
     await db.insert(views).values({
       id: viewId,
       linkId,
-      viewerEmail: email || null,
+      viewerEmail: viewerIdentity ?? null,
       viewerIp: getClientIp(c.req.raw.headers),
       viewerUserAgent: ua,
       viewerCountry: c.req.header('cf-ipcountry') || null,
@@ -248,7 +292,7 @@ viewsRouter.post(
       ? renderWatermarkTemplate(
           link.watermarkTemplate || '{{email}} · {{date}} · {{session_id}}',
           {
-            email: email || 'anonymous',
+            email: viewerIdentity || 'anonymous',
             date: formatDateForWatermark(),
             session_id: sessionShortId,
           },
@@ -257,14 +301,14 @@ viewsRouter.post(
 
     logger.info({
       linkId,
-      viewerEmail: email,
+      viewerEmail: viewerIdentity,
       viewId,
       device,
     }, 'View session started');
 
     // Fire webhook: link.viewed (async, non-blocking)
     dispatchWebhook(linkId, 'link.viewed', {
-      viewer_email: email || 'anonymous',
+      viewer_email: viewerIdentity || 'anonymous',
       view_id: viewId,
       device,
       country: c.req.header('cf-ipcountry') || null,
@@ -279,7 +323,7 @@ viewsRouter.post(
       linkName: link.name || link.originalFilename || link.id,
       message: `${email || 'Anonymous'} viewed "${link.name || link.originalFilename || 'your link'}"`,
       metadata: {
-        viewer_email: email || 'anonymous',
+        viewer_email: viewerIdentity || 'anonymous',
         view_id: viewId,
         device,
         country: c.req.header('cf-ipcountry') || null,
@@ -298,7 +342,7 @@ viewsRouter.post(
           ownerEmail: link.notifyEmail || owner.email,
           linkName: link.name || link.originalFilename || link.id,
           linkId,
-          viewerEmail: email || 'anonymous',
+          viewerEmail: viewerIdentity || 'anonymous',
           viewerDevice: device,
           viewerCountry: c.req.header('cf-ipcountry') || null,
         }).catch((err) => logger.warn({ err }, 'View notification email failed'));
@@ -321,7 +365,7 @@ viewsRouter.post(
 
       return successResponse(c, {
         session_token: sessionToken,
-        viewer_email: email || 'anonymous',
+        viewer_email: viewerIdentity || 'anonymous',
         file_type: 'video',
         master_playlist_url: masterPlaylistUrl,
         session_manifest: sessionManifestContent,
@@ -385,7 +429,7 @@ viewsRouter.post(
 
     return successResponse(c, {
       session_token: sessionToken,
-      viewer_email: email || 'anonymous',
+      viewer_email: viewerIdentity || 'anonymous',
       pages,
       page_count: pageCount,
       watermark_text: watermarkText,
