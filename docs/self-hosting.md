@@ -54,7 +54,7 @@ openssl rand -hex 32  # Use output for each secret below
 | `PORT` | `3000` | HTTP port |
 | `NODE_ENV` | `development` | Set to `production` for production deployments |
 | `API_URL` | `http://localhost:3000` | Public API URL (used for signed URLs) |
-| `VIEWER_URL` | `http://localhost:5173` | Public viewer URL |
+| `VIEWER_URL` | `http://localhost:3000` | Public viewer URL |
 | `DASHBOARD_URL` | `http://localhost:5174` | Public dashboard URL |
 | `CLOAK_MODE` | `self-hosted` | Must be `self-hosted` |
 

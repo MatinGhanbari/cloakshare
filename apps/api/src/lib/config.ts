@@ -7,8 +7,8 @@ export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   apiUrl: process.env.API_URL || 'http://localhost:3000',
-  viewerUrl: process.env.VIEWER_URL || 'http://localhost:5173',
-  dashboardUrl: process.env.DASHBOARD_URL || process.env.WEB_URL || 'http://localhost:5174',
+  viewerUrl: process.env.VIEWER_URL || 'http://localhost:3000',
+  dashboardUrl: process.env.DASHBOARD_URL || process.env.WEB_URL || 'http://localhost:3000',
   apiVersion: 'v1',
 
   // Mode
