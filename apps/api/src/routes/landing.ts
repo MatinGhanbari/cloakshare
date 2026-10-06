@@ -34,6 +34,11 @@ const LANDING_HTML = `<!doctype html>
   --accent: #00ff88;
   --accent-ink: #04160e;
   --radius: 12px;
+  /*
+   * The wordmark only. A serif against the sans body and the mono labels gives the brand its own
+   * voice, and these faces already ship with macOS and Windows, so nothing is downloaded.
+   */
+  --font-brand: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
 }
 
 /* Light palette. The media query covers the first visit and the no-script case; the
@@ -149,10 +154,10 @@ a { color: inherit; }
 }
 
 .brand {
-  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-brand);
+  font-size: 1.3125rem;
   font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
   text-decoration: none;
   margin-right: auto;
 }
@@ -469,9 +474,11 @@ a { color: inherit; }
 }
 
 .foot-title {
-  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-brand);
+  font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  letter-spacing: -0.012em;
+  margin-bottom: 6px;
 }
 
 .foot-note { font-size: 0.8125rem; color: var(--muted); }
