@@ -279,6 +279,23 @@ export const VIEWER_STYLES = /* css */ `
   touch-action: pan-y;
 }
 
+/* Capture guard: a blur layer over the page while the window is not being looked at (another
+   tab, another app, or just after a PrintScreen press), so a capture taken in that window
+   shows the document's shape but none of its content. */
+.capture-blur {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(9, 9, 11, 0.45);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.viewer-body.capture-guard .capture-blur {
+  display: block;
+}
+
 .viewer-canvas {
   display: block;
   max-width: 100%;
@@ -469,6 +486,10 @@ export const VIEWER_STYLES = /* css */ `
 
 :host([theme="light"]) .branding-badge svg {
   color: #059669;
+}
+
+:host([theme="light"]) .capture-blur {
+  background: rgba(244, 244, 245, 0.45);
 }
 
 /* ── Reduced Motion ──────────────────────────── */

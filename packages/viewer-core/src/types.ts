@@ -41,6 +41,18 @@ export interface ScriniumErrorEvent {
   details?: string;
 }
 
+/** Why a client-side capture guard flagged the viewer. */
+export type CaptureReason = 'printscreen' | 'tab-hidden' | 'fullscreen-exit';
+
+/** Emitted when a client-side guard suspects a screenshot or screen capture. */
+export interface ScriniumCaptureEvent {
+  reason: CaptureReason;
+  page: number;
+  email: string | null;
+  sessionId: string;
+  timestamp: string;
+}
+
 export type ScriniumErrorCode =
   | 'LOAD_FAILED'
   | 'PARSE_FAILED'

@@ -192,6 +192,11 @@ let videoMaxReached = 0;
 let videoLastTrackTime = 0;
 let videoWatermarkRaf = 0;
 
+// Capture guards (best-effort screenshot deterrence)
+type CaptureReason = 'printscreen' | 'tab-hidden' | 'fullscreen-exit';
+const CAPTURE_HOLD_MS = 1200;
+let captureTimer: number | undefined;
+
 // ============================================
 // ROUTING
 // ============================================
@@ -847,6 +852,62 @@ function setupProtections() {
 }
 
 // ============================================
+// CAPTURE GUARDS (best-effort screenshot deterrence)
+// ============================================
+
+/**
+ * A browser cannot stop an OS screenshot, and every signal here has false positives: a reader who
+ * switches tabs or clicks the address bar is not necessarily capturing. So the guard only hides
+ * the page while the window is not being looked at and reports the suspicion as a `cloak:capture`
+ * DOM event — it never claims to have blocked a capture.
+ *
+ * The obscured pixels are the page and the video; the surrounding chrome stays so the reader can
+ * still see that the viewer is alive. Nothing is sent to the server: `/v1/viewer/:token/track`
+ * has no field for it, so reporting is left to the host page listening for the event.
+ */
+function setupCaptureGuards() {
+  const flag = (reason: CaptureReason, holdUntilFocus = false) => {
+    window.dispatchEvent(new CustomEvent('cloak:capture', { detail: { reason } }));
+    obscure();
+    /* A tab-hidden guard is cleared by the matching `visible` event; the timer is only a
+       backstop for the signals that have no reliable end event (PrintScreen, fullscreen exit). */
+    if (!holdUntilFocus) {
+      window.clearTimeout(captureTimer);
+      captureTimer = window.setTimeout(reveal, CAPTURE_HOLD_MS);
+    }
+  };
+
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      // `key` on modern engines, the legacy keyCode on older ones. macOS fires neither.
+      if (e.key === 'PrintScreen' || e.keyCode === 44) flag('printscreen');
+    },
+    true,
+  );
+  document.addEventListener('visibilitychange', () =>
+    document.hidden ? flag('tab-hidden', true) : reveal(),
+  );
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) flag('fullscreen-exit');
+  });
+  // Blur/focus drive the hiding only. Reporting them would double every tab switch, because
+  // `visibilitychange` fires alongside `blur`.
+  window.addEventListener('blur', obscure);
+  window.addEventListener('focus', reveal);
+}
+
+/** Raise the blur layer over the page. */
+function obscure() {
+  document.body.classList.add('capture-guard');
+}
+
+function reveal() {
+  window.clearTimeout(captureTimer);
+  document.body.classList.remove('capture-guard');
+}
+
+// ============================================
 // PRELOAD PAGES
 // ============================================
 
@@ -1455,4 +1516,5 @@ async function init() {
 // Boot — apply the theme first so the gate and the viewer paint in the right palette.
 initTheme();
 setupThemeToggle();
+setupCaptureGuards();
 init();

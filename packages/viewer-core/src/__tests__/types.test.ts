@@ -5,6 +5,8 @@ import type {
   ScriniumReadyEvent,
   ScriniumErrorEvent,
   ScriniumErrorCode,
+  ScriniumCaptureEvent,
+  CaptureReason,
 } from '../types.js';
 
 describe('type exports', () => {
@@ -58,5 +60,18 @@ describe('type exports', () => {
       'RENDER_ERROR',
     ];
     expectTypeOf(codes).toEqualTypeOf<ScriniumErrorCode[]>();
+  });
+
+  it('ScriniumCaptureEvent has expected shape', () => {
+    expectTypeOf<ScriniumCaptureEvent>().toHaveProperty('reason');
+    expectTypeOf<ScriniumCaptureEvent>().toHaveProperty('page');
+    expectTypeOf<ScriniumCaptureEvent>().toHaveProperty('email');
+    expectTypeOf<ScriniumCaptureEvent>().toHaveProperty('sessionId');
+    expectTypeOf<ScriniumCaptureEvent>().toHaveProperty('timestamp');
+  });
+
+  it('CaptureReason covers every reported guard signal', () => {
+    const reasons: CaptureReason[] = ['printscreen', 'tab-hidden', 'fullscreen-exit'];
+    expectTypeOf(reasons).toEqualTypeOf<CaptureReason[]>();
   });
 });

@@ -5,7 +5,12 @@ import {
   createWatermarkCanvas,
   updateWatermark,
 } from './watermark.js';
-import type { ScriniumErrorCode, ScriniumViewEvent } from './types.js';
+import type {
+  CaptureReason,
+  ScriniumCaptureEvent,
+  ScriniumErrorCode,
+  ScriniumViewEvent,
+} from './types.js';
 
 // ── SVG Icons ───────────────────────────────────────────────────────────────
 
@@ -66,6 +71,9 @@ function storeEmail(email: string): void {
 
 // ── Component ───────────────────────────────────────────────────────────────
 
+/** How long the page stays hidden after a capture signal with no reliable "end" event. */
+const CAPTURE_HOLD_MS = 1200;
+
 export class ScriniumViewerElement extends HTMLElement {
   static get observedAttributes() {
     return [...OBSERVED];
@@ -112,11 +120,20 @@ export class ScriniumViewerElement extends HTMLElement {
   private _keydownHandler?: (e: Event) => void;
   private _contextMenuHandler?: (e: Event) => void;
   private _dragStartHandler?: (e: Event) => void;
+  private _captureHandlers?: {
+    keydown: (e: KeyboardEvent) => void;
+    visibility: () => void;
+    fullscreen: () => void;
+    blur: () => void;
+    focus: () => void;
+  };
+  private _captureTimer?: ReturnType<typeof setTimeout>;
 
   connectedCallback() {
     if (!this.initialized) {
       this.applySize();
       this.setupProtections();
+      this.setupCaptureGuards();
       this.setupKeyboardNav();
       this.setupSwipe();
       this.setupResizeObserver();
@@ -150,6 +167,18 @@ export class ScriniumViewerElement extends HTMLElement {
       this.$canvas.removeEventListener('dragstart', this._dragStartHandler);
       this._dragStartHandler = undefined;
     }
+
+    // Clean up capture guards
+    if (this._captureHandlers) {
+      const h = this._captureHandlers;
+      document.removeEventListener('keydown', h.keydown, true);
+      document.removeEventListener('visibilitychange', h.visibility);
+      document.removeEventListener('fullscreenchange', h.fullscreen);
+      window.removeEventListener('blur', h.blur);
+      window.removeEventListener('focus', h.focus);
+      this._captureHandlers = undefined;
+    }
+    clearTimeout(this._captureTimer);
 
     // Allow re-initialization if re-connected
     this.initialized = false;
@@ -229,6 +258,7 @@ export class ScriniumViewerElement extends HTMLElement {
           <div class="canvas-container">
             <canvas class="viewer-canvas"></canvas>
           </div>
+          <div class="capture-blur" aria-hidden="true"></div>
         </div>
         <a class="branding-badge" href="https://cloakshare.dev" target="_blank" rel="noopener" aria-label="Secured by Scrinium">
           ${ICON_SHIELD}
@@ -797,6 +827,69 @@ export class ScriniumViewerElement extends HTMLElement {
     this.$canvas.addEventListener('dragstart', this._dragStartHandler);
     this.$canvas.style.userSelect = 'none';
     this.$canvas.style.webkitUserSelect = 'none';
+  }
+
+  // ── Capture guards ──────────────────────────────────────────────────────
+
+  /**
+   * Best-effort screenshot deterrence.
+   *
+   * A browser cannot stop an OS screenshot, and every signal here has false positives: a reader
+   * who switches tabs or clicks the address bar is not necessarily capturing. So the guard only
+   * hides the page while the window is not being looked at and reports the suspicion on
+   * `cloak:capture` — it never claims to have blocked a capture.
+   */
+  private setupCaptureGuards() {
+    const keydown = (e: KeyboardEvent) => {
+      /* `key` on modern engines, the legacy keyCode on older ones. macOS fires neither. */
+      if (e.key === 'PrintScreen' || e.keyCode === 44) this.flagCapture('printscreen');
+    };
+    const visibility = () =>
+      document.hidden ? this.flagCapture('tab-hidden', true) : this.reveal();
+    const fullscreen = () => {
+      if (!document.fullscreenElement) this.flagCapture('fullscreen-exit');
+    };
+    /* Blur/focus drive the hiding only. Reporting them would double every tab switch, because
+       `visibilitychange` fires alongside `blur`. */
+    const blur = () => this.obscure();
+    const focus = () => this.reveal();
+
+    document.addEventListener('keydown', keydown, true);
+    document.addEventListener('visibilitychange', visibility);
+    document.addEventListener('fullscreenchange', fullscreen);
+    window.addEventListener('blur', blur);
+    window.addEventListener('focus', focus);
+    this._captureHandlers = { keydown, visibility, fullscreen, blur, focus };
+  }
+
+  /** Report a suspected capture and hide the page. */
+  private flagCapture(reason: CaptureReason, holdUntilFocus = false) {
+    const detail: ScriniumCaptureEvent = {
+      reason,
+      page: this.currentPage,
+      email: this.viewerEmail,
+      sessionId: this.sessionId,
+      timestamp: new Date().toISOString(),
+    };
+    this.dispatchEvent(new CustomEvent('cloak:capture', { detail, bubbles: true, composed: true }));
+
+    this.obscure();
+    /* A tab-hidden guard is cleared by the matching `visible` event; the timer is only a
+       backstop for the signals that have no reliable end event (PrintScreen, fullscreen exit). */
+    if (!holdUntilFocus) {
+      clearTimeout(this._captureTimer);
+      this._captureTimer = setTimeout(() => this.reveal(), CAPTURE_HOLD_MS);
+    }
+  }
+
+  /** Raise the blur layer over the page. */
+  private obscure() {
+    this.$viewerBody.classList.add('capture-guard');
+  }
+
+  private reveal() {
+    clearTimeout(this._captureTimer);
+    this.$viewerBody.classList.remove('capture-guard');
   }
 
   // ── Touch / Swipe / Pinch-to-Zoom ──────────────────────────────────────

@@ -14,6 +14,8 @@ export type {
   ScriniumReadyEvent,
   ScriniumErrorEvent,
   ScriniumErrorCode,
+  ScriniumCaptureEvent,
+  CaptureReason,
 } from './types.js';
 
 // Auto-register the custom element
