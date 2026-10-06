@@ -7,7 +7,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
-import { MorphGlyph, glyph, type ActionStatus, type IconInput } from './morph';
+import { MorphGlyph, glyph, useActionStatus, type ActionStatus, type IconInput } from './morph';
 
 /** Tiny class joiner. Avoids pulling in a dependency for three lines of logic. */
 export function cx(...parts: Array<string | false | null | undefined>): string {
@@ -670,9 +670,18 @@ export function StatTile({
   );
 }
 
-/** Read-only value with an inline copy affordance. Owns its own "Copied" state. */
+/**
+ * Read-only value with an inline copy affordance. Owns its own "Copied" state.
+ *
+ * A URL value also gets an "Open" button. It morphs to a spinner for a beat before the tab
+ * opens, so the press is acknowledged on the page you are leaving. Non-URL values (API keys)
+ * get no such button: opening a key in a tab is meaningless, and this is the only signal
+ * CopyField has to tell the two apart.
+ */
 export function CopyField({ value, className }: { value: string; className?: string }) {
   const [copied, setCopied] = useState(false);
+  const open = useActionStatus();
+  const isUrl = /^https?:\/\//i.test(value);
 
   const copy = async () => {
     try {
@@ -704,6 +713,25 @@ export function CopyField({ value, className }: { value: string; className?: str
       >
         {copied ? 'Copied' : 'Copy'}
       </Button>
+      {isUrl && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          status={open.status}
+          icon={glyph.external}
+          onClick={() =>
+            void open.run(async () => {
+              /* 300ms is well inside the browser's transient-activation window (~5s), so the
+                 tab opens despite leaving the click handler. */
+              await new Promise((resolve) => setTimeout(resolve, 300));
+              window.open(value, '_blank', 'noopener,noreferrer');
+            })
+          }
+        >
+          Open
+        </Button>
+      )}
     </div>
   );
 }
