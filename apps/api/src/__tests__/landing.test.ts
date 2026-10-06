@@ -32,4 +32,10 @@ describe('Landing page', () => {
     expect(res.status).toBe(302);
     expect(res.headers.get('location')).toBe('/dashboard/');
   });
+
+  it('ships the theme toggle and its storage key', async () => {
+    const html = await (await app.request('/')).text();
+    expect(html).toContain('id="theme-toggle"');
+    expect(html).toContain("localStorage.getItem(KEY)");
+  });
 });

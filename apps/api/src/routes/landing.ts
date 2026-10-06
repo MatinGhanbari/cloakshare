@@ -36,8 +36,10 @@ const LANDING_HTML = `<!doctype html>
   --radius: 12px;
 }
 
+/* Light palette. The media query covers the first visit and the no-script case; the
+   [data-theme='light'] block is what the header toggle sets. */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme='dark']) {
     --bg: #f7f9fa;
     --surface: #ffffff;
     --border: #dde4ea;
@@ -47,6 +49,17 @@ const LANDING_HTML = `<!doctype html>
     --accent: #00803f;
     --accent-ink: #ffffff;
   }
+}
+
+:root[data-theme='light'] {
+  --bg: #f7f9fa;
+  --surface: #ffffff;
+  --border: #dde4ea;
+  --border-soft: #eaeff3;
+  --text: #0d1218;
+  --muted: #5c6673;
+  --accent: #00803f;
+  --accent-ink: #ffffff;
 }
 
 * { box-sizing: border-box; }
@@ -130,14 +143,39 @@ a { color: inherit; }
   font-size: 1rem;
   letter-spacing: -0.01em;
   text-decoration: none;
+  margin-right: auto;
 }
 
 .site-nav {
   display: flex;
   gap: 22px;
-  margin-right: auto;
   font-size: 0.875rem;
 }
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Two classes, not one: .btn sets padding, and it is defined further down the sheet, so a
+   single-class .theme-toggle would lose the cascade and squeeze the icon to nothing. */
+.btn.theme-toggle {
+  width: 40px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.btn.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.theme-icon-sun { display: none; }
+
+:root[data-theme='light'] .theme-icon-sun { display: block; }
+:root[data-theme='light'] .theme-icon-moon { display: none; }
 
 .site-nav a {
   color: var(--muted);
@@ -157,6 +195,9 @@ a { color: inherit; }
   padding: 0 18px;
   border-radius: 8px;
   border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
@@ -429,6 +470,48 @@ a { color: inherit; }
   * { transition: none !important; }
 }
 </style>
+<script>
+(function () {
+  var KEY = 'scrinium-theme';
+  var root = document.documentElement;
+
+  function preferred() {
+    try {
+      var saved = localStorage.getItem(KEY);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch (e) { /* storage blocked */ }
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function current() {
+    var set = root.getAttribute('data-theme');
+    return set === 'dark' || set === 'light' ? set : preferred();
+  }
+
+  function relabel() {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    var next = current() === 'dark' ? 'light' : 'dark';
+    btn.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+    btn.setAttribute('title', 'Switch to ' + next + ' theme');
+  }
+
+  // Resolved here, before the body paints, so the stored choice never flashes the wrong palette.
+  root.setAttribute('data-theme', preferred());
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    relabel();
+    btn.addEventListener('click', function () {
+      var next = current() === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem(KEY, next); } catch (e) { /* storage blocked */ }
+      relabel();
+    });
+  });
+})();
+</script>
 </head>
 <body>
 
@@ -440,7 +523,13 @@ a { color: inherit; }
       <a href="#features">Features</a>
       <a href="#protections">Protections</a>
     </nav>
-    <a class="btn btn-primary" href="/dashboard/">Open dashboard</a>
+    <div class="head-actions">
+      <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" aria-label="Switch theme">
+        <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <a class="btn btn-primary" href="/dashboard/">Open dashboard</a>
+    </div>
   </div>
 </header>
 
