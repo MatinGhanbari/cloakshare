@@ -172,10 +172,28 @@ a { color: inherit; }
   flex-shrink: 0;
 }
 
-.theme-icon-sun { display: none; }
+/* Sun and moon are one drawing, not two glyphs. The disc stays put while a masked "bite" slides
+   out of it and the rays grow in, so the icon morphs between the two states. */
+.theme-bite,
+.theme-rays {
+  transition: transform 380ms cubic-bezier(0.34, 1.35, 0.5, 1), opacity 200ms ease;
+}
 
-:root[data-theme='light'] .theme-icon-sun { display: block; }
-:root[data-theme='light'] .theme-icon-moon { display: none; }
+.theme-rays {
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  transform: scale(0.5);
+}
+
+:root[data-theme='light'] .theme-bite {
+  transform: translate(11px, -11px);
+}
+
+:root[data-theme='light'] .theme-rays {
+  opacity: 1;
+  transform: scale(1);
+}
 
 .site-nav a {
   color: var(--muted);
@@ -525,8 +543,25 @@ a { color: inherit; }
     </nav>
     <div class="head-actions">
       <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" aria-label="Switch theme">
-        <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-        <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <mask id="theme-moon-mask">
+              <rect width="24" height="24" fill="#fff"/>
+              <circle class="theme-bite" cx="15.5" cy="8.5" r="5.5" fill="#000"/>
+            </mask>
+          </defs>
+          <circle class="theme-disc" cx="12" cy="12" r="5.5" fill="currentColor" mask="url(#theme-moon-mask)"/>
+          <g class="theme-rays" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <line x1="12" y1="1.5" x2="12" y2="4.5"/>
+            <line x1="12" y1="19.5" x2="12" y2="22.5"/>
+            <line x1="1.5" y1="12" x2="4.5" y2="12"/>
+            <line x1="19.5" y1="12" x2="22.5" y2="12"/>
+            <line x1="4.58" y1="4.58" x2="6.7" y2="6.7"/>
+            <line x1="17.3" y1="17.3" x2="19.42" y2="19.42"/>
+            <line x1="4.58" y1="19.42" x2="6.7" y2="17.3"/>
+            <line x1="17.3" y1="6.7" x2="19.42" y2="4.58"/>
+          </g>
+        </svg>
       </button>
       <a class="btn btn-primary" href="/dashboard/">Open dashboard</a>
     </div>
