@@ -39,6 +39,7 @@ import notificationsRouter from './routes/notifications.js';
 import demoRouter from './routes/demo.js';
 import docsRouter from './routes/docs.js';
 import publicRouter from './routes/public.js';
+import landingRouter from './routes/landing.js';
 
 // Workers
 import { startRenderWorker, stopRenderWorker } from './workers/renderer.js';
@@ -369,8 +370,9 @@ try {
   viewerIndex = '';
 }
 
-// Root → dashboard
-app.get('/', (c) => c.redirect('/dashboard/', 302));
+// Root → the project landing page (routes/landing.ts). It used to redirect straight to the
+// dashboard; the landing is now the entry point and links there instead.
+app.route('/', landingRouter);
 app.get('/dashboard', (c) => c.redirect('/dashboard/', 302));
 
 // Dashboard SPA (Vite base /dashboard/). Only registered when a build is present, so the
