@@ -64,6 +64,17 @@ const LANDING_HTML = `<!doctype html>
 
 * { box-sizing: border-box; }
 
+/*
+ * A theme switch repaints every surface in the same frame, which reads as a flash. Transitioning
+ * the colour properties only (never layout) lets the change settle instead. Elements with their
+ * own transition, such as the buttons and the rays, keep theirs: a more specific rule replaces it.
+ */
+*,
+*::before,
+*::after {
+  transition: background-color 260ms ease, border-color 260ms ease, color 260ms ease;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -172,22 +183,14 @@ a { color: inherit; }
   flex-shrink: 0;
 }
 
-/* Sun and moon are one drawing, not two glyphs. The disc stays put while a masked "bite" slides
-   out of it and the rays grow in, so the icon morphs between the two states. */
-.theme-bite,
-.theme-rays {
-  transition: transform 380ms cubic-bezier(0.34, 1.35, 0.5, 1), opacity 200ms ease;
-}
-
+/* The disc is a single path interpolated between Lucide's Sun circle and Moon crescent by the
+   script at the end of the body. The rays are a separate group that grows in as it opens up. */
 .theme-rays {
   opacity: 0;
   transform-box: view-box;
   transform-origin: 50% 50%;
-  transform: scale(0.5);
-}
-
-:root[data-theme='light'] .theme-bite {
-  transform: translate(11px, -11px);
+  transform: scale(0.55);
+  transition: transform 380ms cubic-bezier(0.34, 1.35, 0.5, 1), opacity 220ms ease;
 }
 
 :root[data-theme='light'] .theme-rays {
@@ -489,45 +492,15 @@ a { color: inherit; }
 }
 </style>
 <script>
+/* Resolved before the body paints, so a stored choice never flashes the wrong palette. The
+   toggle itself is wired at the end of the body, once the icon it animates exists. */
 (function () {
-  var KEY = 'scrinium-theme';
-  var root = document.documentElement;
-
-  function preferred() {
-    try {
-      var saved = localStorage.getItem(KEY);
-      if (saved === 'dark' || saved === 'light') return saved;
-    } catch (e) { /* storage blocked */ }
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  var saved = null;
+  try { saved = localStorage.getItem('scrinium-theme'); } catch (e) { /* storage blocked */ }
+  if (saved !== 'dark' && saved !== 'light') {
+    saved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   }
-
-  function current() {
-    var set = root.getAttribute('data-theme');
-    return set === 'dark' || set === 'light' ? set : preferred();
-  }
-
-  function relabel() {
-    var btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    var next = current() === 'dark' ? 'light' : 'dark';
-    btn.setAttribute('aria-label', 'Switch to ' + next + ' theme');
-    btn.setAttribute('title', 'Switch to ' + next + ' theme');
-  }
-
-  // Resolved here, before the body paints, so the stored choice never flashes the wrong palette.
-  root.setAttribute('data-theme', preferred());
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    relabel();
-    btn.addEventListener('click', function () {
-      var next = current() === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      try { localStorage.setItem(KEY, next); } catch (e) { /* storage blocked */ }
-      relabel();
-    });
-  });
+  document.documentElement.setAttribute('data-theme', saved);
 })();
 </script>
 </head>
@@ -543,23 +516,17 @@ a { color: inherit; }
     </nav>
     <div class="head-actions">
       <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" aria-label="Switch theme">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <defs>
-            <mask id="theme-moon-mask">
-              <rect width="24" height="24" fill="#fff"/>
-              <circle class="theme-bite" cx="15.5" cy="8.5" r="5.5" fill="#000"/>
-            </mask>
-          </defs>
-          <circle class="theme-disc" cx="12" cy="12" r="5.5" fill="currentColor" mask="url(#theme-moon-mask)"/>
-          <g class="theme-rays" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <line x1="12" y1="1.5" x2="12" y2="4.5"/>
-            <line x1="12" y1="19.5" x2="12" y2="22.5"/>
-            <line x1="1.5" y1="12" x2="4.5" y2="12"/>
-            <line x1="19.5" y1="12" x2="22.5" y2="12"/>
-            <line x1="4.58" y1="4.58" x2="6.7" y2="6.7"/>
-            <line x1="17.3" y1="17.3" x2="19.42" y2="19.42"/>
-            <line x1="4.58" y1="19.42" x2="6.7" y2="17.3"/>
-            <line x1="17.3" y1="6.7" x2="19.42" y2="4.58"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path class="theme-morph" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>
+          <g class="theme-rays">
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+            <path d="m4.93 4.93 1.41 1.41"/>
+            <path d="m17.66 17.66 1.41 1.41"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="m6.34 17.66-1.41 1.41"/>
+            <path d="m19.07 4.93-1.41 1.41"/>
           </g>
         </svg>
       </button>
@@ -780,6 +747,127 @@ a { color: inherit; }
     </div>
   </div>
 </footer>
+
+<script>
+/*
+ * Theme toggle, and the morph between Lucide's Sun and Moon.
+ *
+ * morphicons is a build-time dependency of the dashboard and is not reachable from this page, so
+ * the two icons are interpolated here instead: both paths are sampled with the browser's own
+ * getPointAtLength, the loops are aligned, and the morph lerps between the two point lists. The
+ * path data below is Lucide 1.52's Sun circle and Moon, unchanged.
+ */
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var KEY = 'scrinium-theme';
+  var SUN = 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8Z';
+  var MOON = 'M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401';
+  var SAMPLES = 96;
+  var DURATION = 380;
+
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  var path = document.querySelector('.theme-morph');
+  if (!btn || !path) return;
+
+  function sample(d) {
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden';
+    var probe = document.createElementNS(NS, 'path');
+    probe.setAttribute('d', d);
+    svg.appendChild(probe);
+    document.body.appendChild(svg);
+    var total = probe.getTotalLength();
+    var points = [];
+    for (var i = 0; i < SAMPLES; i++) {
+      var point = probe.getPointAtLength((i / SAMPLES) * total);
+      points.push([point.x, point.y]);
+    }
+    document.body.removeChild(svg);
+    return points;
+  }
+
+  function signedArea(points) {
+    var sum = 0;
+    for (var i = 0; i < points.length; i++) {
+      var a = points[i];
+      var b = points[(i + 1) % points.length];
+      sum += a[0] * b[1] - b[0] * a[1];
+    }
+    return sum;
+  }
+
+  /* Two closed loops only morph cleanly when they run the same way and start in the same place.
+     Match the winding, then rotate the second loop so it begins nearest the first. */
+  function align(a, b) {
+    var loop = signedArea(a) * signedArea(b) < 0 ? b.slice().reverse() : b.slice();
+    var best = 0;
+    var bestDistance = Infinity;
+    for (var i = 0; i < loop.length; i++) {
+      var dx = loop[i][0] - a[0][0];
+      var dy = loop[i][1] - a[0][1];
+      var distance = dx * dx + dy * dy;
+      if (distance < bestDistance) { bestDistance = distance; best = i; }
+    }
+    return loop.slice(best).concat(loop.slice(0, best));
+  }
+
+  var sun = sample(SUN);
+  var moon = align(sun, sample(MOON));
+  var value = 0;
+  var frame = 0;
+
+  function draw(t) {
+    var d = '';
+    for (var i = 0; i < SAMPLES; i++) {
+      var x = moon[i][0] + (sun[i][0] - moon[i][0]) * t;
+      var y = moon[i][1] + (sun[i][1] - moon[i][1]) * t;
+      d += (i ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2);
+    }
+    path.setAttribute('d', d + 'Z');
+    value = t;
+  }
+
+  function animateTo(target) {
+    cancelAnimationFrame(frame);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      draw(target);
+      return;
+    }
+    var from = value;
+    var start = performance.now();
+    function step(now) {
+      var progress = Math.min(1, (now - start) / DURATION);
+      /* easeOutCubic: quartic was so front-loaded that the morph was over before it registered. */
+      draw(from + (target - from) * (1 - Math.pow(1 - progress, 3)));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    }
+    frame = requestAnimationFrame(step);
+  }
+
+  function theme() {
+    return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  }
+
+  function relabel() {
+    var next = theme() === 'dark' ? 'light' : 'dark';
+    btn.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+    btn.setAttribute('title', 'Switch to ' + next + ' theme');
+  }
+
+  draw(theme() === 'light' ? 1 : 0);
+  relabel();
+
+  btn.addEventListener('click', function () {
+    var next = theme() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem(KEY, next); } catch (e) { /* storage blocked */ }
+    relabel();
+    animateTo(next === 'light' ? 1 : 0);
+  });
+})();
+</script>
 
 <script>
 (function () {
