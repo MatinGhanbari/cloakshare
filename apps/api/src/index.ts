@@ -38,6 +38,7 @@ import auditRouter from './routes/audit.js';
 import notificationsRouter from './routes/notifications.js';
 import demoRouter from './routes/demo.js';
 import docsRouter from './routes/docs.js';
+import publicRouter from './routes/public.js';
 
 // Workers
 import { startRenderWorker, stopRenderWorker } from './workers/renderer.js';
@@ -212,6 +213,9 @@ app.route('/', demoRouter);
 
 // API docs (OpenAPI spec + Scalar reference)
 app.route('/', docsRouter);
+
+// Public landing surface (aggregate stats; the landing page itself is registered below)
+app.route('/', publicRouter);
 
 // Internal file serving for local storage mode
 if (config.storage.provider === 'local') {
